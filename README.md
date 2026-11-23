@@ -17,11 +17,39 @@ Minecraft:realzanized is a fan-made Minecraft you play in the browser: an endles
   - **Ashen Wasteland**: ash plains, volcanic mountains with lava craters, basalt and magma, burnt trees, and ash storms.
   - **Glowing Mushroom Fields**: giant glowing mushrooms, glowing plants and shrooms, glowing moss, floating spores.
   - **Frozen Forest**: frosted trees, snow, frozen lakes, ice spikes, and ice caves.
-- **Caves** (long tunnels and big caverns, lava lakes near the bottom) and **ores**: coal, iron, gold, diamond and the new **Ruby** (more under Ashen Wasteland), **Sapphire** (Frozen Forest), **Cobalt**, **Mythril** (Crystal Forest, needs a diamond pickaxe) and **Amethyst Steel** (Mushroom Fields, needs a diamond pickaxe). Ores drop gems and raw metal. The ores' special abilities come with tools and crafting in the next stage.
+- **Caves** (long tunnels and big caverns, lava lakes near the bottom) and **ores**: coal, iron, gold, diamond and the new **Ruby** (more under Ashen Wasteland), **Sapphire** (Frozen Forest), **Cobalt**, **Mythril** (Crystal Forest, needs a diamond pickaxe) and **Amethyst Steel** (Mushroom Fields, needs a diamond pickaxe). Ores drop gems and raw metal.
 - **Mining and building**: hold left click to mine (pickaxes for stone and ores, axes for wood; ores need a good enough pickaxe to drop anything), right click to place blocks. You start with stone tools, bread, torches and planks.
 - **Day and night**: a 20-minute day with sunrise and sunset colours, a moon and stars. Torches, lava, crystals and glowing mushrooms light up the dark.
 - Hunger, health, fall damage, drowning and lava as before. When you die you drop your items and can respawn at the world spawn.
 - F3 shows coordinates, biome, light, time and chunk info.
+
+**Crafting** (console style)
+- Press **C** (or open the inventory with **E** and choose Crafting) for the console crafting screen: group tabs along the top (Structures, Tools and Weapons, Food, Armour, Materials, Decoration), a row of things you can make, the recipe picture with missing ingredients marked in red with **!**, your inventory on the right. On your own you get 2x2 recipes; right click a **Crafting Table** (4 planks) for everything.
+- Click (or Space) crafts, Shift crafts as many as you can, A/D picks an item, W/S (or the mouse wheel) changes the material (wood, stone, iron, gold, diamond, ruby, amethyst steel, mythril), Q/R changes group, F shows a description.
+- Recipes: planks from every wood, sticks, torches, chests, furnaces, slabs, fences, stone bricks, sandstone, storage blocks, pickaxes, shovels, axes and swords in eight materials, iron/gold/diamond/cobalt armour, bows (sticks and vines) and arrows (crystal shards and sticks), new foods (Sakura Mochi, Glow Stew, Crystal Candy) and the unique tools below. **Sapphire Enchanting** upgrades any tool or armour piece you carry (Efficiency, Sharpness, Protection up to III).
+- **Furnace**: smelt raw iron, gold, cobalt and mythril into ingots, sand into glass, cobblestone into stone and logs into coal. **Chests** you place keep their items. The inventory screen (E) still lets you move stacks around with the mouse.
+- **Ore abilities**: Ruby tools set what you hit on fire and smelt what they mine; Amethyst Steel heals you when you hit and digs 3x3; Mythril pickaxes mine a whole vein and Mythril axes fell a whole tree; a full Cobalt set stops knockback and halves fall damage. Tools wear out and show a durability bar.
+
+**Unique tools**
+| Tool | What it does |
+| --- | --- |
+| Grappling Hook | shoot it at a block and get pulled there (sneak to let go) |
+| Builder's Wand | right click a block face to extend that surface by up to 9 blocks from your inventory |
+| Item Magnet | hold it and dropped items within 10 blocks fly to you |
+| Spyglass | hold right click to zoom |
+| Compass / Clock | point back to spawn / show the day and time |
+| Blink Staff | teleport up to 12 blocks where you look |
+| Fire Staff | fire bolt that burns whatever it hits |
+| Frost Wand | freezes water into ice and lava into obsidian around where you look |
+| Sakura Staff | heals 3 hearts plus Regeneration (20 second cooldown) |
+| Ore Scanner | shows every ore within 16 blocks through walls for 15 seconds |
+| Mythril Glider | hold it and keep holding jump while falling to glide |
+
+**Textures from the pack**: every new block and item (sakura, redwood and frozen wood, crystals, ash, basalt, magma, glowing mushrooms, the new ores and gem blocks, ruby/amethyst/mythril tools, cobalt armour, ingots, gems and all the unique tools) is made from the loaded resource pack's own textures, recoloured, so they match the pack's style. Without a pack they use built-in art.
+
+**Saved games**: Play Game lists your saved games with a picture of each world, its day and when you last played. Save Game in the pause menu saves straight away (it also saves every 30 seconds and when you leave). Export downloads a world as a `.mcrworld` file you can keep or give to a friend, and Import Save loads one.
+
+**Anti-cheat**: the developer-tools keys (F12, Ctrl+Shift+I/J/C, Ctrl+U) and right click are blocked. If the developer tools are opened anyway, or the game spots something that can't happen in play (too much health, impossible item stacks, moving impossibly fast), the page reloads straight away without saving, so nothing changed from the console is kept. The game's code is no longer reachable from the console window either. (Anything running in a browser can be got round by someone determined, so this stops casual cheating, not everything.)
 
 **Graphics: Potato to PEAK** (Options > Video Settings > Graphics, or when creating a world)
 
@@ -54,7 +82,8 @@ The first player in is the host: their world (saved on their computer as "Online
 | Left click | Attack; hold to mine (Survival and Battle Royale) |
 | Right click | Place block, eat/drink/draw bow (hold), open chest, throw splash potion, block with sword, equip armour |
 | 1-9 / wheel | Hotbar |
-| E | Inventory (Survival: click a backpack slot to swap it into your selected hotbar slot) |
+| E | Inventory (move stacks with the mouse) |
+| C | Crafting (Survival) |
 | Q | Drop item |
 | F3 | Debug screen |
 | Esc | Pause (Leave Game saves your world) |
@@ -150,10 +179,15 @@ python3 build.py
 | `13_ui.js` | Menus, input, local player |
 | `14_main.js` | Main loop |
 | `15_survival.js` | Survival: worlds and saving, loading, death and respawn, Photon menu |
+| `06b_derive.js` | New block and item textures made from the resource pack's own art |
+| `15b_craft.js` | Recipes, inventory screen, furnace, placed chests, tool abilities, durability, Survival name tags |
+| `15c_lcecraft.js` | Console-style crafting screen |
+| `15d_gadgets.js` | The unique tools |
+| `16_guard.js` | Anti-cheat |
 
 ## Coming next
 
-Crafting and tools (with the new ores' special abilities), mobs (deer, crystal spiders, ice wolves, magma creatures, mushroom mobs), structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End overhaul with the Void King.
+Mobs (deer, crystal spiders, ice wolves, magma creatures, mushroom mobs), structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End overhaul with the Void King.
 
 ## Credits
 
