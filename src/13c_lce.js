@@ -141,4 +141,5 @@ refreshLCE();
 
 // the Battle mini games keep their own logo; the title screen shows Minecraft:realzanized
 function showBattleLogo(on){if(on){const im=new Image();im.onload=()=>{if(miniOpen)setLogoImage(im);};im.src='logo_battle.png';}
-  else{const saved=store('bb_logo');if(saved){loadLogoURL(saved,false);return;}drawLogo();$('logo').style.imageRendering='';$('edition').classList.remove('hidden');$('splash').classList.remove('onlogo');}}
+  else{const saved=store('bb_logo');(async()=>{if(saved&&await loadLogoURL(saved,false))return;if(location.protocol!=='file:'&&await loadLogoURL('logo.png',false))return;
+    drawLogo();$('logo').style.imageRendering='';$('edition').classList.remove('hidden');$('splash').classList.remove('onlogo');})();}}

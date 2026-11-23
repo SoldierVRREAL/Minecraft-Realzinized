@@ -166,7 +166,7 @@ function drawLogo(){const c=$('logo');if(c.width!==760||c.height!==210){c.width=
       g.fillStyle='rgba(255,255,255,.28)';g.fillRect(cx,cy,cs,2);g.fillRect(cx,cy,2,cs);g.fillStyle='rgba(0,0,0,.3)';g.fillRect(cx,cy+cs-2,cs,2);g.fillRect(cx+cs-2,cy,2,cs);}};
   const stone=(x,y)=>{const v=hash2(x,y,7);return v<.2?'#7e7e7e':v<.6?'#a2a2a2':v<.85?'#b8b8b8':'#cfcfcf';};
   // sakura pink -> crystal blue -> mythril, the new biomes' colours
-  const gem=(x,y,t)=>{const v=hash2(x,y,9)*.22-.11;const A=[245,140,200],B=[90,170,255],C=[150,240,220];const k=t<.5?t*2:(t-.5)*2,P=t<.5?A:B,Q=t<.5?B:C;
+  const gem=(x,y,t)=>{const v=hash2(x,y,9)*.22-.11;const A=[160,80,235],B=[185,105,250],C=[140,65,220];const k=t<.5?t*2:(t-.5)*2,P=t<.5?A:B,Q=t<.5?B:C;
     const r=P[0]+(Q[0]-P[0])*k,gg=P[1]+(Q[1]-P[1])*k,b=P[2]+(Q[2]-P[2])*k;return `rgb(${clamp(r*(1+v),0,255)|0},${clamp(gg*(1+v),0,255)|0},${clamp(b*(1+v),0,255)|0})`;};
   word('MINECRAFT',14,8,stone,6);word(':REALZANIZED',9,120,gem,4);}
 drawLogo();
@@ -182,7 +182,7 @@ function setLogoImage(img){const c=$('logo');const w=Math.min(1024,img.naturalWi
 function loadLogoURL(url,save){return new Promise(res=>{const im=new Image();im.onload=()=>{setLogoImage(im);if(save)try{store('bb_logo',url);}catch(e){}res(true);};im.onerror=()=>res(false);im.src=url;});}
 (async()=>{const saved=store('bb_logo');if(saved&&await loadLogoURL(saved,false))return;if(location.protocol!=='file:')for(const n of ['logo.png','logo.webp','logo.jpg'])if(await loadLogoURL(n,false))return;})();
 $('logoFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>loadLogoURL(r.result,true).then(ok=>{$('packList').textContent=ok?'Title logo set.':'Could not read that image.';});r.readAsDataURL(f);});
-$('logoClear').addEventListener('click',()=>{store('bb_logo','');const c=$('logo');c.width=760;c.height=150;c.style.imageRendering='';drawLogo();$('edition').classList.remove('hidden');$('splash').classList.remove('onlogo');$('packList').textContent='Title logo reset.';});
+$('logoClear').addEventListener('click',()=>{store('bb_logo','');showBattleLogo(false);$('packList').textContent='Title logo reset.';});
 const SPLASHES=['Now with our own servers!','Spam click!','Last one standing!','Bats can squeak!','100% procedural!','Grace period!','Showdown!','Not Herobrine!','Also try BR mode!','Sprint jump!'];
 
 $('optClose').addEventListener('click',()=>{readOptions();hide('optPanel');show(optReturn);sfx('click');});
