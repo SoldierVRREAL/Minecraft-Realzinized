@@ -85,12 +85,21 @@ Animals and monsters now live in the Survival world. They use the resource pack'
 Animals killed while burning drop cooked meat. **Options > Survival Difficulty** sets Peaceful (no monsters), Easy, Normal or Hard (monster damage). In multiplayer the host runs every mob and everyone sees the same ones.
 
 **100+ new things**
-- **52 blocks**: TNT (light it with Flint and Steel; explosions chain), wool in all 16 colours, Bookshelf, Hay Bale, Pumpkin and Jack o'Lantern (pumpkins and melons grow wild in Plains and Forests), Melon, Clay (lake and ocean floors) and Terracotta, Blocks of Iron and Lapis, Nether Bricks, End Stone, Prismarine, Prismarine Bricks, Dark Prismarine, Sea Lantern, Jukebox, Note Block, Redstone Lamp, Crystal / Basalt / Ash / Ice / Snow / Magma Bricks, Sakura Lantern, Glowshroom Lamp, Mythril Lantern, Quartz Pillar, Chiseled Quartz, and Granite, Diorite and Andesite (now found underground) plus their polished forms.
+- **50 blocks**: TNT (light it with Flint and Steel; explosions chain), wool in all 16 colours, Bookshelf, Hay Bale, Pumpkin and Jack o'Lantern (pumpkins and melons grow wild in Plains and Forests), Melon, Clay (lake and ocean floors) and Terracotta, Blocks of Iron and Lapis, Nether Bricks, End Stone, Prismarine, Prismarine Bricks, Dark Prismarine, Sea Lantern, Jukebox, Note Block, Redstone Lamp, Crystal / Basalt / Ash / Ice / Snow / Magma Bricks, Sakura Lantern, Glowshroom Lamp, Mythril Lantern, Quartz Pillar, Chiseled Quartz, and Granite, Diorite and Andesite (now found underground) plus their polished forms.
 - **20 mob drops**: raw beef, porkchop, chicken, mutton and venison, cooked mutton and venison, leather, feathers, rotten flesh, bones, bone meal (grows flowers and grass), string, gunpowder, spider eyes, magma cream, eggs (throw them: sometimes a chick hatches), frost fangs, crystal silk, glow spores.
 - **14 dyes** made from flowers, gems, coal, petals and crystals, which colour wool and sheep.
 - **9 foods**: Golden Carrot, Fried Egg, Frost Berries (Frozen leaves), Ember Pepper (Ashen dead bushes, fire resistance), Crystal Apple (absorption and speed), Spore Bread, Magma Jerky, Venison Stew, Milk (clears effects).
 - **Tools and weapons**: Flint and Steel (flint comes from gravel), Shears, Bucket, Crystal Bow (three arrows a shot), Frost Dagger (slows), Magma Hammer (shockwave that burns everything near the target), Spore Bomb and Frost Bomb (throwable), Mob Radar (shows creatures within 32 blocks), Totem of Renewal (saves you from one death), and craftable leather armour. Bows can be made with string, arrows with flint and feathers.
 - Every new recipe is on the console crafting screen's tabs, and raw meat, eggs, clay, rotten flesh, grass and gravel can go in the furnace.
+
+**Creative mode**
+Pick **Game Mode: Creative** when you create a world (or switch any time with the **Game Mode** button in the pause menu, or type `/gamemode creative` / `/gamemode survival` in chat with T or /).
+- **E** opens the Creative menu: tabs for Building Blocks, Decoration, Natural Blocks, Tools and Gadgets, Combat, Food and Potions, Materials, and a Search tab, plus a tab back to your normal inventory for armour. Click takes a full stack, right click takes one, shift-click drops it straight into your inventory, hover and press 1-9 to put it in that hotbar slot, and the red Destroy Item slot deletes what you're holding (shift-click it to clear your inventory).
+- **Double-tap jump to fly** (Space; on touch screens and controllers double-tap the jump button). Jump goes up, sneak goes down, sprint flies faster, and landing while sneaking stops flying.
+- Blocks break instantly and drop nothing; placed blocks, food, arrows and throwables never run out; tools never wear out; bows shoot without arrows.
+- No damage and no hunger (only the void can hurt you), and monsters ignore you.
+- **Middle click** picks the block you're looking at into your hand.
+- Your game mode is saved with your player in the world. In online games, joiners start in the world's mode and only the host can switch. `/time set day|noon|night|midnight` changes the time.
 
 **Locator bar (multiplayer)**
 Like Java 1.21.6: in a Survival game with other players, the bar above the hotbar shows a coloured dot for each player in the direction they are from where you are looking. Dots shrink with distance, show an arrow when someone is well above or below you, and pin to the ends with an arrow when they are behind you. Look straight at a dot to see that player's name and distance.
@@ -216,6 +225,7 @@ python3 build.py
 | `15cz_tabs.js` | The new recipes on the crafting screen tabs |
 | `15e_mobs.js` | Mobs: models, AI, spawning, multiplayer sync, explosions and TNT, mob radar |
 | `15f_locator.js` | Multiplayer locator bar |
+| `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block, /gamemode and /time |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
