@@ -62,12 +62,29 @@ Minecraft:realzanized is a fan-made Minecraft you play in the browser: an endles
 
 Render Distance can be changed separately (2-13 chunks). If the game runs slowly it suggests a lighter preset in chat. Biomes tint the fog and sky, and each has its own floating particles (petals, ash, snow, spores, sparkles).
 
-**Multiplayer (Photon Realtime, App ID only)**
-1. Make a free account at [dashboard.photonengine.com](https://dashboard.photonengine.com), create a new application of type **Realtime**, and copy its **App ID**.
-2. In the game: **Multiplayer**, paste the App ID, choose Survival or Battle, and press **Connect**.
-3. Give the same App ID to your friends. Everyone who connects with it (same game and region) joins the same world: Connect joins an open game, or starts one if nobody is playing. There are no server names or room codes.
+**Multiplayer: servers, like Minecraft Java (carried by Photon)**
+Multiplayer works like Java Edition's: you keep a list of servers, see who is online before you join, and one player's world is the server. Photon Realtime carries the connection, so nobody has to run a real server and it works from GitHub Pages too.
 
-The first player in is the host: their world (saved on their computer as "Online World") is the one everyone plays in, and joiners download it when they connect. If the host leaves, the next player carries on as host. Block changes, players, dropped items and the time of day are shared. A game holds up to 16 players (Photon's free plan allows 20 players online at once per App ID). Multiplayer through Photon also works when the game is hosted on GitHub Pages: no server of your own is needed.
+*One-time setup:* make a free account at [dashboard.photonengine.com](https://dashboard.photonengine.com), create a new application of type **Realtime**, copy its **App ID**, and paste it into **Multiplayer > Photon Settings** (pick your home region there too). Everyone who plays together uses the same App ID, so share it with your friends once.
+
+*Hosting a server:*
+- In a Survival world, open the pause menu and press **Open to Server** (like Open to LAN), or on the Multiplayer screen press **Host Server** and pick a world (or the Battle mini game).
+- Choose the **server address** (for example `realz-castle`; outside the Americas region it gets the region on the end, like `realz-castle:eu`), the **Message of the Day**, **Max Players** (up to 20), the **game mode for other players**, **PvP** on/off, whether it's **listed publicly**, and an optional **whitelist**. The screen shows the exact address to give your friends.
+- Your world is the server. Everyone's inventory, armour, position and game mode are saved in *your* world save, so players who come back get their things back. **Server Settings** in the pause menu changes the settings while it runs.
+- When you leave (or type `/stop`), the server closes and everyone sees "Connection Lost: Server closed". With /stop you keep playing your world offline.
+
+*Joining:*
+- The **Multiplayer** screen lists your saved servers with their icon, name, MOTD, player count (hover it to see who's on) and ping bars, or "Can't connect to server" when nobody is hosting that address. Below them, **Servers online now** shows the public servers in your home region.
+- **Join Server** (or double-click), **Direct Connection** (type an address once), **Add Server** / **Edit** (name and address), **Delete**, **Refresh**, and the arrows on a row reorder the list.
+- If something goes wrong you get a Java-style message: "Failed to connect to the server: Unknown server", "The server is full", "You are banned from this server", "You are not white-listed on this server!", "Disconnected: Kicked by an operator", and so on.
+- In game, hold **Tab** for the player list (server MOTD, everyone's ping, the address), and the pause menu has **Disconnect**.
+
+*Server commands* (T or / for chat). They run on the host. The host is always an operator and can `/op` other players.
+| Everyone | Operators |
+| --- | --- |
+| `/help`, `/list`, `/msg <player> <message>` (also `/tell`, `/w`), `/me <action>` | `/kick <player> [reason]`, `/ban <player> [reason]`, `/pardon <player>`, `/banlist`, `/op` / `/deop <player>`, `/whitelist on\|off\|add\|remove\|list`, `/gamemode <survival\|creative> [player]`, `/defaultgamemode <mode>`, `/tp <player>`, `/tp <player> <player>`, `/tp [player] <x> <y> <z>` (`~` for relative), `/time set\|add\|query`, `/say <message>`, `/seed`, `/stop` (host only) |
+
+In single player every command works, as in a world with cheats on. A player who joins with the same name as someone already on the server replaces the old session ("You logged in from another location"); operators can always join, even with the whitelist on. Names are not accounts, so bans and the whitelist go by player name. A Photon free plan allows 20 players online at once across all servers using that App ID.
 
 **Mobs**
 Animals and monsters now live in the Survival world. They use the resource pack's own entity textures (the new ones are the vanilla skins recoloured) and the real 1.8 model shapes and walking animations.
@@ -93,13 +110,13 @@ Animals killed while burning drop cooked meat. **Options > Survival Difficulty**
 - Every new recipe is on the console crafting screen's tabs, and raw meat, eggs, clay, rotten flesh, grass and gravel can go in the furnace.
 
 **Creative mode**
-Pick **Game Mode: Creative** when you create a world (or switch any time with the **Game Mode** button in the pause menu, or type `/gamemode creative` / `/gamemode survival` in chat with T or /).
+Pick **Game Mode: Creative** when you create a world (or switch any time with the **Game Mode** button in the pause menu, or type `/gamemode creative` / `/gamemode survival` in chat with T or /; on a server you need to be an operator).
 - **E** opens the Creative menu: tabs for Building Blocks, Decoration, Natural Blocks, Tools and Gadgets, Combat, Food and Potions, Materials, and a Search tab, plus a tab back to your normal inventory for armour. Click takes a full stack, right click takes one, shift-click drops it straight into your inventory, hover and press 1-9 to put it in that hotbar slot, and the red Destroy Item slot deletes what you're holding (shift-click it to clear your inventory).
 - **Double-tap jump to fly** (Space; on touch screens and controllers double-tap the jump button). Jump goes up, sneak goes down, sprint flies faster, and landing while sneaking stops flying.
 - Blocks break instantly and drop nothing; placed blocks, food, arrows and throwables never run out; tools never wear out; bows shoot without arrows.
 - No damage and no hunger (only the void can hurt you), and monsters ignore you.
 - **Middle click** picks the block you're looking at into your hand.
-- Your game mode is saved with your player in the world. In online games, joiners start in the world's mode and only the host can switch. `/time set day|noon|night|midnight` changes the time.
+- Your game mode is saved with your player in the world. On a server, players join in the server's "game mode for other players", and operators can switch anyone's mode with `/gamemode`. `/time set day|noon|night|midnight` changes the time.
 
 **Locator bar (multiplayer)**
 Like Java 1.21.6: in a Survival game with other players, the bar above the hotbar shows a coloured dot for each player in the direction they are from where you are looking. Dots shrink with distance, show an arrow when someone is well above or below you, and pin to the ends with an arrow when they are behind you. Look straight at a dot to see that player's name and distance.
@@ -205,7 +222,7 @@ python3 build.py
 | `07_game.js` | Entities, combat, hunger, effects, projectiles, drops |
 | `07b_mcphys.js` | Java Edition movement physics (20 TPS) |
 | `08_net.js` | Multiplayer core (host rules), room relay client and same-browser tabs |
-| `08b_photon.js` | Photon Realtime transport (App ID matchmaking) |
+| `08b_photon.js` | Photon Realtime transport: servers by address, the lobby list for the server browser, error messages |
 | `09_flow.js` | Match flow, lobby, chests, MCBR timeline, net events |
 | `10_bots.js` | Bot AI, including route-finding |
 | `11_render.js` | Audio and rendering |
@@ -213,7 +230,7 @@ python3 build.py
 | `12_hud.js` | HUD |
 | `13_ui.js` | Menus, input, local player |
 | `14_main.js` | Main loop |
-| `15_survival.js` | Survival: worlds and saving, loading, death and respawn, Photon menu |
+| `15_survival.js` | Survival: worlds and saving, loading, death and respawn |
 | `06b_derive.js` | New block and item textures made from the resource pack's own art |
 | `15b_craft.js` | Recipes, inventory screen, furnace, placed chests, tool abilities, durability, Survival name tags |
 | `15c_lcecraft.js` | Console-style crafting screen |
@@ -225,7 +242,9 @@ python3 build.py
 | `15cz_tabs.js` | The new recipes on the crafting screen tabs |
 | `15e_mobs.js` | Mobs: models, AI, spawning, multiplayer sync, explosions and TNT, mob radar |
 | `15f_locator.js` | Multiplayer locator bar |
-| `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block, /gamemode and /time |
+| `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block |
+| `15h_servers.js` | Servers: the Multiplayer screen, hosting, joining, bans/whitelist/kicks, saved player data, Tab player list |
+| `15i_commands.js` | Chat commands, run on the server host with operator permissions |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next

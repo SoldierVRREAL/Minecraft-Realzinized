@@ -176,6 +176,15 @@ body.touch #clickResume{display:none!important}
 #xhair i,#xhair b{position:absolute;background:#fff;display:block}#xhair i{left:-9px;top:-1px;width:18px;height:2px}#xhair b{left:-1px;top:-9px;width:2px;height:18px}
 #chatBar{position:fixed;left:4px;right:4px;bottom:4px;z-index:6}#chatIn{width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:0;color:#fff;font:20px 'VT323',monospace;padding:3px 6px;outline:none}
 .lbt{border-collapse:collapse}.lbt td{padding:calc(var(--S)*2px) calc(var(--S)*6px)}.lbt tr:first-child td{border-bottom:calc(var(--S)*1px) solid #8b8b8b}
+.srvpanel{width:min(760px,96vw)}.srvtitle{text-align:center}.srvlist{max-height:48vh;min-height:30vh}.srvbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px}.srvbtns .btn{flex:1 1 0;margin:0;min-width:110px}
+.srow{display:flex;gap:10px;align-items:center;padding:5px 8px;color:#fff;text-shadow:2px 2px 0 #000;border:2px solid transparent;cursor:pointer;user-select:none}.srow:hover{background:rgba(255,255,255,.08)}.srow.sel{border-color:#fff;background:rgba(0,0,0,.35)}
+.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}.srow .sname{font-size:21px}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
+.srow .smotd.err{color:#ff5555}.srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.srow .splay{font-size:18px;color:#aaa}.srow .sping{width:20px;height:16px;image-rendering:pixelated}.srow .smove{display:flex;flex-direction:column;gap:2px}.srow .smove button{font:14px monospace;padding:0 4px;background:#555;color:#fff;border:1px solid #000;cursor:pointer;visibility:hidden}.srow:hover .smove button{visibility:visible}
+.shead{padding:6px 8px 2px;color:#ffff55;font-size:18px;text-shadow:2px 2px 0 #000;border-top:1px solid rgba(255,255,255,.2)}.srvstatus{min-height:1.2em;margin-top:4px;font-size:18px;text-align:center}
+.srvdlg{width:min(560px,94vw);display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden}.srvdlg .form{overflow:auto;min-height:0;flex:0 1 auto;padding:2px}.srvdlg.wide{width:min(900px,96vw)}@media(min-width:760px){.srvdlg.wide .form{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr)}}.srvdlg .form label{font-size:19px}.srvdlg h3{text-align:center}.srvdlg .note{font-size:16px}.srvdlg .err{color:#a00000;min-height:1.1em;text-align:center}.srvdlg .addr{font:22px 'VT323',monospace;background:#000;color:#55ff55;padding:4px 8px;text-align:center;user-select:all}
+#discPanel{background:rgba(40,20,10,.85)}#discMsg{white-space:pre-line;max-width:80vw;text-align:center}
+#tabList{position:fixed;left:50%;top:8px;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font:18px 'VT323',monospace;padding:4px 6px;z-index:6;pointer-events:none;text-shadow:2px 2px 0 #3f3f3f;min-width:260px}
+#tabList .th{text-align:center;padding:2px 6px}#tabList .tf{text-align:center;color:#aaa;padding:2px 6px}#tabList .tr{display:flex;justify-content:space-between;gap:16px;background:rgba(255,255,255,.12);margin:1px 0;padding:0 4px}#tabList canvas{width:20px;height:16px;image-rendering:pixelated}
 </style>
 </head>
 <body>
@@ -281,9 +290,10 @@ body.touch #clickResume{display:none!important}
 <button class="hidden" id="takeAll"></button><button class="hidden" id="closeChest"></button></div>
 
 <div id="pause" class="screen hidden"><div class="lhead" id="pauseTitle" data-t="Game menu" style="margin-bottom:calc(var(--S)*14px)">Game menu</div><div class="menuList" style="margin-top:0">
-  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn hidden" id="saveBtn">Save Game</button><button class="lbtn hidden" id="gmBtn">Game Mode: Survival</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
+  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn hidden" id="saveBtn">Save Game</button><button class="lbtn hidden" id="gmBtn">Game Mode: Survival</button><button class="lbtn hidden" id="openSrvBtn">Open to Server</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
 <div id="jOpt" class="screen hidden jscreen"><div id="jTitle"></div><div id="jGrid"></div><div id="jFoot"></div></div>
 <div id="xhair" class="hidden"><i></i><b></b></div>
+<div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
 <div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
   <button class="tb" id="tPause" aria-label="Pause"><b>II</b></button><button class="tb" id="tInv" aria-label="Inventory"><b>E</b></button><button class="tb" id="tDrop" aria-label="Drop item"><b>Q</b></button>
@@ -322,15 +332,15 @@ body.touch #clickResume{display:none!important}
   <div class="row"><button class="btn small" id="wCreate">Create New World</button><button class="btn small" id="wImport">Import Save</button><button class="btn small" id="wBack">Back</button></div><input id="wImportFile" type="file" accept=".mcrworld,application/json" class="hidden">
   <div class="note">Worlds are saved in this browser every 30 seconds and when you leave.</div>
 </div></div>
-<div id="mpPanel" class="screen hidden"><div class="panel" style="width:min(600px,94vw)">
-  <h3>Multiplayer</h3>
-  <div class="note" style="margin-top:0">Everyone who enters the same Photon Realtime App ID plays together: Connect joins an open game, or starts one if nobody is playing. Make a free App ID at dashboard.photonengine.com (choose Realtime).</div>
-  <div class="form"><label for="ph_app">Photon Realtime App ID</label><input id="ph_app" type="text" maxlength="64" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" autocomplete="off">
-    <label for="ph_mode">Game</label><select id="ph_mode"><option value="survival">Survival (endless world)</option><option value="battle">Battle mini game</option></select>
-    <label for="ph_region">Region (everyone the same)</label><select id="ph_region"><option value="us">Americas</option><option value="usw">US West</option><option value="eu">Europe</option><option value="asia">Asia</option><option value="jp">Japan</option><option value="au">Australia</option><option value="sa">South America</option><option value="kr">Korea</option><option value="in">India</option></select></div>
-  <div id="phStatus"></div>
-  <div class="row"><button class="btn small" id="phConnect">Connect</button><button class="btn small" id="phBack">Back</button></div>
+<div id="mpPanel" class="screen hidden"><div class="panel srvpanel">
+  <h3 class="srvtitle">Play Multiplayer</h3>
+  <div id="srvList" class="wlist srvlist" role="listbox" aria-label="Servers"></div>
+  <div id="phStatus" class="srvstatus"></div>
+  <div class="srvbtns"><button class="btn small" id="srvJoin">Join Server</button><button class="btn small" id="srvDirect">Direct Connection</button><button class="btn small" id="srvAdd">Add Server</button></div>
+  <div class="srvbtns"><button class="btn small" id="srvEdit">Edit</button><button class="btn small" id="srvDel">Delete</button><button class="btn small" id="srvRefresh">Refresh</button><button class="btn small" id="srvHost">Host Server</button><button class="btn small" id="srvPhoton">Photon Settings</button><button class="btn small" id="phBack">Back</button></div>
 </div></div>
+<div id="srvDlg" class="screen hidden"><div class="panel srvdlg" id="srvDlgBox"></div></div>
+<div id="discPanel" class="screen hidden"><h2 id="discTitle">Connection Lost</h2><div id="discMsg" class="sub"></div><div class="row"><button class="btn" id="discBack">Back to Server List</button></div></div>
 <div id="deathPanel" class="screen hidden" style="background:rgba(110,0,0,.5)"><h2 id="deathTitle">You died!</h2><div id="deathSub" class="sub"></div>
   <div class="row"><button class="btn" id="respawnBtn">Respawn</button><button class="btn" id="deathMenu">Title Screen</button></div></div>
 <div id="clickResume" class="screen hidden" style="background:rgba(0,0,0,.25)"><h2>Click to play</h2></div>
@@ -2617,6 +2627,7 @@ function addWpn(e,w,amt){if(!w)return;const m=e.wpn||(e.wpn={});m[w]=(m[w]||0)+a
 function creditTaken(e,amt){if(!(amt>0))return;if(isHost())e.dmgTaken=(e.dmgTaken||0)+amt;else netSend(N.DEALT,{tk:e.id,d:amt});}
 // route damage to whoever owns the target
 function damage(t,amt,src,cause,kb,raw,fx){
+  if(MATCH.mode==='survival'&&src&&src!==t&&src.kind==='player'&&t.kind==='player'&&!srvPvp())return false;   // the server has PvP turned off
   if(owned(t)){const ok=hurt(t,amt,src,cause,kb,raw);if(fx&&(ok||amt===0))for(const f of fx)giveEffect(t,...f);return ok;}
   // you hit someone on another computer: show the red flash and sound now instead of waiting for their reply to come back
   if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();if(t.kind==='mob')mobSnd(t,'hurt');else sfx('hurt',{pos:t.pos});}
@@ -2866,7 +2877,7 @@ function netSend(code,data,to){
 class MeshNet{
   constructor(room,name,transport,opt){
     this.kind=opt.kind;this.tr=transport;this.myId=1+Math.floor(Math.random()*1e8);this.name=String(name).slice(0,16);this.members=new Map();this.opt=opt;
-    this.members.set(this.myId,{id:this.myId,name:this.name,seen:Date.now(),joined:Date.now()});this.ready=false;this.left=false;
+    this.members.set(this.myId,{id:this.myId,name:this.name,seen:Date.now(),joined:Date.now()});this.ready=false;this.left=false;this.blocked=new Set();   // blocked = kicked / banned players: ignore everything they send
     transport.onmessage=m=>{try{this.recv(m);}catch(e){}};transport.will={t:'bye',from:this.myId,will:1};   // the relay sends this for us if the connection dies
     transport.open(()=>{if(this.left)return;this.hb=setInterval(()=>this.beat(),opt.hb);this.beat();
       setTimeout(()=>{if(this.left)return;let mx=0;for(const m of this.members.values())if(m.id!==this.myId)mx=Math.max(mx,m.joined);
@@ -2879,7 +2890,7 @@ class MeshNet{
     const me=this.members.get(this.myId);this.post({t:'hb',from:this.myId,name:this.name,joined:me.joined,r:this.ready?1:0,pt:Math.round(performance.now())});const now=Date.now();
     for(const [id,m] of [...this.members]){if(id!==this.myId&&now-m.seen>this.opt.timeout){this.members.delete(id);if(m.r)this.onLeave&&this.onLeave(id);this.checkHost();}}}
   recv(m){if(m&&m.from===this.myId){if(m.t==='hb'&&m.pt)this.notePing(performance.now()-m.pt);return;}   // our own heartbeat coming back = round trip to the relay
-    if(!m||typeof m.from!=='number')return;
+    if(!m||typeof m.from!=='number'||this.blocked.has(m.from))return;
     if(m.t==='hb'){const had=this.members.has(m.from);const ex=this.members.get(m.from)||{id:m.from};ex.seen=Date.now();ex.name=String(m.name||'Player').slice(0,16);ex.joined=+m.joined||Date.now();const wasR=ex.r;ex.r=!!m.r;this.members.set(m.from,ex);
       if(ex.r&&!wasR&&this.ready)this.onJoin&&this.onJoin(m.from,ex.name);if(!had||ex.r!==wasR)this.checkHost();return;}
     if(m.t==='bye'&&m.will){const ex=this.members.get(m.from);if(ex)ex.seen=Math.min(ex.seen,Date.now()-this.opt.timeout+3500);return;}   // dropped, not left: 3.5 s to reconnect before they count as gone
@@ -2892,6 +2903,7 @@ class MeshNet{
   checkHost(){if(!this.ready)return;const h=this.hostId();if(this._h!==h){this._h=h;this.onHostChange&&this.onHostChange(h);}}
   inRoom(){return this.ready;}
   send(code,data,to){this.post({t:'ev',from:this.myId,code,data:data===undefined?null:data,to:to||null});}
+  block(id){this.blocked.add(id);const ex=this.members.get(id);if(ex){this.members.delete(id);if(ex.r)this.onLeave&&this.onLeave(id);this.checkHost();}}
   list(){return [...this.members.values()].filter(m=>m.id===this.myId||m.r).map(m=>({id:m.id,name:m.name}));}
   leave(){this.left=true;clearInterval(this.hb);try{this.tr.post({t:'bye',from:this.myId});}catch(e){}setTimeout(()=>{try{this.tr.close();}catch(e){}},150);}
 }
@@ -2954,35 +2966,72 @@ class RelayNet extends MeshNet{constructor(room,name,typed){const tr=mqttTranspo
   tr.onreconnected=down=>{const me=this.members.get(this.myId);if(down>4000&&!this.isHost()){let mx=0;for(const m of this.members.values())if(m.id!==this.myId)mx=Math.max(mx,m.joined);me.joined=Math.max(me.joined,mx+1);}
     this.beat();this.onReconnected&&this.onReconnected(down);};}}
 
-// ================= Photon Realtime multiplayer: join anyone using the same App ID =================
-// Everyone who types the same Photon Realtime App ID (and picks the same game) lands in the same room: Connect joins an open
-// room for that game, or makes one if there is none. Photon only carries the messages; the game's own host rules (earliest
-// player is host, host hands over if they leave) work exactly as with the relay, so MeshNet runs on top of this transport.
-const PHOTON_VERSION='mcr-1';
+// ================= Photon Realtime multiplayer: servers by address, like Minecraft's server list =================
+// A "server" is a Photon room whose name is the server address. The player who opens their world to a server creates the room
+// (and is its host); everyone else joins it by address from the Multiplayer screen. Rooms are listed in Photon's lobby with a few
+// small properties (MOTD, icon, player names...) so the server list can show them, and their player counts and ping, without joining.
+// Photon only carries the messages; MeshNet runs on top of it exactly as before (the earliest member is the host).
+const PHOTON_VERSION='mcr-2';
+const GAME_VERSION='1.4';
+const PHOTON_REGIONS=[['us','Americas'],['usw','US West'],['eu','Europe'],['asia','Asia'],['jp','Japan'],['au','Australia'],['sa','South America'],['kr','Korea'],['in','India'],['za','South Africa'],['uae','UAE'],['cae','Canada East']];
 function photonOK(){return typeof Photon!=='undefined'&&Photon.LoadBalancing&&Photon.LoadBalancing.LoadBalancingClient;}
-function photonTransport(appId,region,mode){
+// what Photon's error codes mean to a player
+function photonErrText(code,msg,creating){
+  if(code===32758)return 'Unknown server: nobody is hosting that address right now. Check the address, and that the host has opened their world.';
+  if(code===32765)return 'The server is full.';
+  if(code===32764)return 'The server is not accepting players right now.';
+  if(code===32766)return creating?'That server address is already in use. Pick a different address.':'That server address is already in use.';
+  if(code===32767||/auth/i.test(String(msg)))return 'Photon did not accept the App ID. Check it in Photon Settings (it must be a Photon Realtime App ID).';
+  if(code===32757)return 'The Photon app has reached its player limit (CCU). Try again later.';
+  return 'Photon refused the connection'+(msg?': '+msg:' (error '+code+')')+'.';}
+// opts.create = {name, max, props, listed}: make a new server.   opts.join = name: join that server.   neither: quick play (old behaviour)
+function photonTransport(appId,region,mode,opts={}){
   const t={lbc:null,actorFrom:new Map(),closed:false,url:'Photon '+region,
     open(ok,fail){if(!photonOK()){fail('The Photon library did not load.');return;}
       const LBC=Photon.LoadBalancing.LoadBalancingClient,S=LBC.State;let c;
       try{c=new LBC(Photon.ConnectionProtocol.Wss,appId,PHOTON_VERSION);}catch(e){fail('Photon could not start: '+e.message);return;}
       t.lbc=c;try{c.setLogLevel(Photon.LogLevel.ERROR);}catch(e){}
       let done=false;const finish=(good,msg)=>{if(done)return;done=true;clearTimeout(to);if(good)ok();else{t.closed=true;try{c.disconnect();}catch(e){}fail(msg);}};
-      const to=setTimeout(()=>finish(false,'Photon did not answer. Check the App ID (it must be a Realtime app) and your internet connection.'),15000);
-      const join=()=>{c.joinRandomOrCreateRoom({expectedCustomRoomProperties:{m:mode}},undefined,{customGameProperties:{m:mode},propsListedInLobby:['m'],maxPlayers:16,isVisible:true,isOpen:true});};
+      const to=setTimeout(()=>finish(false,'Timed out: Photon did not answer. Check your internet connection and the App ID.'),15000);
+      const join=()=>{try{
+        if(opts.join)c.joinRoom(opts.join);
+        else if(opts.create){const o=opts.create;c.createRoom(o.name,{maxPlayers:o.max||8,customGameProperties:o.props||{},propsListedInLobby:o.listed||Object.keys(o.props||{}),isVisible:true,isOpen:true,emptyRoomLiveTime:0});}
+        else c.joinRandomOrCreateRoom({expectedCustomRoomProperties:{m:mode}},undefined,{customGameProperties:{m:mode},propsListedInLobby:['m'],maxPlayers:16,isVisible:true,isOpen:true});}
+        catch(e){finish(false,'Photon could not join: '+e.message);}};
       c.onStateChange=st=>{t.onstate&&t.onstate(LBC.StateToName(st));
         if(st===S.JoinedLobby)join();
         else if(st===S.Joined)finish(true);
         else if(st===S.Disconnected||st===S.Error){if(!done)finish(false,'Photon closed the connection. Check that the App ID is a Photon Realtime App ID.');else if(!t.closed)t.onlost&&t.onlost();}};
-      c.onError=(code,msg)=>{finish(false,'Photon error '+code+(msg?': '+msg:'')+(code===32767||/auth/i.test(String(msg))?' (App ID not accepted)':''));};
-      c.onOperationResponse=(code,msg)=>{if(code&&code!==0&&!done&&code!==32760)finish(false,'Photon refused: '+(msg||code));};
+      c.onError=(code,msg)=>{finish(false,photonErrText(code,msg,!!opts.create));};
+      c.onOperationResponse=(code,msg)=>{if(code&&code!==0&&!done&&code!==32760)finish(false,photonErrText(code,msg,!!opts.create));};
       c.onEvent=(code,data,actorNr)=>{if(code!==1||!data)return;if(typeof data==='string'){try{data=JSON.parse(data);}catch(e){return;}}if(typeof data.from==='number')t.actorFrom.set(actorNr,data.from);t.onmessage&&t.onmessage(data);};
       c.onActorLeave=a=>{const id=t.actorFrom.get(a&&a.actorNr);if(id!=null){t.actorFrom.delete(a.actorNr);t.onmessage&&t.onmessage({t:'bye',from:id});}};
       try{c.connectToRegionMaster(region||'us');}catch(e){finish(false,'Photon could not connect: '+e.message);}},
     post(o){const c=t.lbc;if(!c||!c.isJoinedToRoom())return;const R=Photon.LoadBalancing.Constants.ReceiverGroup;try{c.raiseEvent(1,o,{receivers:o.t==='hb'?R.All:R.Others});}catch(e){}},
+    // the host keeps the server's lobby listing (player names, MOTD...) up to date
+    setProps(p){const c=t.lbc;try{const r=c&&c.isJoinedToRoom()&&c.myRoom();if(r)r.setCustomProperties(p);}catch(e){}},
+    setOpen(open){const c=t.lbc;try{const r=c&&c.isJoinedToRoom()&&c.myRoom();if(r&&r.setIsOpen)r.setIsOpen(open);}catch(e){}},
+    props(){try{const r=t.lbc&&t.lbc.myRoom();return r?(r.getCustomProperties?r.getCustomProperties():r._customProperties||{}):{};}catch(e){return {};}},
+    rtt(){const c=t.lbc;try{return c?(c.getRtt?c.getRtt():0):0;}catch(e){return 0;}},
     close(){t.closed=true;try{t.lbc&&t.lbc.disconnect();}catch(e){}}};
   return t;}
-class PhotonNet extends MeshNet{constructor(appId,region,mode,name){const tr=photonTransport(appId,region,mode);super('photon',name,tr,{kind:'photon',hb:1000,timeout:8000,listen:1800,room:'photon-'+mode});
-  this.mode=mode;tr.onlost=()=>this.onFail&&this.onFail('Lost the connection to Photon.');}}
+class PhotonNet extends MeshNet{constructor(appId,region,mode,name,opts){const tr=photonTransport(appId,region,mode,opts);super('photon',name,tr,{kind:'photon',hb:1000,timeout:8000,listen:opts&&opts.create?400:1800,room:'photon-'+mode});
+  this.mode=mode;this.region=region;this.addr=opts&&(opts.join||(opts.create&&opts.create.name))||null;this.creator=!!(opts&&opts.create);tr.onlost=()=>this.onFail&&this.onFail('Lost the connection to Photon.');}}
+// ---- the server list: a lobby connection that watches every listed server in one region ----
+function photonBrowse(appId,region,onList){let c,closed=false;const LBC=photonOK()&&Photon.LoadBalancing.LoadBalancingClient;
+  if(!LBC){onList(null,0,'The Photon library did not load.');return {close(){}};}
+  try{c=new LBC(Photon.ConnectionProtocol.Wss,appId,PHOTON_VERSION);}catch(e){onList(null,0,'Photon could not start: '+e.message);return {close(){}};}
+  try{c.setLogLevel(Photon.LogLevel.ERROR);}catch(e){}
+  const t0=performance.now();let rtt=0,got=false;
+  const emit=()=>{if(closed)return;let rooms=[];try{rooms=(c.availableRooms()||[]).filter(r=>!r.removed).map(r=>({name:r.name,n:r.playerCount,max:r.maxPlayers,open:r.isOpen,p:r.getCustomProperties?r.getCustomProperties():(r._customProperties||{})}));}catch(e){}
+    try{const v=c.masterPeer&&c.masterPeer.getRtt&&c.masterPeer.getRtt();if(v>0)rtt=v;}catch(e){}onList(rooms,rtt||Math.round((performance.now()-t0)/4),null);};
+  const S=LBC.State;
+  c.onStateChange=st=>{if(st===S.JoinedLobby){got=true;setTimeout(emit,250);}else if((st===S.Disconnected||st===S.Error)&&!closed&&!got)onList(null,0,'Can\'t connect to Photon. Check your internet connection and the App ID.');};
+  c.onRoomList=()=>emit();c.onRoomListUpdate=()=>emit();
+  c.onError=(code,msg)=>{if(!closed)onList(null,0,photonErrText(code,msg));};
+  try{c.connectToRegionMaster(region||'us');}catch(e){onList(null,0,'Photon could not connect: '+e.message);}
+  const iv=setInterval(()=>{if(got)emit();},3000);
+  return {close(){closed=true;clearInterval(iv);try{c.disconnect();}catch(e){}}};}
 
 // ================= match flow: settings, start/end, lobby hub, phases, chests, MCBR timeline, net handlers =================
 const SET={mode:'battle',roundLen:600,hunger:1,refill:120,grace:30,showdown:true,takeAll:true,central:true,bots:5,difficulty:1,
@@ -4173,7 +4222,7 @@ function drawBRHud(){
 
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
-const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
+const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
 // raw mouse input (unadjustedMovement) skips OS acceleration, but on macOS it inflates movement while a mouse button is held,
@@ -4580,6 +4629,8 @@ function procButton(sel){const c=mkCanvas(200,20),g=c.getContext('2d');const bas
   for(let y=0;y<20;y++)for(let x=0;x<200;x++){const n=(hash2(x>>1,y>>1,sel?31:30)-.5)*18;g.fillStyle=`rgb(${base[0]+n|0},${base[1]+n|0},${base[2]+n|0})`;g.fillRect(x,y,1,1);}
   g.fillStyle=sel===true?'#c8ccf4':sel==='off'?'#505050':'#a8a8a8';g.fillRect(1,1,198,1);g.fillRect(1,1,1,17);g.fillStyle=sel===true?'#5b609e':sel==='off'?'#1c1c1c':'#4a4a4a';g.fillRect(1,17,198,2);g.fillRect(198,1,1,18);
   g.strokeStyle='#000';g.lineWidth=1;g.strokeRect(.5,.5,199,19);return c;}
+// change a pixel-font menu button's label
+function setLbtn(b,t){if(!b||b.dataset.t===t&&b.firstChild)return;b.dataset.t=t;b.textContent='';const n=pxCanvas(t,GS,'#e0e0e0'),s=pxCanvas(t,GS,'#ffffa0');n.className='n';s.className='s';b.append(n,s);b.setAttribute('aria-label',t);}
 function refreshLCE(){
   const fitS=clamp(Math.min(Math.round(innerHeight/360),Math.floor(innerWidth*.92/210)),1,4);const S=OPT.gui?clamp(Math.min(OPT.gui,Math.floor(innerWidth*.92/210)),1,4):fitS;GS=S;document.documentElement.style.setProperty('--S',S);
   const G=PACK.gui||{};document.documentElement.style.setProperty('--btn',`url(${(G.btn||procButton(false)).toDataURL()})`);document.documentElement.style.setProperty('--btnSel',`url(${(G.btn_hover||procButton(true)).toDataURL()})`);document.documentElement.style.setProperty('--btnOff',`url(${(G.btn_off||procButton('off')).toDataURL()})`);
@@ -4964,9 +5015,9 @@ function newWorldMeta(name,seedText,mode){const meta={mode:mode==='creative'?'cr
   const l=worldList();l.unshift(meta);saveWorldList(l);return meta;}
 function loadWorldData(id){try{return JSON.parse(store('mcr_w_'+id)||'null');}catch(e){return null;}}
 function playerSave(p){return p?{gm:p.gm||'survival',fly:!!p.flying,pos:p.pos.map(v=>+v.toFixed(2)),yaw:p.yaw,inv:p.inv,armor:p.armor,hp:p.alive?p.health:20,food:p.alive?p.food:20,sat:p.sat,sel:p.sel}:null;}
-function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;
+function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;const data0=loadWorldData(SURV.meta.id);
   const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN],
-    pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health}))};
+    pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health})),srv:SRV.cfg||(data0&&data0.srv)||null,others:Object.assign({},data0&&data0.others,SRV.players)};
   let ok=true;try{localStorage.setItem('mcr_w_'+SURV.meta.id,JSON.stringify(data));}catch(e){ok=false;}
   const l=worldList();const m=l.find(w=>w.id===SURV.meta.id);if(m){m.played=Date.now();m.day=GZ.day;saveWorldList([m,...l.filter(w=>w!==m)]);}
   if(!ok)chatMsg('Could not save the world: browser storage is full.','#ff5555',false);infDirtySave=false;return ok;}
@@ -5049,26 +5100,11 @@ $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('m
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});
 $('respawnBtn').addEventListener('click',survRespawn);
 $('deathMenu').addEventListener('click',()=>{hide('deathPanel');toMenu();});
-// ---------- Multiplayer through Photon (App ID only) ----------
-function openMP(){initAudio();sfx('click');readName();hide('menu');$('ph_app').value=store('mcr_appid')||'';$('ph_region').value=store('mcr_region')||'us';$('ph_mode').value=store('mcr_mpmode')||'survival';$('phStatus').textContent='';show('mpPanel');}
-$('phBack').addEventListener('click',()=>{sfx('click');if(net&&!online){net.leave();net=null;}hide('mpPanel');show('menu');});
-$('phConnect').addEventListener('click',()=>{const app=$('ph_app').value.trim(),region=$('ph_region').value,mode=$('ph_mode').value;
-  if(!/^[0-9a-f-]{20,}$/i.test(app)){$('phStatus').textContent='Paste your Photon Realtime App ID (it looks like 1a2b3c4d-....).';return;}
-  store('mcr_appid',app);store('mcr_region',region);store('mcr_mpmode',mode);if(net){net.leave();net=null;}readOptions();
-  $('phStatus').textContent='Connecting to Photon...';const n=new PhotonNet(app,region,mode,myName);net=n;
-  n.tr.onstate=s=>{if(net===n&&!n.ready)$('phStatus').textContent='Photon: '+s.replace(/([a-z])([A-Z])/g,'$1 $2')+'...';};
-  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);};n.onLeave=onMemberLeave;n.onHostChange=onHostChanged;
-  n.onFail=msg=>{if(net!==n)return;const was=online;net=null;n.leave();if(was){toMenu();openMP();}$('phStatus').textContent=msg;};
-  n.onReady=()=>{if(net!==n)return;online=true;$('phStatus').textContent='Connected. '+(n.isHost()?'You are the host.':'Joining the host...');player=null;ents=[];
-    if(mode==='survival'){if(n.isHost()){const id='online_'+(hashStr(app)>>>0).toString(36);let meta=worldList().find(w=>w.id===id);
-        if(!meta){meta={id,name:'Online World',seed:seedFrom(''),created:Date.now(),played:Date.now()};saveWorldList([meta,...worldList()]);}hide('mpPanel');playWorld(meta,true);}
-      else{hide('mpPanel');const el=$('loading');$('loadTitle').textContent='Joining world';el.classList.remove('hidden');$('loadBar').style.width='5%';netSend(N.HELLO,{},'host');
-        setTimeout(()=>{if(net===n&&MATCH.mode!=='survival'&&!n.isHost()){netSend(N.HELLO,{},'host');}},4000);}}
-    else{hide('mpPanel');if(n.isHost())enterLobby();else{enterLobby();netSend(N.HELLO,{},'host');}}};});
+// ---------- Multiplayer: see 15h_servers.js (server list, hosting, commands) ----------
 // what a joining player needs to build the same world
 function survSnapshot(joinId){return {mode:'survival',gm:SURV.meta&&SURV.meta.mode,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),chests:[...chests].map(([k,c])=>[k,c.items]),
   ents:ents.filter(e=>e.kind==='player').map(e=>({id:e.id,name:e.name,skin:e.skin,sp:[e.pos[0],e.pos[1],e.pos[2],e.yaw]})),drops:drops.filter(d=>d.did>0).map(d=>({did:d.did,pos:d.pos,vel:[0,0,0],id:d.id,count:d.count,age:1,spin:0}))};}
-function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,gm:d.gm,join:true});}
+function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,gm:d.gm,me:d.me||null,join:true});srvJoinedInfo(d.srv);}
 // render distance grew past what the chunk ring holds: rebuild it around the player (edits and time are kept)
 function restartSurvivalStream(){if(!INF)return;const ed=worldEdits,seed=WSEED;infInit(infRingFor(OPT.chunks),seed,ed);infRD=Math.min(OPT.chunks,infMaxRD());
   SURV.loading=true;$('loadTitle').textContent='Loading chunks';$('loadBar').style.width='0%';$('loading').classList.remove('hidden');}
@@ -5919,18 +5955,320 @@ document.addEventListener('mousedown',e=>{if(e.button!==1||!locked||!player||!pl
 // ---- switching game mode ----
 function setGameMode(m,quiet){const p=player;if(!p)return;p.gm=m==='creative'?'creative':'survival';if(p.gm!=='creative')p.flying=false;else{p.health=maxHP(p);p.food=20;p.fire=0;}
   if(CR.open&&(CR.mode==='creative'||CR.mode==='inv'))chestClose(false);if(!quiet)chatMsg('Your game mode has been updated to '+(p.gm==='creative'?'Creative':'Survival')+' Mode','#aaaaaa',false);gmBtnRefresh();}
-function canSwitchMode(){return MATCH.mode==='survival'&&(!online||isHost());}
-function gmBtnRefresh(){const b=$('gmBtn');if(!b)return;const on=MATCH.mode==='survival'&&MATCH.state==='play'&&!!player;b.classList.toggle('hidden',!on);if(on){b.textContent='Game Mode: '+(player.gm==='creative'?'Creative':'Survival');b.disabled=!canSwitchMode();b.title=canSwitchMode()?'':'Only the host can change game modes online';}}
-$('gmBtn').addEventListener('click',()=>{if(!canSwitchMode()||!player)return;sfx('click');setGameMode(player.gm==='creative'?'survival':'creative');});
+function canSwitchMode(){return MATCH.mode==='survival'&&(!online||isHost()||!!SRV.amOp);}
+function gmBtnRefresh(){const b=$('gmBtn');if(!b)return;const on=MATCH.mode==='survival'&&MATCH.state==='play'&&!!player;b.classList.toggle('hidden',!on);if(on){setLbtn(b,'Game Mode: '+(player.gm==='creative'?'Creative':'Survival'));b.disabled=!canSwitchMode();b.title=canSwitchMode()?'':'Only the host can change game modes online';}}
+$('gmBtn').addEventListener('click',()=>{if(!canSwitchMode()||!player)return;sfx('click');const g=player.gm==='creative'?'survival':'creative';if(online&&!isHost())runCommand('/gamemode '+g);else setGameMode(g);});
 {const sh=show;show=function(id){if(id==='pause')gmBtnRefresh();sh(id);};}
-// chat commands: /gamemode, /time
-function runCommand(m){const a=m.slice(1).trim().split(/\s+/),c=(a[0]||'').toLowerCase();
-  if(c==='gamemode'||c==='gm'){if(MATCH.mode!=='survival'){chatMsg('Game modes only work in Survival worlds.','#ff5555',false);return;}if(!canSwitchMode()){chatMsg('Only the host can change game modes online.','#ff5555',false);return;}
-    const v=(a[1]||'').toLowerCase();const mode=['creative','c','1'].includes(v)?'creative':['survival','s','0'].includes(v)?'survival':null;if(!mode){chatMsg('Usage: /gamemode <survival|creative>','#ff5555',false);return;}setGameMode(mode);return;}
-  if(c==='time'&&(a[1]||'').toLowerCase()==='set'){if(online&&!isHost()){chatMsg('Only the host can change the time.','#ff5555',false);return;}
-    const v=(a[2]||'').toLowerCase();const t={day:.03,sunrise:0,noon:.25,sunset:.5,night:.6,midnight:.75}[v];if(t==null){chatMsg('Usage: /time set <day|noon|sunset|night|midnight>','#ff5555',false);return;}worldTime=t;if(net)netSend(N.WTIME,{t:worldTime});chatMsg('Set the time to '+v,'#aaaaaa',false);return;}
-  if(c==='help'){chatMsg('Commands: /gamemode <survival|creative>, /time set <day|noon|night|midnight>','#aaaaaa',false);return;}
-  chatMsg('Unknown command. Type /help for a list.','#ff5555',false);}
+// chat commands live in 15h_servers.js (they run on the server host, with operator permissions)
+
+// ================= Servers, like Minecraft Java's multiplayer, carried by Photon =================
+// Multiplayer screen: your saved servers (name, MOTD, icon, players, ping) plus "Servers online now" (public servers in your region),
+// Join Server, Direct Connection, Add / Edit / Delete, Refresh. A server is a Photon room named after its address; whoever hosts it
+// (Host Server here, or Open to Server from the pause menu) runs the world. When the host stops, the server closes for everyone.
+// The host is the server: it decides who may join (bans, whitelist), keeps every player's inventory and position in its world save,
+// and runs the commands (/list /msg /me /say /kick /ban /pardon /op /deop /whitelist /gamemode /defaultgamemode /tp /time /seed /stop).
+Object.assign(N,{KICK:45,CMD:46,SETGM:47,PSAVE:48,TPTO:49,SRVINFO:50});
+const SRV={list:[],sel:null,browsers:[],rooms:{},cfg:null,hosting:false,joined:null,info:null,players:{},amOp:false,sig:'',lastClick:{k:null,t:0},dlgOpen:null};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const homeRegion=()=>store('mcr_region')||'us';
+function srvLoad(){try{SRV.list=(JSON.parse(store('mcr_servers')||'[]')||[]).filter(s=>s&&s.addr);}catch(e){SRV.list=[];}}
+function srvSaveList(){store('mcr_servers',JSON.stringify(SRV.list.slice(0,60)));}
+// "name" or "name:region" (like host:port; no region means the Americas region)
+function parseAddr(s){s=String(s||'').trim().toLowerCase();let region='us';const m=s.match(/^(.*):([a-z]+)$/);if(m&&PHOTON_REGIONS.some(r=>r[0]===m[2])){s=m[1];region=m[2];}
+  s=s.replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').slice(0,40);return s?{room:s,region,full:s+(region!=='us'?':'+region:'')}:null;}
+const regionName=r=>(PHOTON_REGIONS.find(x=>x[0]===r)||[r,r])[1];
+
+// ---------------- pinging: one lobby connection per region we need ----------------
+function srvBrowseStop(){for(const b of SRV.browsers)b.close();SRV.browsers=[];}
+function srvBrowseStart(){srvBrowseStop();SRV.rooms={};const app=store('mcr_appid');if(!app){srvRender();return;}
+  const regs=new Set([homeRegion()]);for(const s of SRV.list){const a=parseAddr(s.addr);if(a)regs.add(a.region);}
+  for(const reg of regs){SRV.rooms[reg]={loading:true,list:[],rtt:0,err:null};
+    SRV.browsers.push(photonBrowse(app,reg,(list,rtt,err)=>{const R=SRV.rooms[reg];if(!R)return;if(err){R.err=err;R.loading=false;}else{R.list=list;R.rtt=rtt;R.loading=false;R.err=null;}srvRender();}));}
+  srvRender();}
+function srvStatus(addr){const a=parseAddr(addr);if(!a)return {st:'bad'};const R=SRV.rooms[a.region];if(!store('mcr_appid'))return {st:'noapp'};if(!R||R.loading)return {st:'ping'};
+  if(R.err)return {st:'err',msg:R.err};const r=R.list.find(x=>x.name===a.room);if(!r)return {st:'off'};return {st:'on',r,rtt:R.rtt};}
+// the five signal bars (or a red cross), drawn like the Java icons
+function pingIcon(c,st,rtt){c.width=10;c.height=8;const g=c.getContext('2d');g.clearRect(0,0,10,8);
+  if(st==='off'||st==='err'||st==='bad'){g.fillStyle='#ff3030';for(let i=0;i<6;i++){g.fillRect(2+i,1+i,1,1);g.fillRect(7-i,1+i,1,1);}return;}
+  const n=st==='ping'?-1:rtt<150?5:rtt<300?4:rtt<600?3:rtt<1000?2:1;const anim=Math.floor(performance.now()/180)%8;
+  for(let i=0;i<5;i++){const h=2+i*1.5|0;const lit=st==='ping'?(anim<5?i===anim:i===8-anim):i<n;g.fillStyle=lit?(st==='ping'?'#a0a0ff':'#55ff55'):'#353535';g.fillRect(i*2,8-h,1,h);}}
+function defaultIcon(){const c=mkCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const gi=ICONS['b'+B.GRASS];if(gi)g.drawImage(gi,0,0,32,32);else{g.fillStyle='#5a8a3a';g.fillRect(0,0,32,32);}return c.toDataURL();}
+
+// ---------------- the Multiplayer screen ----------------
+function openMP(){initAudio();sfx('click');readName();hide('menu');hide('discPanel');srvLoad();SRV.sel=null;SRV.sig='';show('mpPanel');$('phStatus').textContent='';
+  if(!store('mcr_appid'))dlgPhoton(true);else srvBrowseStart();srvRender(true);}
+function srvRows(){const rows=SRV.list.map((s,i)=>({t:'saved',i,key:'s'+i,name:s.name,addr:s.addr}));
+  const home=homeRegion(),R=SRV.rooms[home];const pub=[];
+  if(R&&!R.loading&&!R.err)for(const r of R.list){if(!r.p||!+r.p.pub)continue;const full=r.name+(home!=='us'?':'+home:'');if(SRV.list.some(s=>{const a=parseAddr(s.addr);return a&&a.room===r.name&&a.region===home;}))continue;pub.push({t:'pub',key:'p'+full,name:r.name,addr:full});}
+  return {rows,pub};}
+function srvRender(force){const box=$('srvList');if(!box||$('mpPanel').classList.contains('hidden'))return;const {rows,pub}=srvRows();
+  const sig=JSON.stringify([rows.map(r=>[r.key,r.name,r.addr,JSON.stringify(srvStatus(r.addr).r||srvStatus(r.addr).st)]),pub.map(r=>[r.key,JSON.stringify(srvStatus(r.addr).r)]),SRV.sel&&SRV.sel.key]);
+  if(!force&&sig===SRV.sig){srvAnimate();return;}SRV.sig=sig;const top=box.scrollTop;box.textContent='';
+  const add=r=>{const s=srvStatus(r.addr);const row=document.createElement('div');row.className='srow'+(SRV.sel&&SRV.sel.key===r.key?' sel':'');row.setAttribute('role','option');row.dataset.key=r.key;
+    const img=document.createElement('img');img.alt='';const ic=s.r&&s.r.p&&s.r.p.ic;img.src=typeof ic==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(ic)?ic:(srvRender.defIc||(srvRender.defIc=defaultIcon()));
+    const info=document.createElement('div');info.className='sinfo';const nm=document.createElement('div');nm.className='sname';nm.textContent=r.t==='pub'&&s.r&&s.r.p&&s.r.p.m==='battle'?r.name+'  [Battle]':r.name;
+    const motd=document.createElement('div');motd.className='smotd';
+    if(s.st==='on')motd.textContent=String(s.r.p&&s.r.p.motd||'A Minecraft:realzanized Server').slice(0,90);
+    else if(s.st==='ping')motd.textContent='Pinging...';else if(s.st==='noapp'){motd.textContent='Set a Photon App ID in Photon Settings to ping servers';motd.classList.add('err');}
+    else if(s.st==='bad'){motd.textContent='That server address is not valid';motd.classList.add('err');}
+    else{motd.textContent=s.st==='err'?s.msg:'Can\'t connect to server';motd.classList.add('err');}
+    info.append(nm,motd);
+    const right=document.createElement('div');right.className='sright';const pl=document.createElement('div');pl.className='splay';
+    if(s.st==='on'){pl.textContent=s.r.n+'/'+s.r.max;const names=String(s.r.p&&s.r.p.pl||'').split('\n').filter(Boolean);pl.title=names.length?names.join('\n'):'';
+      if(s.r.p&&s.r.p.v&&s.r.p.v!==GAME_VERSION){pl.textContent=s.r.p.v>GAME_VERSION?'Client out of date!':'Server out of date!';pl.style.color='#ff5555';}else if(!s.r.open){pl.textContent='Not accepting players';pl.style.color='#ff5555';}}
+    const pc=document.createElement('canvas');pc.className='sping';pc.dataset.st=s.st;pc.dataset.rtt=s.rtt||0;pingIcon(pc,s.st,s.rtt||0);pc.title=s.st==='on'?Math.round(s.rtt)+' ms':'';right.append(pl,pc);
+    row.append(img,info,right);
+    if(r.t==='saved'){const mv=document.createElement('div');mv.className='smove';const up=document.createElement('button');up.textContent='▲';up.title='Move up';const dn=document.createElement('button');dn.textContent='▼';dn.title='Move down';
+      up.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,-1);});dn.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,1);});mv.append(up,dn);row.appendChild(mv);}
+    row.addEventListener('click',()=>{const now=performance.now();const dbl=SRV.lastClick.k===r.key&&now-SRV.lastClick.t<450;SRV.lastClick={k:r.key,t:now};SRV.sel=r;sfx('click');if(dbl){srvJoinSelected();return;}srvRender(true);});
+    box.appendChild(row);};
+  if(!rows.length){const d=document.createElement('div');d.className='rnote';d.textContent='No servers yet. Add Server saves one by its address; Direct Connection joins once; Host Server opens one of your worlds to other players.';box.appendChild(d);}
+  rows.forEach(add);
+  const h=document.createElement('div');h.className='shead';const R=SRV.rooms[homeRegion()];
+  h.textContent='Servers online now ('+regionName(homeRegion())+')'+(!store('mcr_appid')?'':R&&R.loading?': searching...':R&&R.err?': '+R.err:pub.length?'':': none right now');box.appendChild(h);
+  pub.forEach(add);box.scrollTop=top;srvButtons();}
+function srvAnimate(){for(const c of document.querySelectorAll('#srvList canvas.sping'))if(c.dataset.st==='ping')pingIcon(c,'ping',0);}
+function srvButtons(){const s=SRV.sel;$('srvJoin').disabled=!s;$('srvEdit').disabled=!(s&&s.t==='saved');$('srvDel').disabled=!(s&&s.t==='saved');}
+function srvMove(i,d){const j=i+d;if(j<0||j>=SRV.list.length)return;const l=SRV.list;[l[i],l[j]]=[l[j],l[i]];srvSaveList();SRV.sel=null;sfx('click');srvRender(true);}
+function srvJoinSelected(){const s=SRV.sel;if(!s)return;srvJoin(s.addr,s.name);}
+setInterval(()=>{if(!$('mpPanel').classList.contains('hidden'))srvRender();},250);
+$('srvJoin').addEventListener('click',srvJoinSelected);
+$('srvDirect').addEventListener('click',()=>{sfx('click');dlgDirect();});
+$('srvAdd').addEventListener('click',()=>{sfx('click');dlgEdit(-1);});
+$('srvEdit').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgEdit(SRV.sel.i);}});
+$('srvDel').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgDelete(SRV.sel.i);}});
+$('srvRefresh').addEventListener('click',()=>{sfx('click');SRV.sig='';srvBrowseStart();});
+$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}dlgHost('menu');});
+$('srvPhoton').addEventListener('click',()=>{sfx('click');dlgPhoton(false);});
+$('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');});
+$('discBack').addEventListener('click',()=>{hide('discPanel');openMP();});
+addEventListener('keydown',e=>{if($('mpPanel').classList.contains('hidden')||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
+  if(e.code==='Enter'&&SRV.sel){e.preventDefault();srvJoinSelected();}
+  else if(e.code==='ArrowDown'||e.code==='ArrowUp'){const {rows,pub}=srvRows();const all=rows.concat(pub);if(!all.length)return;let i=all.findIndex(r=>SRV.sel&&r.key===SRV.sel.key);i=Math.max(0,Math.min(all.length-1,i+(e.code==='ArrowDown'?1:-1)));SRV.sel=all[i];srvRender(true);e.preventDefault();}
+  else if(e.code==='Delete'&&SRV.sel&&SRV.sel.t==='saved')dlgDelete(SRV.sel.i);});
+
+// ---------------- dialogs ----------------
+function dlgShow(html,mount,wide){const b=$('srvDlgBox');b.classList.toggle('wide',!!wide);b.innerHTML=html;show('srvDlg');SRV.dlgOpen=true;mount&&mount(b);const f=b.querySelector('input,select');if(f)setTimeout(()=>f.focus(),0);}
+function dlgClose(){hide('srvDlg');SRV.dlgOpen=null;}
+addEventListener('keydown',e=>{if($('srvDlg').classList.contains('hidden'))return;
+  if(e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();const c=$('srvDlgBox').querySelector('[data-cancel]');if(c)c.click();else dlgClose();}
+  else if(e.code==='Enter'){const ok=$('srvDlgBox').querySelector('[data-ok]');if(ok&&!ok.disabled){e.preventDefault();ok.click();}}},true);
+function dlgEdit(i){const s=i>=0?SRV.list[i]:{name:'Minecraft Server',addr:''};
+  dlgShow(`<h3>${i>=0?'Edit Server Info':'Add Server'}</h3><div class="form"><label for="se_name">Server Name</label><input id="se_name" type="text" maxlength="32" autocomplete="off">
+    <label for="se_addr">Server Address</label><input id="se_addr" type="text" maxlength="48" placeholder="name or name:region" spellcheck="false" autocomplete="off"></div>
+    <div class="note">The address is what the host sees on their screen when they open the server, for example <b>realz-castle</b> or <b>realz-castle:eu</b>.</div>
+    <div class="row"><button class="btn small" data-ok id="se_ok">Done</button><button class="btn small" data-cancel id="se_cancel">Cancel</button></div>`,b=>{
+    b.querySelector('#se_name').value=s.name;b.querySelector('#se_addr').value=s.addr;const ok=b.querySelector('#se_ok');const chk=()=>{ok.disabled=!parseAddr(b.querySelector('#se_addr').value);};chk();b.querySelector('#se_addr').addEventListener('input',chk);
+    ok.addEventListener('click',()=>{const a=parseAddr(b.querySelector('#se_addr').value);if(!a)return;const e={name:b.querySelector('#se_name').value.trim().slice(0,32)||'Minecraft Server',addr:a.full};
+      if(i>=0)SRV.list[i]=e;else SRV.list.push(e);srvSaveList();sfx('click');dlgClose();SRV.sel=null;srvBrowseStart();});
+    b.querySelector('#se_cancel').addEventListener('click',()=>{sfx('click');dlgClose();});});}
+function dlgDelete(i){const s=SRV.list[i];if(!s)return;
+  dlgShow(`<h3>Are you sure you want to remove this server?</h3><div class="note" style="text-align:center">'${esc(s.name)}' will be lost forever! (A long time!)</div>
+    <div class="row"><button class="btn small" data-ok id="sd_ok">Delete</button><button class="btn small" data-cancel id="sd_cancel">Cancel</button></div>`,b=>{
+    b.querySelector('#sd_ok').addEventListener('click',()=>{SRV.list.splice(i,1);srvSaveList();SRV.sel=null;sfx('click');dlgClose();srvRender(true);});b.querySelector('#sd_cancel').addEventListener('click',()=>{sfx('click');dlgClose();});});}
+function dlgDirect(){dlgShow(`<h3>Direct Connection</h3><div class="form"><label for="dc_addr">Server Address</label><input id="dc_addr" type="text" maxlength="48" spellcheck="false" autocomplete="off"></div>
+    <div class="row"><button class="btn small" data-ok id="dc_ok">Join Server</button><button class="btn small" data-cancel id="dc_cancel">Cancel</button></div>`,b=>{
+    const inp=b.querySelector('#dc_addr'),ok=b.querySelector('#dc_ok');inp.value=store('mcr_lastaddr')||'';const chk=()=>{ok.disabled=!parseAddr(inp.value);};chk();inp.addEventListener('input',chk);
+    ok.addEventListener('click',()=>{const a=parseAddr(inp.value);if(!a)return;store('mcr_lastaddr',a.full);srvJoin(a.full,a.full);});b.querySelector('#dc_cancel').addEventListener('click',()=>{sfx('click');dlgClose();});});}
+function dlgPhoton(first){dlgShow(`<h3>Photon Settings</h3>${first?'<div class="note">Multiplayer runs on Photon Realtime. Everyone playing together needs the same App ID: make a free one at <b>dashboard.photonengine.com</b> (Create a New App, choose <b>Realtime</b>), then share it with your friends once.</div>':''}
+    <div class="form"><label for="pz_app">Photon Realtime App ID</label><input id="pz_app" type="text" maxlength="64" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" autocomplete="off">
+    <label for="pz_reg">Home region (where you host, and whose servers show as online now)</label><select id="pz_reg">${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select></div>
+    <div class="err" id="pz_err"></div><div class="row"><button class="btn small" data-ok id="pz_ok">Done</button><button class="btn small" data-cancel id="pz_cancel">Cancel</button></div>`,b=>{
+    b.querySelector('#pz_app').value=store('mcr_appid')||'';b.querySelector('#pz_reg').value=homeRegion();
+    b.querySelector('#pz_ok').addEventListener('click',()=>{const app=b.querySelector('#pz_app').value.trim();if(!/^[0-9a-f-]{20,}$/i.test(app)){b.querySelector('#pz_err').textContent='Paste your Photon Realtime App ID (it looks like 1a2b3c4d-....).';return;}
+      store('mcr_appid',app);store('mcr_region',b.querySelector('#pz_reg').value);sfx('click');dlgClose();srvBrowseStart();});
+    b.querySelector('#pz_cancel').addEventListener('click',()=>{sfx('click');dlgClose();srvRender(true);});});}
+function dlgConnecting(addr,onCancel){dlgShow(`<h3>Connecting to the server...</h3><div class="note" style="text-align:center">${esc(addr)}</div><div class="note" id="cn_st" style="text-align:center"></div>
+    <div class="row"><button class="btn small" data-cancel id="cn_cancel">Cancel</button></div>`,b=>{b.querySelector('#cn_cancel').addEventListener('click',()=>{sfx('click');onCancel&&onCancel();});});}
+const dlgStatus=t=>{const e=$('cn_st');if(e)e.textContent=t;};
+
+// ---------------- joining ----------------
+function srvJoin(addr,label){const a=parseAddr(addr);if(!a){$('phStatus').textContent='That server address is not valid.';return;}const app=store('mcr_appid');if(!app){dlgPhoton(true);return;}
+  srvBrowseStop();readName();readOptions();if(net){net.leave();net=null;}online=false;SRV.hosting=false;SRV.cfg=null;SRV.info=null;SRV.amOp=false;
+  const n=new PhotonNet(app,a.region,'any',myName,{join:a.room});net=n;SRV.joined={addr:a.full,room:a.room,region:a.region,name:label||a.full,mode:null};
+  dlgConnecting(a.full,()=>{if(net===n){net=null;n.leave();}SRV.joined=null;dlgClose();srvBrowseStart();});
+  n.tr.onstate=s=>{if(net===n&&!n.ready)dlgStatus(s.replace(/([a-z])([A-Z])/g,'$1 $2')+'...');};
+  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);};n.onLeave=onMemberLeave;
+  n.onHostChange=()=>{if(net!==n)return;if(SRV.joined&&SRV.joined.mode==='survival'){srvDisconnect('Server closed','Connection Lost');return;}onHostChanged();};
+  n.onFail=msg=>{if(net!==n)return;srvDisconnect(msg,online?'Connection Lost':'Failed to connect to the server');};
+  n.onReady=()=>{if(net!==n)return;const props=n.tr.props?n.tr.props():{};const mode=props.m==='battle'?'battle':'survival';SRV.joined.mode=mode;
+    if(n.isHost()){srvDisconnect('Server closed: nobody is hosting '+a.full+' any more.','Failed to connect to the server');return;}   // only us in there: the host is gone
+    online=true;player=null;ents=[];const hello={n:myName,v:GAME_VERSION};
+    if(mode==='survival'){dlgClose();hide('mpPanel');const el=$('loading');$('loadTitle').textContent='Joining world';el.classList.remove('hidden');$('loadBar').style.width='5%';netSend(N.HELLO,hello,'host');
+      setTimeout(()=>{if(net===n&&MATCH.mode!=='survival')netSend(N.HELLO,hello,'host');},4000);
+      setTimeout(()=>{if(net===n&&MATCH.mode!=='survival')srvDisconnect('Timed out: the server did not send the world.','Failed to connect to the server');},25000);}
+    else{dlgClose();hide('mpPanel');enterLobby();netSend(N.HELLO,hello,'host');}};}
+// leave the server and show why (kicked, server closed, connection lost...)
+function srvDisconnect(msg,title){if(SRV.discing)return;SRV.discing=true;try{if(net){const n=net;try{if(online&&!n.isHost()&&survival()&&player)netSend(N.PSAVE,{d:playerSave(player)},'host');}catch(e){}net=null;setTimeout(()=>n.leave(),60);}online=false;SRV.joined=null;
+    if(MATCH.state!=='menu')toMenu();dlgClose();hideOverlays();$('loading').classList.add('hidden');hide('menu');hide('mpPanel');
+    $('discTitle').textContent=title||'Connection Lost';$('discMsg').textContent=msg||'';show('discPanel');document.exitPointerLock&&document.exitPointerLock();}finally{SRV.discing=false;}}
+function srvJoinedInfo(info){SRV.info=info||null;SRV.amOp=!!(info&&(info.ops||[]).includes(myName.toLowerCase()));}
+
+// ---------------- hosting ----------------
+function srvDefaults(){let c=null;try{c=JSON.parse(store('mcr_lastsrv')||'null');}catch(e){}
+  return Object.assign({room:'realz-'+Math.random().toString(36).slice(2,7),region:homeRegion(),motd:'A Minecraft:realzanized Server',max:8,gm:'survival',pvp:true,pub:true,wl:false,white:[],ops:[],bans:{}},c||{},{white:(c&&c.white)||[],ops:(c&&c.ops)||[],bans:(c&&c.bans)||{}});}
+function srvFullAddr(c){return c.room+(c.region!=='us'?':'+c.region:'');}
+// where: 'menu' (Host Server: pick a world or the Battle mini game), 'pause' (Open to Server), 'edit' (Server Settings while hosting)
+function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.assign(srvDefaults(),(loadWorldData(SURV.meta.id)||{}).srv||{},{gm:player&&player.gm||'survival'}):srvDefaults();
+  const worlds=worldList();const live=where==='edit';
+  dlgShow(`<h3>${where==='edit'?'Server Settings':where==='pause'?'Open to Server':'Host a Server'}</h3><div class="form">
+    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option></select>
+    <label for="hs_world" class="hs_sv">World</label><select id="hs_world" class="hs_sv">${worlds.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}${w.mode==='creative'?' (Creative)':''}</option>`).join('')}<option value="__new">Create a new world</option></select>`:''}
+    <label for="hs_room">Server Address</label><input id="hs_room" type="text" maxlength="40" spellcheck="false" autocomplete="off" ${live?'disabled':''}>
+    <label for="hs_reg">Region</label><select id="hs_reg" ${live?'disabled':''}>${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select>
+    <label for="hs_motd">MOTD</label><input id="hs_motd" type="text" maxlength="80" autocomplete="off">
+    <label for="hs_max">Max Players</label><select id="hs_max">${[2,3,4,5,6,8,10,12,16,20].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+    <label for="hs_gm" class="hs_sv">Others Play In</label><select id="hs_gm" class="hs_sv"><option value="survival">Survival</option><option value="creative">Creative</option></select>
+    <label for="hs_pvp" class="hs_sv">PvP</label><select id="hs_pvp" class="hs_sv"><option value="1">On</option><option value="0">Off</option></select>
+    <label for="hs_pub">Listed Publicly</label><select id="hs_pub"><option value="1">Yes: in Servers online now</option><option value="0">No: address only</option></select>
+    <label for="hs_wl">Whitelist</label><select id="hs_wl"><option value="0">Off: anyone can join</option><option value="1">On: whitelisted only</option></select></div>
+    <div class="note">Players join with this address: <span class="addr" id="hs_addr"></span></div>
+    <div class="err" id="hs_err"></div>
+    <div class="row"><button class="btn small" data-ok id="hs_ok">${live?'Done':'Start Server'}</button>${live?'<button class="btn small" id="hs_stop">Stop Server</button>':''}<button class="btn small" data-cancel id="hs_cancel">Cancel</button></div>`,b=>{
+    const q=s=>b.querySelector(s);q('#hs_room').value=cur.room;q('#hs_reg').value=cur.region||'us';q('#hs_motd').value=cur.motd;q('#hs_max').value=String(cur.max);q('#hs_gm').value=cur.gm;q('#hs_pvp').value=cur.pvp===false?'0':'1';q('#hs_pub').value=cur.pub===false?'0':'1';q('#hs_wl').value=cur.wl?'1':'0';
+    if(q('#hs_world')&&SURV.lastWorld)q('#hs_world').value=SURV.lastWorld;
+    const upd=()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);q('#hs_addr').textContent=a?a.full:'(type an address)';q('#hs_ok').disabled=!a;
+      const sv=!q('#hs_game')||q('#hs_game').value==='survival';for(const el of b.querySelectorAll('.hs_sv'))el.style.display=sv?'':'none';};
+    upd();for(const s of ['#hs_room','#hs_reg','#hs_game'])if(q(s))q(s).addEventListener(s==='#hs_room'?'input':'change',upd);
+    q('#hs_cancel').addEventListener('click',()=>{sfx('click');dlgClose();if(where!=='menu')$('resumeBtn').click();});
+    if(q('#hs_stop'))q('#hs_stop').addEventListener('click',()=>{sfx('click');dlgClose();srvStop('Server closed');$('resumeBtn').click();});
+    q('#hs_ok').addEventListener('click',()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);if(!a)return;
+      const cfg=Object.assign({},cur,{room:a.room,region:a.region,full:a.full,motd:q('#hs_motd').value.trim().slice(0,80)||'A Minecraft:realzanized Server',max:+q('#hs_max').value,gm:q('#hs_gm').value,pvp:q('#hs_pvp').value==='1',pub:q('#hs_pub').value==='1',wl:q('#hs_wl').value==='1'});
+      if(live){SRV.cfg=cfg;srvCfgChanged();dlgClose();$('resumeBtn').click();return;}
+      const game=q('#hs_game')?q('#hs_game').value:'survival';const wid=q('#hs_world')?q('#hs_world').value:null;
+      q('#hs_ok').disabled=true;q('#hs_err').textContent='Starting the server...';srvStart(cfg,where,game,wid,msg=>{q('#hs_ok').disabled=false;q('#hs_err').textContent=msg;});});},true);}
+async function makeIcon(url){if(!url)return null;try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});const c=mkCanvas(40,40),g=c.getContext('2d');const s=Math.min(img.width,img.height);
+    g.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,40,40);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
+function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];return {m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||''};}
+async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');if(!app){onErr('Set your Photon App ID first (Photon Settings).');return;}readName();readOptions();
+  let meta=null;if(game==='survival'){meta=where==='pause'?SURV.meta:wid&&wid!=='__new'?worldList().find(w=>w.id===wid):null;if(!meta&&where!=='pause')meta=newWorldMeta('Server World','','survival');SURV.lastWorld=meta&&meta.id;}
+  SRV.icon=await makeIcon(meta&&meta.thumb)||'';SRV.mode=game;SRV.cfg=cfg;
+  const n=new PhotonNet(app,cfg.region,game,myName,{create:{name:cfg.room,max:cfg.max,props:srvProps()}});
+  n.onEvent=onNetEvent;
+  n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);srvUpdateProps();};
+  n.onLeave=id=>{onMemberLeave(id);srvUpdateProps();};n.onHostChange=()=>{if(net===n)onHostChanged();};
+  n.onFail=msg=>{if(net!==n&&n.ready)return;if(!n.ready){SRV.cfg=null;onErr(msg);return;}
+    // lost Photon while hosting: the world carries on, offline
+    net=null;online=false;SRV.hosting=false;try{n.leave();}catch(e){}if(survival()){if(player)player.id='p1';chatMsg('The server stopped: '+msg+' You are playing offline now.','#ff5555',false);}else{toMenu();srvDisconnect(msg,'Connection Lost');}};
+  n.onReady=()=>{store('mcr_lastsrv',JSON.stringify(Object.assign({},cfg,{full:undefined})));net=n;online=true;SRV.hosting=true;SRV.joined=null;srvBrowseStop();
+    if(game==='battle'){dlgClose();hide('mpPanel');player=null;ents=[];enterLobby();chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);srvUpdateProps();return;}
+    SRV.players=Object.assign({},(loadWorldData(meta.id)||{}).others||{});
+    if(where==='pause'){const old=player.id;player.id='p'+n.myId;for(const m of mobs)if(m.owner===old)m.owner=player.id;dlgClose();$('resumeBtn').click();}
+    else{dlgClose();hide('mpPanel');playWorld(meta,true);}
+    chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);SURV.toast={t:5,txt:'Server open: '+cfg.full};srvUpdateProps();saveWorldSoon();};}
+function saveWorldSoon(){setTimeout(()=>{if(survival()&&SRV.hosting)saveWorld();},1500);}
+function srvUpdateProps(){if(!SRV.hosting||!net||!net.tr.setProps||!SRV.cfg)return;net.tr.setProps(srvProps());}
+function srvCfgChanged(){if(!SRV.cfg)return;store('mcr_lastsrv',JSON.stringify(SRV.cfg));srvUpdateProps();
+  netSend(N.SRVINFO,{pvp:SRV.cfg.pvp,motd:SRV.cfg.motd,ops:SRV.cfg.ops,addr:SRV.cfg.full});if(survival())saveWorld();}
+// stop hosting: everyone else gets "Server closed"; the host keeps playing offline
+function srvStop(why){if(!SRV.hosting||!net)return;netSend(N.KICK,{all:1,r:why||'Server closed'});const n=net;setTimeout(()=>{try{n.leave();}catch(e){}},300);net=null;online=false;SRV.hosting=false;
+  if(survival()){saveWorld();player.id='p1';for(const m of mobs)if(m.owner&&m.owner!=='p1')m.owner='p1';ents=ents.filter(e=>e===player);chatMsg('Server stopped. You are playing offline.','#aaaaaa',false);}else toMenu();}
+// who may join: bans, whitelist, same name already playing
+function srvAdmit(from,d){const c=SRV.cfg;if(!c)return null;const nm=String((d&&d.n)||((net.members.get(from)||{}).name)||'').slice(0,16);const lo=nm.toLowerCase();
+  if(c.bans&&c.bans[lo]!=null)return 'You are banned from this server.\nReason: '+(c.bans[lo]||'Banned by an operator.');
+  if(c.wl&&lo!==myName.toLowerCase()&&!(c.white||[]).includes(lo)&&!(c.ops||[]).includes(lo))return 'You are not white-listed on this server!';   // operators can always join, like Java
+  if(lo===myName.toLowerCase())return 'The host is already playing as '+nm+'. Change your name and try again.';
+  // the same name joining again (say after a dropped connection): the old session goes, like Java's "logged in from another location"
+  for(const e of ents)if(e.kind==='player'&&e.id!=='p'+from&&e.name.toLowerCase()===lo&&e!==player)srvKick(+String(e.id).slice(1),'You logged in from another location');
+  return null;}
+function srvKick(id,reason){netSend(N.KICK,{id,r:reason});setTimeout(()=>{if(net)net.block(id);},400);}
+// what joining players are given: their own saved player data, the server's rules
+{const ss=survSnapshot;survSnapshot=function(jid){const s=ss(jid);if(SRV.hosting&&SRV.cfg){const m=net&&net.members.get(+String(jid).slice(1));const lo=String(m&&m.name||'').toLowerCase();
+    s.me=SRV.players[lo]||null;s.gm=SRV.cfg.gm;s.srv={pvp:SRV.cfg.pvp,motd:SRV.cfg.motd,ops:SRV.cfg.ops||[],addr:SRV.cfg.full};}return s;};}
+// joiners send their player data to the host now and then (and when they leave), so it is in the host's world save
+setInterval(()=>{if(online&&net&&!isHost()&&survival()&&player&&!SURV.loading)netSend(N.PSAVE,{d:playerSave(player)},'host');},12000);
+const srvPvp=()=>!online?true:SRV.hosting?SRV.cfg&&SRV.cfg.pvp!==false:SRV.info?SRV.info.pvp!==false:true;
+{const one=onNetEvent;onNetEvent=function(code,d,from){
+  if(code===N.HELLO&&SRV.hosting&&isHost()&&net){const r=srvAdmit(from,d);if(r){srvKick(from,r);return;}}
+  if(code>=N.KICK&&code<=N.SRVINFO){srvNet(code,d,from);return;}
+  return one(code,d,from);};}
+function srvNet(code,d,from){const fromHost=net&&from===net.hostId();if(!d)return;
+  if(code===N.KICK){if(!fromHost)return;if(d.all||d.id===net.myId){srvDisconnect(String(d.r||'Kicked from the server'),d.all?'Connection Lost':'Disconnected');return;}if(typeof d.id==='number')net.block(d.id);return;}
+  if(code===N.CMD){if(!isHost()||typeof d.c!=='string')return;const e=entById('p'+from);serverCmd({id:from,ent:e||null,name:e?e.name:((net.members.get(from)||{}).name||'Player'),local:false},d.c.slice(0,200));return;}
+  if(code===N.SETGM){if(fromHost)setGameMode(d.gm,false);return;}
+  if(code===N.PSAVE){if(!isHost()||!SRV.hosting||!d.d||typeof d.d!=='object')return;const m=net.members.get(from);if(m)SRV.players[m.name.toLowerCase()]=d.d;return;}
+  if(code===N.TPTO){if(fromHost&&player&&Array.isArray(d.p)){player.pos=d.p.map(Number);player.mot=[0,0,0];player.vel=[0,0,0];player.fallDist=0;GZ.tp=perfT;}return;}
+  if(code===N.SRVINFO){if(fromHost){SRV.info=Object.assign(SRV.info||{},d);SRV.amOp=(SRV.info.ops||[]).includes(myName.toLowerCase());}return;}}
+// pause menu: Open to Server / Server Settings, and the right name for leaving
+{const sh=show;show=function(id){if(id==='pause'){const b=$('openSrvBtn');const sp=MATCH.mode==='survival'&&MATCH.state==='play'&&!online&&!!SURV.meta;
+    b.classList.toggle('hidden',!(sp||SRV.hosting));setLbtn(b,SRV.hosting?'Server Settings':'Open to Server');
+    setLbtn($('leaveBtn'),MATCH.mode==='survival'?(online&&!isHost()?'Disconnect':SRV.hosting?'Stop Server and Quit':'Save and Quit to Title'):'Leave Game');}sh(id);};}
+$('openSrvBtn').addEventListener('click',()=>{sfx('click');if(SRV.hosting){dlgHost('edit');return;}if(!store('mcr_appid')){hide('pause');dlgPhoton(true);return;}hide('pause');dlgHost('pause');});
+{const tm=toMenu;toMenu=function(){try{if(online&&net){if(SRV.hosting)netSend(N.KICK,{all:1,r:'Server closed'});else if(survival()&&player)netSend(N.PSAVE,{d:playerSave(player)},'host');}}catch(e){}
+  tm();SRV.hosting=false;SRV.cfg=null;SRV.joined=null;SRV.info=null;SRV.amOp=false;};}
+
+// ---------------- player list (hold Tab) ----------------
+let tabHeld=false;
+addEventListener('keydown',e=>{if(e.code!=='Tab'||!online||MATCH.mode!=='survival'||MATCH.state!=='play'||chatUI)return;e.preventDefault();if(!tabHeld){tabHeld=true;tabRender();$('tabList').classList.remove('hidden');}});
+addEventListener('keyup',e=>{if(e.code==='Tab'){tabHeld=false;$('tabList').classList.add('hidden');}});
+setInterval(()=>{if(tabHeld){if(!online||MATCH.state!=='play'){tabHeld=false;$('tabList').classList.add('hidden');}else tabRender();}},500);
+function tabRender(){const el=$('tabList');el.textContent='';const head=document.createElement('div');head.className='th';
+  const motd=SRV.hosting?SRV.cfg&&SRV.cfg.motd:SRV.info&&SRV.info.motd;const addr=SRV.hosting?SRV.cfg&&SRV.cfg.full:SRV.info&&SRV.info.addr||(SRV.joined&&SRV.joined.addr);
+  head.textContent=motd||'Minecraft:realzanized';el.appendChild(head);
+  const ps=ents.filter(e=>e.kind==='player').sort((a,b)=>a.name.localeCompare(b.name));
+  for(const e of ps){const r=document.createElement('div');r.className='tr';const n=document.createElement('span');const hostE=net&&e.id==='p'+net.hostId();n.textContent=e.name+(hostE?' (host)':'');if(e.gm==='creative')n.style.color='#aaa';
+    const c=document.createElement('canvas');const ms=e===player?(net&&net.ping):e.ping;pingIcon(c,ms==null?'ping':'on',ms||0);c.title=ms!=null?Math.round(ms)+' ms':'';r.append(n,c);el.appendChild(r);}
+  const f=document.createElement('div');f.className='tf';f.textContent=(addr?addr+' · ':'')+ps.length+' player'+(ps.length===1?'':'s')+' · Photon';el.appendChild(f);}
+
+// ================= Chat commands (T or / to open chat) =================
+// Like a Minecraft server, every command runs on the host. In single player all commands work (like a world with cheats on);
+// online, the host is always an operator and can /op other players; everyone can use /help /list /msg /me.
+function runCommand(m){if(!online||!net||isHost())serverCmd({id:null,ent:player,name:myName,local:true},m);else netSend(N.CMD,{c:m},'host');}
+const GM_NAMES={survival:'survival',s:'survival','0':'survival',creative:'creative',c:'creative','1':'creative'};
+const gmLabel=g=>g==='creative'?'Creative Mode':'Survival Mode';
+function serverCmd(S,text){const a=text.replace(/^\//,'').trim().split(/\s+/);const c=(a[0]||'').toLowerCase();const C=SRV.cfg;
+  const reply=(t,col='#aaaaaa')=>{if(S.local)chatMsg(t,col,false);else netSend(N.CHAT,{t,c:col},S.id);};
+  const all=(t,col='#aaaaaa')=>{chatMsg(t,col,false);if(net)netSend(N.CHAT,{t,c:col});};
+  const isOp=()=>!online||(S.local&&isHost())||!!(C&&(C.ops||[]).includes(String(S.name).toLowerCase()));
+  const needOp=()=>{if(isOp())return true;reply('You do not have permission to use this command. Ask the host to /op you.','#ff5555');return false;};
+  const players=()=>ents.filter(e=>e.kind==='player');
+  const find=n=>{if(!n)return null;if(n==='@s')return S.ent;if(n==='@p'){let b=null,bd=1e9;for(const e of players()){if(e===S.ent)continue;const d=S.ent?dist(e.pos,S.ent.pos):0;if(d<bd){bd=d;b=e;}}return b;}
+    const lo=n.toLowerCase();return players().find(e=>e.name.toLowerCase()===lo)||players().find(e=>e.name.toLowerCase().startsWith(lo))||null;};
+  const netId=e=>+String(e.id).slice(1);const isMe=e=>e===player;
+  const usage=u=>reply('Usage: '+u,'#ff5555');const notFound=n=>reply('No player was found'+(n?' called '+n:''),'#ff5555');
+  const cfgSave=()=>{if(SRV.hosting)srvCfgChanged();};const online1=()=>{if(SRV.hosting&&C)return true;reply('That command only works on a server you are hosting.','#ff5555');return false;};
+  const setGM=(e,g)=>{if(isMe(e))setGameMode(g,true);else{netSend(N.SETGM,{gm:g},netId(e));const d=SRV.players[e.name.toLowerCase()];if(d)d.gm=g;}e.gm=g;};
+  const tpTo=(e,p)=>{if(isMe(e)){player.pos=p.slice();player.mot=[0,0,0];player.vel=[0,0,0];player.fallDist=0;GZ.tp=perfT;}else netSend(N.TPTO,{p},netId(e));};
+  switch(c){
+  case 'help':case '?':reply('Commands: /list, /msg <player> <message>, /me <action>'+(isOp()?', /gamemode <mode> [player], /defaultgamemode <mode>, /tp, /time set|add, /say, /seed'+(online?', /kick, /ban, /pardon, /banlist, /op, /deop, /whitelist, /stop':''):''));return;
+  case 'list':{const ps=players();reply(`There are ${ps.length} of a max of ${C?C.max:(online?16:1)} players online: ${ps.map(e=>e.name).join(', ')}`);return;}
+  case 'msg':case 'tell':case 'w':{const t=find(a[1]);const msg=a.slice(2).join(' ').slice(0,100);if(!a[1]||!msg)return usage('/msg <player> <message>');if(!t)return notFound(a[1]);
+    reply(`You whisper to ${t.name}: ${msg}`,'#aaaaaa');if(isMe(t))chatMsg(`${S.name} whispers to you: ${msg}`,'#aaaaaa',false);else netSend(N.CHAT,{t:`${S.name} whispers to you: ${msg}`,c:'#aaaaaa'},netId(t));return;}
+  case 'me':{const msg=a.slice(1).join(' ').slice(0,100);if(!msg)return usage('/me <action>');all(`* ${S.name} ${msg}`,'#ffffff');return;}
+  case 'say':{if(!needOp())return;const msg=a.slice(1).join(' ').slice(0,100);if(!msg)return usage('/say <message>');all(`[${S.name}] ${msg}`,'#ff55ff');return;}
+  case 'gamemode':case 'gm':{if(!needOp())return;if(MATCH.mode!=='survival')return reply('Game modes only work in Survival worlds.','#ff5555');const g=GM_NAMES[(a[1]||'').toLowerCase()];
+    if(!g)return usage('/gamemode <survival|creative> [player]');const t=a[2]?find(a[2]):S.ent;if(!t)return notFound(a[2]);setGM(t,g);
+    if(t===S.ent)reply('Set own game mode to '+gmLabel(g));else{reply(`Set ${t.name}'s game mode to ${gmLabel(g)}`);if(isMe(t))chatMsg('Your game mode has been updated to '+gmLabel(g),'#aaaaaa',false);else netSend(N.CHAT,{t:'Your game mode has been updated to '+gmLabel(g),c:'#aaaaaa'},netId(t));}return;}
+  case 'defaultgamemode':{if(!needOp()||!online1())return;const g=GM_NAMES[(a[1]||'').toLowerCase()];if(!g)return usage('/defaultgamemode <survival|creative>');C.gm=g;cfgSave();reply('The default game mode is now '+gmLabel(g));return;}
+  case 'time':{if(!needOp())return;const sub=(a[1]||'').toLowerCase();const named={day:1000,noon:6000,sunset:12000,night:13000,midnight:18000,sunrise:23000};
+    let ticks=null;if(sub==='set')ticks=named[(a[2]||'').toLowerCase()]!=null?named[a[2].toLowerCase()]:(/^\d+$/.test(a[2]||'')?+a[2]:null);
+    else if(sub==='add'&&/^\d+$/.test(a[2]||''))ticks=Math.round(worldTime*24000)+ +a[2];else if(sub==='query'){return reply('The time is '+Math.round(worldTime*24000));}
+    if(ticks==null)return usage('/time <set|add> <day|noon|night|midnight|ticks>');worldTime=(ticks%24000)/24000;if(net)netSend(N.WTIME,{t:worldTime});reply('Set the time to '+(ticks%24000));return;}
+  case 'tp':case 'teleport':{if(!needOp())return;if(MATCH.mode!=='survival')return reply('Teleporting only works in Survival worlds.','#ff5555');
+    const g=a.slice(1),co=x=>/^(~(-?\d+(\.\d+)?)?|-?\d+(\.\d+)?)$/.test(x),rel=(base,xs)=>xs.map((x,i)=>x.startsWith('~')?base[i]+(+(x.slice(1)||0)):+x);let who=S.ent,to=null,label='';
+    if(g.length===3&&g.every(co)){to=rel(who.pos,g);}
+    else if(g.length===4&&g.slice(1).every(co)){who=find(g[0]);if(!who)return notFound(g[0]);to=rel(who.pos,g.slice(1));}
+    else if(g.length===1||g.length===2){if(g.length===2){who=find(g[0]);if(!who)return notFound(g[0]);}const t=find(g[g.length-1]);if(!t)return notFound(g[g.length-1]);to=t.pos.slice();label=t.name;}
+    if(!to||!who)return usage('/tp <player> | /tp <player> <player> | /tp [player] <x> <y> <z>');tpTo(who,to);reply(`Teleported ${who.name} to `+(label||to.map(v=>v.toFixed(1)).join(', ')));return;}
+  case 'seed':{if(!needOp())return;if(MATCH.mode!=='survival')return reply('There is no seed in the Battle mini game.','#ff5555');reply('Seed: ['+WSEED+']');return;}
+  case 'kick':{if(!needOp()||!online1())return;const t=find(a[1]);if(!a[1])return usage('/kick <player> [reason]');if(!t)return notFound(a[1]);if(isMe(t))return reply('You can\'t kick the server host. Use /stop to close the server.','#ff5555');
+    const r=a.slice(2).join(' ')||'Kicked by an operator';srvKick(netId(t),r);all(`Kicked ${t.name}: ${r}`);return;}
+  case 'ban':{if(!needOp()||!online1())return;if(!a[1])return usage('/ban <player> [reason]');const lo=a[1].toLowerCase();if(lo===myName.toLowerCase())return reply('You can\'t ban the server host.','#ff5555');
+    const r=a.slice(2).join(' ')||'Banned by an operator';C.bans=C.bans||{};const t=find(a[1]);const nm=t?t.name:a[1];C.bans[nm.toLowerCase()]=r;cfgSave();
+    if(t&&!isMe(t))srvKick(netId(t),'You are banned from this server.\nReason: '+r);all(`Banned ${nm}: ${r}`);return;}
+  case 'pardon':case 'unban':{if(!needOp()||!online1())return;if(!a[1])return usage('/pardon <player>');const lo=a[1].toLowerCase();if(!C.bans||C.bans[lo]==null)return reply('Nothing changed. The player isn\'t banned','#ff5555');delete C.bans[lo];cfgSave();reply('Unbanned '+a[1]);return;}
+  case 'banlist':{if(!needOp()||!online1())return;const l=Object.keys(C.bans||{});reply(l.length?`There are ${l.length} ban(s): ${l.join(', ')}`:'There are no bans');return;}
+  case 'op':case 'deop':{if(!needOp()||!online1())return;if(!a[1])return usage('/'+c+' <player>');const t=find(a[1]);const nm=t?t.name:a[1];const lo=nm.toLowerCase();C.ops=C.ops||[];
+    if(c==='op'){if(C.ops.includes(lo))return reply('Nothing changed. The player already is an operator','#ff5555');C.ops.push(lo);reply('Made '+nm+' a server operator');}
+    else{if(!C.ops.includes(lo))return reply('Nothing changed. The player is not an operator','#ff5555');C.ops=C.ops.filter(x=>x!==lo);reply('Made '+nm+' no longer a server operator');}
+    cfgSave();if(t&&!isMe(t))netSend(N.CHAT,{t:c==='op'?'You are now a server operator':'You are no longer a server operator',c:'#aaaaaa'},netId(t));return;}
+  case 'whitelist':{if(!needOp()||!online1())return;const sub=(a[1]||'').toLowerCase();C.white=C.white||[];
+    if(sub==='on'){C.wl=true;cfgSave();return reply('Whitelist is now turned on');}if(sub==='off'){C.wl=false;cfgSave();return reply('Whitelist is now turned off');}
+    if(sub==='list')return reply(C.white.length?`There are ${C.white.length} whitelisted player(s): ${C.white.join(', ')}`:'There are no whitelisted players');
+    if((sub==='add'||sub==='remove')&&a[2]){const lo=a[2].toLowerCase();if(sub==='add'){if(!C.white.includes(lo))C.white.push(lo);reply('Added '+a[2]+' to the whitelist');}else{C.white=C.white.filter(x=>x!==lo);reply('Removed '+a[2]+' from the whitelist');}cfgSave();return;}
+    return usage('/whitelist <on|off|list|add|remove> [player]');}
+  case 'stop':{if(!(S.local&&SRV.hosting))return reply(SRV.hosting||!online?'Only the host can stop the server.':'You can only stop a server you are hosting.','#ff5555');reply('Stopping the server');srvStop('Server closed');return;}
+  default:reply('Unknown command. Type /help for a list of commands.','#ff5555');}}
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.
