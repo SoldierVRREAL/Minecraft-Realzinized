@@ -121,7 +121,21 @@ Pick **Game Mode: Creative** when you create a world (or switch any time with th
 **Locator bar (multiplayer)**
 Like Java 1.21.6: in a Survival game with other players, the bar above the hotbar shows a coloured dot for each player in the direction they are from where you are looking. Dots shrink with distance, show an arrow when someone is well above or below you, and pin to the ends with an arrow when they are behind you. Look straight at a dot to see that player's name and distance.
 
-**Mini Games**: Battle, Battle Royale, Play Online (the original relay server) and Practice, unchanged.
+**Mini Games**: Battle, Battle Royale, Play Online (Battle Servers on Photon, see below) and Practice.
+
+**Creating a Battle game**: Battle and Battle Royale open a create screen. On the left are tick boxes and buttons; on the right, a description of whatever is selected:
+- **Central Spawn**: everyone starts around the middle of the arena (Battle only).
+- **Online Game**: makes the game a Photon server others join by address. Untick it to play offline against bots.
+- **Public Game**: lists the server in Battle servers online now.
+- **Allow friends of friends**: always greyed out, because Photon has no friends lists.
+- **Invite Only**: only the players named in Server Settings can join.
+- **Select Maps**: choose which maps the game goes through.
+- **Server Settings**: the address, region, MOTD, player limit and invite list.
+- **Round Length**: Short, Normal or Long.
+- **Create Casual**: everyone keeps their skin, and spectators are bats.
+- **Create Competitive**: skins with see-through body parts are swapped for plain ones, and spectating bats are invisible and silent to the players still fighting.
+
+Click the Battle title, or press left or right on it, to switch to Battle Royale.
 
 ### Controls
 
@@ -148,7 +162,7 @@ Open `index.html` in a browser, or host it with GitHub Pages (below).
 - **Play Game**: Battle vs bots on Temple, Cavern, Cove, Crucible or Skyhold
 - **Temple** (new): a ruined stone-brick temple deep in a jungle cave, after the Battle key art: centre chests inside the temple and in the shrine on top (ladder inside), a lily-pad moat you can cross by bridge, stepping stones or the lily pads themselves, a jungle floor with ruins and trees, and a gallery round the cave wall
 - **Bots that play like players**: they keep a sensible inventory, loot, then go hunting (with route-finding over stairs, ladders and drops), shoot with bows at people they can't reach, and give up on anything they can't get to instead of standing still
-- **Play Online** (in Mini Games): online rooms through the game's own server or relay (or "same browser, other tabs" for testing)
+- **Play Online** (in Mini Games): Battle Servers on Photon, the same server system as Survival multiplayer
 - **Enchanted items**: Sharpness, Knockback and Fire Aspect swords and axes; Power, Punch, Flame and Infinity bows; Protection armour. They show a purple glint, list their enchantments in the inventory tooltip, and turn up in chests (more often in the centre ones). Turn them off with **Enchanted Loot** in Game Rules.
 - **Console look and feel** (matched to Xbox One Edition Battle footage): raised console HUD with the 8-slot player colour strip, a small animated model of you on the left, kill messages in the chat area, contextual button prompts, "Invulnerability wears off / has worn off! Fight!" messages, rounds that start behind a "Downloading terrain" loading screen with tips, block info panels when you look at a block, and an end-of-round scoreboard with kills, awards, favourite weapon, damage inflicted/received and round time. In-Game Tooltips and Animated Character can be turned off in Video Settings.
 - **Practice**: lobby town with a movement playground (ice, slime, soul sand, cobwebs, ladders, slabs, stairs, water)
@@ -161,25 +175,17 @@ Open `index.html` in a browser, or host it with GitHub Pages (below).
 2. In the repo: **Settings > Pages > Build and deployment**, set **Source** to *Deploy from a branch*, branch `main`, folder `/ (root)`.
 3. After a minute the game is live at `https://<your-username>.github.io/<repo-name>/`.
 
-### Online multiplayer for the Battle mini game (relay server)
+### Online multiplayer for the Battle mini game (Photon servers)
 
-The game has its own multiplayer system: a small room relay that every player in a room talks to. The first player in a room is the host and runs the bots, chests and round timer; if they leave, the next player takes over.
+Battle uses the same Photon server system as Survival (see Multiplayer above), with the same Photon App ID.
 
-**Option A: run the game's own server (best).** `server/server.js` is one Node.js file with no packages to install. It serves the game *and* the multiplayer relay on the same address:
+- **Mini Games → Play Online** opens **Battle Servers**: your saved Battle servers (a separate list from the Multiplayer screen) and **Battle servers online now**, the public Battle and Battle Royale servers in your home region. Each row shows the address, the mode, the next or current map, whether it is in the lobby or mid-round, the MOTD, players and ping. Join Server, Direct Connection, Add / Edit / Delete and Refresh work as on the Multiplayer screen.
+- **Host Server** opens the Battle create screen (above) with Online Game ticked: pick the address (`name` or `name:region`), MOTD, max players (up to 20), public listing and an invite list, then Create Casual or Create Competitive. Competitive servers say so in the list. You are the host: you run the bots, chests and round timer, and you set the game rules from the lobby. Battle servers can also be hosted from Multiplayer → Host Server.
+- The host's commands work here too (`/kick`, `/ban`, `/pardon`, `/op`, `/whitelist`, `/list`, `/msg`, `/say`, `/time`, `/stop`); the pause menu has **Server Settings** while you host.
+- **When the host leaves:** quitting closes the server for everyone ("Server closed"). If the host's connection drops instead, the round carries on: the next player becomes the host (bots included) and the server keeps its address and listing. The bans and whitelist stay with the old host.
+- If you're not the host, taking from chests, picking items up and dropping them happen instantly on your screen; the host checks each move and takes an item back only if someone else got it first. After a round everyone goes back to the lobby.
 
-```
-node server/server.js          # or: npm start   (needs Node.js 18+)
-```
-
-Open `http://localhost:8080` (or your PC's address, e.g. `http://192.168.1.20:8080`, for friends on the same Wi-Fi). Players who open the game from that address connect to it automatically. Free hosts that run Node apps (Render, Railway, Fly.io, Glitch, a Replit, your own PC with port forwarding) work too: point them at this repo with the start command `npm start`. Check `/health` on the server to see rooms and players.
-
-**Finding games:** Play Online shows a list of open games on the same server (room, host, mode, map, lobby or in game, player count); click one to join. Untick "List my room here when I host" to keep a room private. On the game server, `/rooms` shows the same list as JSON.
-
-**How multiplayer behaves:** if you're not the host, taking from chests, picking items up and dropping them happen instantly on your screen; the host checks each move and takes an item back only if someone else got it first. The host leaving doesn't end the round: the next player takes over, bots included. A dropped connection reconnects by itself (you have a few seconds before you count as gone), and after a round everyone goes back to the lobby.
-
-**Option B: GitHub Pages with no server.** Mini Games → Play Online → Connect also works on GitHub Pages: if there's no game server, it falls back to free public relays (EMQX, HiveMQ, Mosquitto test broker). Anyone who knows the room code can join those, so pick an unusual code.
-
-To use a game server from the GitHub Pages copy, type its address in **Game server (optional)** on the Play Online screen, or open the page with `?relay=wss://your-server/mqtt`.
+`server/server.js` (`node server/server.js`, or `npm start`) still serves the game files on your network if you'd rather not use GitHub Pages; online play itself goes through Photon.
 
 ### Resource packs
 
@@ -189,7 +195,7 @@ Players can load any Java Edition resource pack (`.zip`) or a client `.jar` they
 
 **Mouse:** some Mac browsers report mouse movement too big while a button is held, which made the camera turn faster whenever you clicked. Mac Click Fix (Controls, Auto = on for Macs) undoes it: it learns how much the browser inflates movement from how fast you move just before and after each click, and divides it back out. Controls > Raw Mouse Input picks between raw input (no OS acceleration) and normal input; Auto uses normal input on Macs.
 
-**Connection:** the Tab lobby panel and the F3 screen show your ping to the game server and which server you are on, and you get a warning in chat if it stays above 250 ms. The game server itself relays 16 players at 20 updates a second in under 5 ms, so lag comes from distance: host it in a region close to your players, and avoid the free public relays.
+**Connection:** the Tab lobby panel and the F3 screen show your ping and which server you are on, and you get a warning in chat if it stays above 250 ms. Lag comes mostly from distance: host in the Photon region closest to your players.
 
 **Options & mobile:** Help & Options opens Java-style Options screens (Video Settings, Music & Sounds, Controls, Game Rules, Maps). Mobile Controls (Auto/ON/OFF) adds a touch joystick, drag-to-look, tap-to-attack, hold-to-use and buttons for jump, sneak, sprint, inventory and drop. Settings are saved in the browser.
 
@@ -221,7 +227,7 @@ python3 build.py
 | `06_pack.js` | Resource pack loader |
 | `07_game.js` | Entities, combat, hunger, effects, projectiles, drops |
 | `07b_mcphys.js` | Java Edition movement physics (20 TPS) |
-| `08_net.js` | Multiplayer core (host rules), room relay client and same-browser tabs |
+| `08_net.js` | Multiplayer core (host rules, host hand-over); the old relay clients, no longer used by the menus |
 | `08b_photon.js` | Photon Realtime transport: servers by address, the lobby list for the server browser, error messages |
 | `09_flow.js` | Match flow, lobby, chests, MCBR timeline, net events |
 | `10_bots.js` | Bot AI, including route-finding |
@@ -243,8 +249,9 @@ python3 build.py
 | `15e_mobs.js` | Mobs: models, AI, spawning, multiplayer sync, explosions and TNT, mob radar |
 | `15f_locator.js` | Multiplayer locator bar |
 | `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block |
-| `15h_servers.js` | Servers: the Multiplayer screen, hosting, joining, bans/whitelist/kicks, saved player data, Tab player list |
+| `15h_servers.js` | Servers: the Multiplayer and Battle Servers screens, hosting, joining, bans/whitelist/kicks, saved player data, Tab player list |
 | `15i_commands.js` | Chat commands, run on the server host with operator permissions |
+| `15j_battlecreate.js` | The Battle create screen (Casual / Competitive) and the Competitive rules; its picture is `battle_art.jpg` |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next

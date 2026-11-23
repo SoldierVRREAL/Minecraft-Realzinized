@@ -178,7 +178,22 @@ body.touch #clickResume{display:none!important}
 .lbt{border-collapse:collapse}.lbt td{padding:calc(var(--S)*2px) calc(var(--S)*6px)}.lbt tr:first-child td{border-bottom:calc(var(--S)*1px) solid #8b8b8b}
 .srvpanel{width:min(760px,96vw)}.srvtitle{text-align:center}.srvlist{max-height:48vh;min-height:30vh}.srvbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px}.srvbtns .btn{flex:1 1 0;margin:0;min-width:110px}
 .srow{display:flex;gap:10px;align-items:center;padding:5px 8px;color:#fff;text-shadow:2px 2px 0 #000;border:2px solid transparent;cursor:pointer;user-select:none}.srow:hover{background:rgba(255,255,255,.08)}.srow.sel{border-color:#fff;background:rgba(0,0,0,.35)}
-.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}.srow .sname{font-size:21px}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
+.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}#results.reslock button{pointer-events:none;opacity:.6}#bcPanel{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:calc(var(--S)*3px);margin-top:calc(var(--S)*10px)}
+#bcLeft{width:calc(var(--S)*214px);padding:calc(var(--S)*6px) calc(var(--S)*7px);display:flex;flex-direction:column;gap:calc(var(--S)*2px);background:#e4e4e4;overflow:visible;max-height:none;
+  box-shadow:0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #fff,inset calc(var(--S)*-2px) calc(var(--S)*-2px) 0 #8a8a8a}
+.bcHead{display:flex;align-items:flex-start;gap:calc(var(--S)*3px);cursor:pointer;margin-bottom:calc(var(--S)*2px)}
+.bcIcon{width:calc(var(--S)*24px);height:calc(var(--S)*24px);display:flex;align-items:center;justify-content:center;background:#c9c9c9;box-shadow:inset 0 0 0 calc(var(--S)*1px) #555,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #f4f4f4}
+.bcIcon canvas,.bcHeadT canvas,.bcRow canvas,#bcDesc canvas,.bcStatus canvas{image-rendering:pixelated}.bcHeadT{padding-top:calc(var(--S)*2px)}
+.bcRow{display:flex;align-items:center;gap:calc(var(--S)*3px);min-height:calc(var(--S)*12px);cursor:pointer}.bcRow.off{cursor:default}
+.bcBox{position:relative;flex:0 0 auto;width:calc(var(--S)*9px);height:calc(var(--S)*9px);background:#fff;box-shadow:inset 0 0 0 calc(var(--S)*1px) #5c5c5c,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #c8c8c8}
+.bcRow.off .bcBox{background:#d6d6d6}.bcBox canvas{position:absolute;left:0;top:calc(var(--S)*-3px)}
+#bcLeft .bcBtn{width:100%;margin-top:calc(var(--S)*1px)}#bcLeft .bcBtn.sel:not(.off){background-image:var(--btnSel)}#bcLeft .bcBtn.sel:not(.off) canvas.n{display:none}#bcLeft .bcBtn.sel:not(.off) canvas.s{display:block}
+#bcLeft .jslider.sel .knob{background-image:var(--btnSel)}.bcStatus{min-height:calc(var(--S)*4px)}
+#bcRight{width:calc(var(--S)*132px);padding:calc(var(--S)*4px);display:flex;flex-direction:column;justify-content:space-between;gap:calc(var(--S)*4px);background:rgba(58,78,98,.74);
+  box-shadow:0 0 0 calc(var(--S)*1px) rgba(220,230,240,.85),0 0 0 calc(var(--S)*2px) rgba(0,0,0,.35)}
+#bcImg{display:block;width:100%;height:auto;box-shadow:0 0 0 calc(var(--S)*1px) #000,0 0 0 calc(var(--S)*2.5px) #e6c43a,0 0 0 calc(var(--S)*3.5px) #6a5310;margin:calc(var(--S)*3px)}
+#bcImg{width:calc(100% - var(--S)*6px)}
+.srow .sname{font-size:21px}.srow .stag{font-size:17px;color:#ffd060;white-space:nowrap}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
 .srow .smotd.err{color:#ff5555}.srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.srow .splay{font-size:18px;color:#aaa}.srow .sping{width:20px;height:16px;image-rendering:pixelated}.srow .smove{display:flex;flex-direction:column;gap:2px}.srow .smove button{font:14px monospace;padding:0 4px;background:#555;color:#fff;border:1px solid #000;cursor:pointer;visibility:hidden}.srow:hover .smove button{visibility:visible}
 .shead{padding:6px 8px 2px;color:#ffff55;font-size:18px;text-shadow:2px 2px 0 #000;border-top:1px solid rgba(255,255,255,.2)}.srvstatus{min-height:1.2em;margin-top:4px;font-size:18px;text-align:center}
 .srvdlg{width:min(560px,94vw);display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden}.srvdlg .form{overflow:auto;min-height:0;flex:0 1 auto;padding:2px}.srvdlg.wide{width:min(900px,96vw)}@media(min-width:760px){.srvdlg.wide .form{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr)}}.srvdlg .form label{font-size:19px}.srvdlg h3{text-align:center}.srvdlg .note{font-size:16px}.srvdlg .err{color:#a00000;min-height:1.1em;text-align:center}.srvdlg .addr{font:22px 'VT323',monospace;background:#000;color:#55ff55;padding:4px 8px;text-align:center;user-select:all}
@@ -204,6 +219,7 @@ body.touch #clickResume{display:none!important}
     <button class="lbtn mini hidden" id="practiceBtn">Practice</button>
     <button class="lbtn mini hidden" id="lbBtn">Leaderboards</button>
   </div>
+  <div id="bcPanel" class="hidden"><div id="bcLeft" class="lpanel"></div><div id="bcRight"><div id="bcDesc" aria-live="polite"></div><canvas id="bcImg" width="660" height="418" aria-hidden="true"></canvas></div></div>
   <div id="prompts" class="lprompts"></div>
   <div id="verL" class="ver" data-t="Minecraft:realzanized Browser Edition">Minecraft:realzanized Browser Edition</div><div id="verR" class="ver" data-t="Copyright Logjang AB. Do not distribute!">Copyright Logjang AB. Do not distribute!</div>
 </div>
@@ -252,22 +268,6 @@ body.touch #clickResume{display:none!important}
   </div>
   <h3>Select Maps</h3><div class="maps" id="mapChecks"></div>
   <div class="row"><button class="btn small" id="optClose">Done</button></div>
-</div></div>
-
-<div id="onlinePanel" class="screen hidden"><div class="panel">
-  <h3>Play Online</h3>
-  <div class="form">
-    <label for="n_kind">Connection</label><select id="n_kind"><option value="relay">Internet</option><option value="local">Same browser, other tabs (test)</option></select>
-    <label for="n_room">Room code</label><input id="n_room" type="text" maxlength="24" value="battle">
-    <label for="n_server">Game server (optional)</label><input id="n_server" type="text" maxlength="120" placeholder="e.g. my-battle.onrender.com or 192.168.1.20:8080">
-  </div>
-  <div id="browse"><div class="bhead"><span>Open games</span><span id="browseWhere" class="bwhere"></span><button class="btn small" id="browseRefresh">Refresh</button></div>
-    <div id="roomList"><div class="rnote">Looking for games...</div></div>
-    <label class="bchk"><input type="checkbox" id="n_public" checked> List my room here when I host</label></div>
-  <div class="note">Pick a game from the list, or everyone types the same room code and presses Connect. The first player in a room hosts: it runs the bots, chests and round timer.
-  If you run the game's own server (<code>node server/server.js</code>), players on it connect to it automatically, or type its address above. Without one, the game uses free public relays, so pick an unusual room code.</div>
-  <div id="status"></div>
-  <div class="row"><button class="btn small" id="connectBtn">Connect</button><button class="btn small" id="onlineClose">Back</button></div>
 </div></div>
 
 <div id="packPanel" class="screen hidden"><div class="panel">
@@ -333,7 +333,7 @@ body.touch #clickResume{display:none!important}
   <div class="note">Worlds are saved in this browser every 30 seconds and when you leave.</div>
 </div></div>
 <div id="mpPanel" class="screen hidden"><div class="panel srvpanel">
-  <h3 class="srvtitle">Play Multiplayer</h3>
+  <h3 class="srvtitle" id="mpTitle">Play Multiplayer</h3>
   <div id="srvList" class="wlist srvlist" role="listbox" aria-label="Servers"></div>
   <div id="phStatus" class="srvstatus"></div>
   <div class="srvbtns"><button class="btn small" id="srvJoin">Join Server</button><button class="btn small" id="srvDirect">Direct Connection</button><button class="btn small" id="srvAdd">Add Server</button></div>
@@ -3034,7 +3034,7 @@ function photonBrowse(appId,region,onList){let c,closed=false;const LBC=photonOK
   return {close(){closed=true;clearInterval(iv);try{c.disconnect();}catch(e){}}};}
 
 // ================= match flow: settings, start/end, lobby hub, phases, chests, MCBR timeline, net handlers =================
-const SET={mode:'battle',roundLen:600,hunger:1,refill:120,grace:30,showdown:true,takeAll:true,central:true,bots:5,difficulty:1,
+const SET={mode:'battle',roundLen:600,hunger:1,refill:120,grace:30,showdown:true,takeAll:true,central:true,comp:false,bots:5,difficulty:1,
   maps:{temple:true,cavern:true,cove:true,crucible:true,skyhold:true},brLen:.2,brExtra:true,enchants:true,lobbyWait:45};
 const MATCH={state:'menu',mode:'battle',map:null,seed:0,gameT:0,showdown:false,refillAt:0,mapIdx:0,lobbyCD:-1,winner:null,phaseT:0,graceAnn:false,edits:[],nextMap:null};
 let suddenDeath=false,br=null,myName='Player',mySkin='gen:Player',online=false;
@@ -3087,7 +3087,7 @@ function snapshotFor(joinId){
 
 // ---------- lobby hub (online) ----------
 function enterLobby(){
-  MATCH.state='lobby';generateMap('hub',1,false);buildMesh();br=null;suddenDeath=false;
+  MATCH.state='lobby';generateMap('hub',1,false);buildMesh();br=null;suddenDeath=false;spectate.mode='bat';spectate.target=null;
   projs=[];drops=[];particles=[];msgs=[];
   const keep=ents.filter(e=>e.kind==='player');ents=keep;
   for(const e of ents){e.alive=true;e.bat=false;e.spectator=false;e.health=20;e.food=20;e.sat=5;e.effects={};e.absorb=0;e.fire=0;e.inv=new Array(9).fill(null);e.armor=[null,null,null,null];e.kills=0;e.dmgDealt=0;e.ready=false;
@@ -3265,7 +3265,7 @@ function onNetEvent(code,d,from){
   case N.ANN:msgs.push({t:d.d,txt:d.t,sub:d.s||''});break;
   case N.CHAT:if(d&&d.p){chat.push({t:10,txt:`<${String(d.n||'Player').slice(0,16)}> ${String(d.m||'').slice(0,100)}`,col:'#ffffff'});if(chat.length>8)chat.shift();sfx('click');break;}chat.push({t:10,txt:String(d.t||'').slice(0,120),col:/^#[0-9a-f]{3,6}$/i.test(d.c)?d.c:'#fff'});if(chat.length>8)chat.shift();break;
   case N.BLOCK:applyBlock(d[0],d[1],d[2],d[3]);break;
-  case N.SQUEAK:{const e=entById(d.id);if(e){spawnParticles(e.pos[0],e.pos[1],e.pos[2],4,[.3,.2,.15],1.5);if(player&&dist(e.pos,player.pos)<24)sfx('squeak');}break;}
+  case N.SQUEAK:{const e=entById(d.id);if(e&&!compHidesBats()){spawnParticles(e.pos[0],e.pos[1],e.pos[2],4,[.3,.2,.15],1.5);if(player&&dist(e.pos,player.pos)<24)sfx('squeak');}break;}
   case N.LOBBY:if(!fromHost)return;if(MATCH.state!=='lobby')enterLobby();MATCH.lobbyCD=d.cd;MATCH.nextMap=d.next;Object.assign(SET,d.set);for(const e of ents)e.ready=d.ready.includes(e.id);break;
   case N.READY:{const e=entById('p'+from);if(e)e.ready=d.r;break;}
   case N.END:if(!fromHost)return;applyEnd(d);break;
@@ -3622,7 +3622,7 @@ function render(){
   fovMod+=((OPT.dynfov===false?1:tf)-fovMod)*Math.min(1,dtFrame*10);const fov=OPT.fov*fovMod*Math.PI/180;const P=M4.persp(fov,W/H,.05,400);
   if(MATCH.state==='menu'&&panoTex){drawPanorama(P,camYaw,camPitch*.3);drawHUD();return;}
   let pre=M4.id();
-  if(player&&player.alive&&spectate.mode!=='follow'&&MATCH.state!=='menu'){const sp=player.onGround?Math.min(.1,Math.hypot(player.mot?player.mot[0]:0,player.mot?player.mot[2]:0)):0;bobAmp+=(sp-bobAmp)*Math.min(1,dtFrame*8);
+  if(player&&player.alive&&MATCH.state!=='menu'){const sp=player.onGround?Math.min(.1,Math.hypot(player.mot?player.mot[0]:0,player.mot?player.mot[2]:0)):0;bobAmp+=(sp-bobAmp)*Math.min(1,dtFrame*8);
     const f1=-player.walkT/1.0,a=OPT.bob?bobAmp:0;const ht=player.hurtT>0?Math.sin(Math.pow(player.hurtT/.5,4)*Math.PI)*14*Math.PI/180:0;
     pre=chain(M4.rz(-ht),M4.tr(Math.sin(f1*Math.PI)*a*.5,-Math.abs(Math.cos(f1*Math.PI)*a),0),M4.rz(Math.sin(f1*Math.PI)*a*3*Math.PI/180),M4.rx(Math.abs(Math.cos(f1*Math.PI-.2)*a)*5*Math.PI/180));}
   if(INF&&GZ.shake>0){const k=GZ.shake*.06;pre=chain(pre,M4.rz((Math.random()-.5)*k),M4.rx((Math.random()-.5)*k));}
@@ -3643,8 +3643,8 @@ function render(){
   drawWorld(fogF);
   // entities
   useTex(VP,camPos);
-  for(const e of ents){if(e===player&&player.alive&&spectate.mode!=='follow'&&!camMode)continue;if(e===player&&!player.alive&&spectate.mode==='bat')continue;
-    if(e.bat&&!e.alive){drawBat(e);continue;}if(!e.alive)continue;drawHumanoid(e);}
+  for(const e of ents){if(e===player&&player.alive&&!camMode)continue;if(e===player&&!player.alive&&spectate.mode==='bat')continue;
+    if(e.bat&&!e.alive){if(e!==player&&compHidesBats())continue;drawBat(e);continue;}if(!e.alive)continue;drawHumanoid(e);}
   if(INF)drawMobs(fogF);
   // chests are tile-entity models (TileEntityChestRenderer), lid animated
   for(const c of chests.values()){if(getB(c.x,c.y,c.z)!==B.CHEST)continue;if(Math.hypot(c.x+.5-camPos[0],c.z+.5-camPos[2])>fogF+8)continue;
@@ -3700,7 +3700,7 @@ function limbTick(e){if(e._lt===perfT)return;e._lt=perfT;   // once per frame, e
   const dts=dtFrame*20;const v=Math.hypot(e.vel[0],e.vel[2])/20;const tgt=Math.min(1,v*4);
   e.limbAmt=(e.limbAmt||0)+(tgt-(e.limbAmt||0))*(1-Math.pow(.6,dts));e.limbSwing=(e.limbSwing||0)+e.limbAmt*dts;}
 function drawHumanoid(e){
-  const invis=e.effects.invis;const S=skinTex(e.skin);const M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
+  const invis=e.effects.invis;const S=skinTex(fairSkin(e));const M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
   const rp=e.rpos||e.pos;const by=e.bodyYaw==null?e.yaw:e.bodyYaw;const base=chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
   const headYaw=e.yaw-by,headPitch=-e.pitch;  // vanilla: positive pitch looks down
   const ls=(e.limbSwing||0)*.6662,la=e.limbAmt||0;const age=perfT*20+(e.color||0)*7;
@@ -4222,7 +4222,7 @@ function drawBRHud(){
 
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
-const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
+const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
 // raw mouse input (unadjustedMovement) skips OS acceleration, but on macOS it inflates movement while a mouse button is held,
@@ -4376,7 +4376,7 @@ $('practiceBtn').addEventListener('click',()=>{initAudio();sfx('click');readName
 const MBTN=()=>[...document.querySelectorAll('#menuList .lbtn')].filter(b=>!b.classList.contains('hidden'));let mSel=0;
 function setMSel(i){const b=MBTN();mSel=(i+b.length)%b.length;b.forEach((x,j)=>x.classList.toggle('sel',j===mSel));}
 document.querySelectorAll('#menuList .lbtn').forEach(b=>b.addEventListener('mouseenter',()=>{const i=MBTN().indexOf(b);if(i>=0&&mSel!==i){setMSel(i);sfx('click');}}));setMSel(0);
-document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
+document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden')||bcOpen()||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='ArrowDown'||e.code==='KeyS'){setMSel(mSel+1);sfx('click');e.preventDefault();}else if(e.code==='ArrowUp'||e.code==='KeyW'){setMSel(mSel-1);sfx('click');e.preventDefault();}
   else if(e.code==='Enter'||e.code==='Space'){MBTN()[mSel].click();e.preventDefault();}});
 // stone-letter logo
@@ -4415,25 +4415,8 @@ $('optClose').addEventListener('click',()=>{readOptions();hide('optPanel');show(
 function startBattleSolo(){initAudio();sfx('click');readName();online=false;if(net){net.leave();net=null;}MATCH.mapIdx=MATCH.mapIdx||0;hide('menu');showLoading('Loading level',()=>{player=null;ents=[];hostStartMatch();});}
 $('soloBtn').addEventListener('click',()=>openWorlds());
 $('mpBtn').addEventListener('click',()=>openMP());
-// ---- server browser: rooms announce themselves; pick one to join ----
-let browser=null;
-function stopBrowse(){if(browser){browser.close();browser=null;}}
-function startBrowse(){stopBrowse();const box=$('roomList');if($('n_kind').value!=='relay'){box.innerHTML='<div class="rnote">Room list works with Internet connections.</div>';return;}
-  box.innerHTML='<div class="rnote">Looking for games...</div>';$('browseWhere').textContent='';
-  browser=browseRooms($('n_server').value,(list,url,err)=>{if(!$('onlinePanel').classList.contains('hidden')||true){
-    if(err){box.innerHTML='<div class="rnote"></div>';box.firstChild.textContent=err;return;}
-    $('browseWhere').textContent=url?'on '+url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,''):'';
-    if(!list.length){box.innerHTML='<div class="rnote">No open games right now. Type a room code and press Connect to start one.</div>';return;}
-    box.textContent='';for(const r of list){const b=document.createElement('button');b.className='room';b.type='button';
-      const nm=document.createElement('span');nm.className='rn';nm.textContent=r.room+(r.host?'  ·  '+r.host:'');
-      const st=document.createElement('span');st.className='rs';const mp=(MAPS.find(m=>m.id===r.map)||{}).name||(r.map==='br'?'Battle Royale':r.map||'');st.textContent=(r.mode==='br'?'Battle Royale':'Battle')+(mp&&r.mode!=='br'?' · '+mp:'')+' · '+(r.state==='lobby'?'In lobby':'In game '+fmtTime(r.gt||0));
-      const pp=document.createElement('span');pp.className='rp';pp.textContent=(r.n||0)+'/'+(r.max||16);
-      b.append(nm,st,pp);b.addEventListener('click',()=>{$('n_room').value=r.room;sfx('click');$('connectBtn').click();});box.appendChild(b);}}});}
-$('browseRefresh').addEventListener('click',()=>{sfx('click');startBrowse();});
-$('n_server').addEventListener('change',()=>{if(!$('onlinePanel').classList.contains('hidden'))startBrowse();});
-$('n_kind').addEventListener('change',()=>{if(!$('onlinePanel').classList.contains('hidden'))startBrowse();});
-$('onlineBtn').addEventListener('click',()=>{initAudio();sfx('click');readName();hide('menu');show('onlinePanel');startBrowse();});
-$('onlineClose').addEventListener('click',()=>{stopBrowse();hide('onlinePanel');show('menu');});
+// Mini Games > Play Online: the Battle Servers screen (Photon servers, see 15h_servers.js)
+$('onlineBtn').addEventListener('click',()=>{showMini(false);openMP('battle');});
 // leaving the page: say goodbye so the room doesn't wait for a timeout
 addEventListener('pagehide',()=>{try{survLeave();}catch(e){}try{if(net)net.leave();}catch(e){}});addEventListener('beforeunload',()=>{try{if(net&&online)net.post({t:'bye',from:net.myId});}catch(e){}});
 $('packBtn').addEventListener('click',()=>{sfx('click');hide('menu');show('packPanel');refreshPackList();});
@@ -4449,32 +4432,21 @@ function refreshSkinPicker(){const row=$('skinRow');const opts=availableSkins().
   for(const k of opts){const c=mkCanvas(16,16);const g=c.getContext('2d');g.imageSmoothingEnabled=false;const S=skinTex(k).img;g.drawImage(S,8,8,8,8,0,0,16,16);g.drawImage(S,40,8,8,8,0,0,16,16);c.title=k.replace(/^(pack|gen):/,'');if(k===mySkin)c.classList.add('on');
     c.addEventListener('click',()=>{mySkin=k;store('bb_skin',k);refreshSkinPicker();sfx('click');});row.appendChild(c);}}
 $('nameIn').addEventListener('change',()=>{if(mySkin.startsWith('gen:'))mySkin='gen:'+($('nameIn').value||'Player');refreshSkinPicker();});
-$('n_server').value=store('bb_server')||'';$('n_kind').value=store('bb_nkind3')||'relay';$('n_room').value=store('bb_room')||'battle';
-$('connectBtn').addEventListener('click',async()=>{
-  const kind=$('n_kind').value,room=($('n_room').value||'battle').trim();store('bb_nkind3',kind);store('bb_server',$('n_server').value.trim());store('bb_room',room);
-  if(net){net.leave();net=null;}readOptions();
-  const ready=()=>{stopBrowse();online=true;setNetStatus('Connected. '+(net.isHost()?'You are the host.':'Joining host...'));hide('onlinePanel');player=null;ents=[];
-    if(net.isHost())enterLobby();else{enterLobby();netSend(N.HELLO,{},'host');}};
-  const wire=()=>{net.onEvent=onNetEvent;net.onJoin=()=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;};net.onLeave=onMemberLeave;net.onHostChange=onHostChanged;};
-  if(kind==='local'){setNetStatus('Joining room "'+room+'" in this browser...');net=new LocalNet(room,myName);wire();net.onReady=ready;return;}
-  if(kind==='relay'){setNetStatus('Connecting to the relay...');const n=new RelayNet(room,myName,$('n_server').value);net=n;wire();
-    n.getAdvert=()=>$('n_public').checked?{host:myName,n:n.list().length,max:16,mode:SET.mode,map:MATCH.state==='play'||MATCH.state==='over'?MATCH.map:nextMapId(),state:MATCH.state==='lobby'?'lobby':'game',gt:Math.round(MATCH.gameT||0)}:null;
-    n.onReconnecting=()=>{if(net===n)chatMsg('Connection lost. Reconnecting...','#ffaa00',false);};
-    n.onReconnected=down=>{if(net!==n)return;chatMsg('Reconnected.','#55ff55',false);if(down>6500&&!n.isHost())netSend(N.HELLO,{},'host');};   // gone long enough to have missed things: ask the host to catch us upn.tr.trying=url=>{if(net===n&&!n.ready)setNetStatus('Connecting to '+url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,'')+'...');};
-    n.onReady=()=>{if(net!==n)return;setNetStatus('Connected to '+(n.tr.url||'relay').replace(/^wss?:\/\//,'').replace(/\/mqtt$/,''));ready();};
-    n.onFail=msg=>{if(net!==n)return;const wasOnline=online;net=null;n.leave();if(wasOnline){toMenu();hide('menu');show('onlinePanel');startBrowse();}setNetStatus(msg);};return;}
-  setNetStatus('Pick a connection type.');
-});
 $('resumeBtn').addEventListener('click',()=>{paused=false;hide('pause');lockPointer();});
 $('leaveBtn').addEventListener('click',()=>toMenu());
-$('menuBtn').addEventListener('click',()=>toMenu());
+// online, leaving from the end-of-round scoreboard asks first: the round ending must never drop you off the server by a stray click, tap or B press
+$('menuBtn').addEventListener('click',()=>{if(!online||!net){toMenu();return;}sfx('click');
+  dlgShow(`<h3>Leave the server?</h3><div class="note" style="text-align:center">The round is over. Stay and you go back to the lobby for the next round.</div>
+    <div class="row"><button class="btn small" data-ok data-cancel id="lv_stay">Stay</button><button class="btn small" id="lv_go">Leave Server</button></div>`,b=>{
+    b.querySelector('#lv_stay').addEventListener('click',()=>{sfx('click');dlgClose();});b.querySelector('#lv_go').addEventListener('click',()=>{sfx('click');dlgClose();toMenu();});});SRV.dlgOpen='leave';});
 // back to the lobby after a round (online: the host takes everyone there; solo: a lobby that counts down to the next round)
-function backToLobby(){hide('results');if(online){if(isHost()){netSend(N.TOLOBBY,{});enterLobby();}else if(MATCH.state!=='lobby')enterLobby();}else{MATCH.offlineLobby=true;enterLobby();}}
+function backToLobby(){hide('results');if(typeof SRV!=='undefined'&&SRV.dlgOpen==='leave')dlgClose();if(online){if(isHost()){netSend(N.TOLOBBY,{});enterLobby();}else if(MATCH.state!=='lobby')enterLobby();}else{MATCH.offlineLobby=true;enterLobby();}}
 $('lobbyBtn').addEventListener('click',backToLobby);
 $('nextBtn').addEventListener('click',()=>{hide('results');if(!online){showLoading('Loading level',()=>{player=null;ents=[];hostStartMatch();});}});
 function toMenu(){survLeave();$('saveBtn').classList.add('hidden');if(net){net.leave();net=null;}online=false;MATCH.offlineLobby=false;MATCH.state='menu';player=null;ents=[];document.exitPointerLock&&document.exitPointerLock();hideOverlays();show('menu');setMSel(0);generateMap('skyhold',1,false);buildMesh();refreshSkinPicker();}
 function openLobbyPanel(){document.exitPointerLock&&document.exitPointerLock();show('lobbyPanel');const host=isHost();
-  $('lobbyInfo').innerHTML=`<div class="note">Room: <b>${($('n_room').value||'').replace(/</g,'&lt;')}</b> · ${net?net.kind:''}${net&&net.tr&&net.tr.url?' via '+net.tr.url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,'').replace(/</g,'&lt;'):''}${net&&net.ping!=null?' · ping '+Math.round(net.ping)+' ms':''} · ${host?'You are the host':'Host decides the options'}<br>Mode: ${SET.mode==='br'?'Battle Royale':'Battle'} · Round ${SET.roundLen?SET.roundLen/60+' min':'unlimited'} · Grace ${SET.grace||'off'} · Hunger ${({0.5:'slow',1:'normal',2:'fast'})[SET.hunger]} · Bots ${SET.bots}<br>Players: ${ents.filter(e=>e.kind==='player').map(e=>(e.ready?'✓ ':'')+e.name.replace(/</g,'&lt;')+(e===player?(net&&net.ping!=null?' ('+Math.round(net.ping)+' ms)':''):(e.ping!=null?' ('+e.ping+' ms)':''))).join(', ')}</div>`;
+  const addr=SRV.hosting?SRV.cfg&&SRV.cfg.full:SRV.info&&SRV.info.addr||(SRV.joined&&SRV.joined.addr)||'';
+  $('lobbyInfo').innerHTML=`<div class="note">${online?'Server: <b>'+esc(addr)+'</b> · Photon':'Offline'}${net&&net.ping!=null?' · ping '+Math.round(net.ping)+' ms':''} · ${host?(online?'You are the host':'You decide the options'):'Host decides the options'}<br>Mode: ${SET.mode==='br'?'Battle Royale':'Battle'} · Round ${SET.roundLen?SET.roundLen/60+' min':'unlimited'} · Grace ${SET.grace||'off'} · Hunger ${({0.5:'slow',1:'normal',2:'fast'})[SET.hunger]} · Bots ${SET.bots}<br>Players: ${ents.filter(e=>e.kind==='player').map(e=>(e.ready?'✓ ':'')+e.name.replace(/</g,'&lt;')+(e===player?(net&&net.ping!=null?' ('+Math.round(net.ping)+' ms)':''):(e.ping!=null?' ('+e.ping+' ms)':''))).join(', ')}</div>`;
   $('lobbyStart').classList.toggle('hidden',!host);$('lobbyOpts').classList.toggle('hidden',!host);}
 $('lobbyReady').addEventListener('click',()=>{toggleReady();openLobbyPanel();});
 $('lobbyStart').addEventListener('click',()=>{if(isHost()){hide('lobbyPanel');hostStartMatch();}});
@@ -4509,7 +4481,9 @@ function showResults(m){
     const k=document.createElement('span');k.className='k';k.textContent=r.k||0;const aw=document.createElement('span');aw.className='sbIco';aw.appendChild(iconCanvas((AWARDS[r.aw]||AWARDS.contender)[1],26));
     d.append(dot,nm,k,aw);d.addEventListener('mouseenter',()=>resPick(i));d.addEventListener('click',()=>resPick(i));box.appendChild(d);});
   resN=rows.length;let sel=rows.findIndex(r=>r.id===me);resPick(sel<0?0:sel);$('sbTime').textContent=fmtClock(m.t!=null?m.t:MATCH.gameT);
-  $('resNote').textContent=online?'Returning to the lobby in a few seconds.':'Back to the lobby in a few seconds, or pick Next map.';$('nextBtn').classList.toggle('hidden',online);$('menuBtn').textContent=online?'Leave Game':'Menu';show('results');
+  $('resNote').textContent=online?'Returning to the lobby in a few seconds.':'Back to the lobby in a few seconds, or pick Next map.';$('nextBtn').classList.toggle('hidden',online);$('menuBtn').textContent=online?'Leave Server':'Menu';show('results');
+  // the scoreboard pops up mid-fight: ignore clicks and taps on its buttons for a moment so attacks don't land on them
+  const rb=$('results');rb.classList.add('reslock');clearTimeout(rb._lk);rb._lk=setTimeout(()=>rb.classList.remove('reslock'),1500);
   const ends=m;setTimeout(()=>{if(MATCH.state==='over'&&!$('results').classList.contains('hidden')&&lastResults===ends)backToLobby();},online?9500:15000);lastResults=ends;
 }
 document.addEventListener('keydown',e=>{if($('results').classList.contains('hidden')||!resPick||!resN)return;if(e.code==='ArrowDown'||e.code==='KeyS'){resPick((resSel+1)%resN);e.preventDefault();}else if(e.code==='ArrowUp'||e.code==='KeyW'){resPick((resSel+resN-1)%resN);e.preventDefault();}});
@@ -4528,10 +4502,11 @@ function pollPad(dt){
   if(!padActive&&(Object.values(B).some(Boolean)||Math.abs(lx)+Math.abs(ly)+Math.abs(rx)+Math.abs(ry)>.3)){padActive=true;if(locked)document.exitPointerLock();}
   if(!padActive){padPrev=B;return;}
   const menuOpen=!$('menu').classList.contains('hidden');
-  const panel=['jOpt','optPanel','onlinePanel','packPanel','lobbyPanel','results','pause','lbPanel','dressPanel'].find(id=>!$(id).classList.contains('hidden'));
+  const panel=['jOpt','optPanel','packPanel','lobbyPanel','results','pause','lbPanel','dressPanel'].find(id=>!$(id).classList.contains('hidden'));
   padRepeat-=dt;const nav=ly<-.5||B.up?-1:ly>.5||B.down?1:0;const navX=lx<-.5||B.left?-1:lx>.5||B.right?1:0;
-  if(menuOpen&&!panel){if(nav&&padRepeat<=0){setMSel(mSel+nav);sfx('click');padRepeat=.22;}if(!nav)padRepeat=0;if(E('a')){MBTN()[mSel].click();}if(E('b'))menuBack();if(E('x'))openDress();}
-  else if(panel){if(E('b')){const back={jOpt:'jDoneHidden',lbPanel:'lbClose',dressPanel:'dressClose',optPanel:'optClose',onlinePanel:'onlineClose',packPanel:'packClose',lobbyPanel:'lobbyClose',results:'menuBtn',pause:'resumeBtn'}[panel];$(back).click();}
+  if(menuOpen&&!panel&&bcOpen())bcPad(E,nav,navX,dt);
+  else if(menuOpen&&!panel){if(nav&&padRepeat<=0){setMSel(mSel+nav);sfx('click');padRepeat=.22;}if(!nav)padRepeat=0;if(E('a')){MBTN()[mSel].click();}if(E('b'))menuBack();if(E('x'))openDress();}
+  else if(panel){if(E('b')){const back={jOpt:'jDoneHidden',lbPanel:'lbClose',dressPanel:'dressClose',optPanel:'optClose',packPanel:'packClose',lobbyPanel:'lobbyClose',results:online?'lobbyBtn':'menuBtn',pause:'resumeBtn'}[panel];if(!(panel==='results'&&$('results').classList.contains('reslock')))$(back).click();}
     if(panel==='pause'&&E('a'))$('resumeBtn').click();if(panel==='results'&&E('a')&&!$('nextBtn').classList.contains('hidden'))$('nextBtn').click();if(panel==='lobbyPanel'&&E('a'))$('lobbyReady').click();}
   else if(chestOpen){ // chest screen: stick/d-pad cursor, A take or put back, LB take everything, B exit
     if((nav||navX)&&padRepeat<=0){const total=CHEST_SLOTS+9,lo=chestOpen.inv?CHEST_SLOTS:0,n=total-lo;let c=chestCursor-lo;if(navX)c+=navX;if(nav)c+=nav*9;chestCursor=lo+((c%n)+n)%n;renderChest();sfx('click');padRepeat=.16;}if(!nav&&!navX)padRepeat=0;
@@ -4662,7 +4637,7 @@ function menuPrompts(){const list=[['A','Select',()=>{const b=MBTN()[mSel];b&&b.
 function showMini(on){if(on!==miniOpen)showBattleLogo(on);miniOpen=on;document.querySelectorAll('#menuList .lbtn').forEach(b=>b.classList.toggle('hidden',b.classList.contains('mini')!==on));setMSel(0);menuPrompts();}
 function menuBack(){if(miniOpen){sfx('click');showMini(false);}}
 $('miniBtn').addEventListener('click',()=>{sfx('click');showMini(true);});
-const startMode=m=>{SET.mode=m;store('bb_set',JSON.stringify(SET));writeOptions();showMini(false);startBattleSolo();};
+const startMode=m=>{sfx('click');openBC(m,'mini');};   // Battle / Battle Royale open the create screen (15j_battlecreate.js)
 $('battleBtn').addEventListener('click',()=>startMode('battle'));$('brBtn').addEventListener('click',()=>startMode('br'));
 // ---- Leaderboards (stats kept in this browser) ----
 function loadStats(){try{return JSON.parse(store('bb_stats')||'{}')||{};}catch(e){return {};}}
@@ -4723,15 +4698,8 @@ function pvGeom(slim){if(PV.geo[slim])return PV.geo[slim];const P={};const A=(n,
 function shadedSkin(key){const S0=skinTex(key);let c=PV.shade[key];if(c&&c.src===S0.img)return c;
   const mk=f=>{const cc=mkCanvas(S0.img.width,S0.img.height),g=cc.getContext('2d');g.drawImage(S0.img,0,0);if(f<1){g.globalCompositeOperation='source-atop';g.fillStyle=`rgba(0,0,0,${1-f})`;g.fillRect(0,0,cc.width,cc.height);}return cc;};
   return PV.shade[key]={src:S0.img,slim:S0.slim,l:[mk(1),mk(.8),mk(.6),mk(.5)]};}
-function drawPreview(){
-  const vis=(!$('menu').classList.contains('hidden')||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
-  const c=$('pvCanvas');const dpr=Math.min(2,devicePixelRatio||1);const cw=Math.round(c.clientWidth*dpr),ch=Math.round(c.clientHeight*dpr);if(!cw||!ch)return;if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
-  const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,ch);g.imageSmoothingEnabled=false;
-  const T=shadedSkin(mySkin),G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;const k=ch/2.05,ox=cw/2,oy=ch*.985;
-  const r=c.getBoundingClientRect();const mx=clamp((PV.mx-(r.left+r.width/2))/Math.max(300,innerWidth*.4),-1,1),my=clamp((PV.my-(r.top+r.height*.15))/Math.max(300,innerHeight*.5),-1,1);
-  const t=perfT,by=-.4+Math.sin(t*.4)*.06,ht=clamp(-mx*1.1-by,-1.1,1.1),pit=clamp(-my*.9,-.8,.8),idle=Math.sin(t*1.3)*.05,sw=Math.sin(t*1.3)*.04;
-  const base=M4.ry(by);const parts={head:chain(base,M4.tr(0,1.5,0),M4.ry(ht),M4.rx(-pit)),body:chain(base,M4.tr(0,1.5,0)),rarm:chain(base,M4.tr(5/16,22/16,0),M4.rx(sw),M4.rz(.05+idle)),
-    larm:chain(base,M4.tr(-5/16,22/16,0),M4.rx(-sw),M4.rz(-.05-idle)),rleg:chain(base,M4.tr(1.9/16,.75,0)),lleg:chain(base,M4.tr(-1.9/16,.75,0))};
+// a player model drawn into a 2D canvas: parts = matrices for head/body/arms/legs, k = pixels per block, (ox,oy) = feet
+function drawSkinModel(g,T,parts,k,ox,oy){const G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;
   const quads=[];
   for(const [pn,ov] of [['head','hat'],['body','jacket'],['rarm','rsleeve'],['larm','lsleeve'],['rleg','rpants'],['lleg','lpants']]){const m=parts[pn];const o0=xform(m,[0,0,0]);
     for(const name of [pn,ov]){const V=G[name];for(let q=0;q<V.length;q+=48){const vi=[0,1,2,5].map(j=>q+j*8);
@@ -4744,6 +4712,16 @@ function drawPreview(){
     const mxp=(A[0]+B[0]+C[0]+D[0])/4,myp=(A[1]+B[1]+C[1]+D[1])/4;const grow=p=>{const vx=p[0]-mxp,vy=p[1]-myp,l=Math.hypot(vx,vy)||1;return [p[0]+vx/l*.6,p[1]+vy/l*.6];};
     g.save();g.beginPath();const pts=[A,B,C,D].map(grow);g.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<4;i++)g.lineTo(pts[i][0],pts[i][1]);g.closePath();g.clip();
     g.setTransform(a,b,cc,d,e,f);const u0=Math.min(A[3],B[3]),v0=Math.min(A[4],D[4]);g.drawImage(T.l[li],u0,v0,Math.abs(du),Math.abs(dv),u0,v0,Math.abs(du),Math.abs(dv));g.restore();g.setTransform(1,0,0,1,0,0);}}
+function drawPreview(){
+  const vis=((!$('menu').classList.contains('hidden')&&!bcOpen())||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
+  const c=$('pvCanvas');const dpr=Math.min(2,devicePixelRatio||1);const cw=Math.round(c.clientWidth*dpr),ch=Math.round(c.clientHeight*dpr);if(!cw||!ch)return;if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
+  const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,ch);g.imageSmoothingEnabled=false;
+  const T=shadedSkin(mySkin),G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;const k=ch/2.05,ox=cw/2,oy=ch*.985;
+  const r=c.getBoundingClientRect();const mx=clamp((PV.mx-(r.left+r.width/2))/Math.max(300,innerWidth*.4),-1,1),my=clamp((PV.my-(r.top+r.height*.15))/Math.max(300,innerHeight*.5),-1,1);
+  const t=perfT,by=-.4+Math.sin(t*.4)*.06,ht=clamp(-mx*1.1-by,-1.1,1.1),pit=clamp(-my*.9,-.8,.8),idle=Math.sin(t*1.3)*.05,sw=Math.sin(t*1.3)*.04;
+  const base=M4.ry(by);const parts={head:chain(base,M4.tr(0,1.5,0),M4.ry(ht),M4.rx(-pit)),body:chain(base,M4.tr(0,1.5,0)),rarm:chain(base,M4.tr(5/16,22/16,0),M4.rx(sw),M4.rz(.05+idle)),
+    larm:chain(base,M4.tr(-5/16,22/16,0),M4.rx(-sw),M4.rz(-.05-idle)),rleg:chain(base,M4.tr(1.9/16,.75,0)),lleg:chain(base,M4.tr(-1.9/16,.75,0))};
+  drawSkinModel(g,T,parts,k,ox,oy);}
 // ---- per-frame hook ----
 let lceLastPad=null;
 function tickLCE(dt){tickTouch();tickCrosshair();tickRunParticles();if(lceLastPad!==padActive){lceLastPad=padActive;if(chestOpen)renderChest();}drawPreview();}
@@ -4752,7 +4730,7 @@ document.addEventListener('keydown',e=>{const inInput=e.target&&e.target.tagName
   if(!$('dressPanel').classList.contains('hidden')){if(e.code==='Escape'||(e.code==='Enter'&&inInput)){closeDress();e.preventDefault();}else if(!inInput&&(e.code==='ArrowLeft'||e.code==='ArrowRight')){cycleSkin(e.code==='ArrowLeft'?-1:1);e.preventDefault();}else if(!inInput&&e.code==='KeyX')$('skinFile').click();return;}
   if(inInput)return;
   if(!$('lbPanel').classList.contains('hidden')&&(e.code==='Escape'||e.code==='Backspace'||e.code==='Enter')){closeLB();return;}
-  if(!$('menu').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
+  if(!$('menu').classList.contains('hidden')&&!bcOpen()&&$('srvDlg').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
 refreshLCE();
 
 // the Battle mini games keep their own logo; the title screen shows Minecraft:realzanized
@@ -4802,7 +4780,7 @@ const lookEnd=e=>{const L=looks.get(e.pointerId);if(!L)return;clearTimeout(L.tim
   if(L.moved<10&&performance.now()-L.t<300){lmb=true;lmbEdge=true;setTimeout(()=>{lmb=false;},60);}};
 $('tLook').addEventListener('pointerup',lookEnd);$('tLook').addEventListener('pointercancel',lookEnd);
 // show the controls only while actually playing
-const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','onlinePanel','packPanel','dressPanel','lbPanel','loading'];
+const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading'];
 function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');});
   TUI.classList.toggle('hidden',!on);if(!on)return;
   const alive=player.alive,lobby=MATCH.state==='lobby';
@@ -4811,7 +4789,7 @@ function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.
 addEventListener('resize',applyTouchSetting);applyTouchSetting();
 
 // ================= Java-style Options screens (Options / Video Settings / Music & Sounds / Controls / Game Rules / Maps) =================
-let jPage='main',jReturn='menu';
+let jPage='main',jReturn='menu',jDirect=false;   // jDirect: Done goes straight back (opened on one page from elsewhere)
 const JPAGES={};
 function jLabel(b){const t=typeof b._label==='function'?b._label():b._label;b.textContent='';const off=b.classList.contains('off');
   const n=pxCanvas(t,GS,off?'#a0a0a0':'#e0e0e0'),s=pxCanvas(t,GS,off?'#a0a0a0':'#ffffa0');n.className='n';s.className='s';if(b._knob)b.appendChild(b._knob);b.append(n,s);b.setAttribute('aria-label',t);}
@@ -4871,9 +4849,9 @@ function jRender(){const P=JPAGES[jPage]();pxSet($('jTitle'),P.title,'#ffffff');
   if(P.items.length%2)P.items[P.items.length-1].classList.add('full');
   const f=$('jFoot');f.textContent='';f.appendChild(jBtn('Done',jBack,'wide'));const hb=document.createElement('button');hb.id='jDoneHidden';hb.className='hidden';hb.addEventListener('click',jBack);f.appendChild(hb);const first=g.querySelector('.jb:not(.off)');}
 function jOpen(page){jPage=page;jRender();}
-function jBack(){if(jPage==='main'||(jPage==='rules'&&jReturn==='lobbyPanel'))jClose();else jOpen('main');}
+function jBack(){if(jPage==='main'||jDirect||(jPage==='rules'&&jReturn==='lobbyPanel'))jClose();else jOpen('main');}
 function jClose(silent){hide('jOpt');if(!silent)show(jReturn);}
-function openOptions(ret,page){jReturn=ret||'menu';['menu','pause','lobbyPanel'].forEach(hide);show('jOpt');jOpen(page||'main');}
+function openOptions(ret,page){jReturn=ret||'menu';jDirect=false;['menu','pause','lobbyPanel'].forEach(hide);show('jOpt');jOpen(page||'main');}
 $('pauseOpts').addEventListener('click',()=>{sfx('click');openOptions('pause');});
 document.addEventListener('keydown',e=>{if($('jOpt').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;if(e.code==='Escape'||e.code==='Backspace'){jBack();e.preventDefault();}},true);
 // FPS counter
@@ -5968,11 +5946,12 @@ $('gmBtn').addEventListener('click',()=>{if(!canSwitchMode()||!player)return;sfx
 // The host is the server: it decides who may join (bans, whitelist), keeps every player's inventory and position in its world save,
 // and runs the commands (/list /msg /me /say /kick /ban /pardon /op /deop /whitelist /gamemode /defaultgamemode /tp /time /seed /stop).
 Object.assign(N,{KICK:45,CMD:46,SETGM:47,PSAVE:48,TPTO:49,SRVINFO:50});
-const SRV={list:[],sel:null,browsers:[],rooms:{},cfg:null,hosting:false,joined:null,info:null,players:{},amOp:false,sig:'',lastClick:{k:null,t:0},dlgOpen:null};
+const SRV={kind:'mp',list:[],sel:null,browsers:[],rooms:{},cfg:null,hosting:false,joined:null,info:null,players:{},amOp:false,sig:'',lastClick:{k:null,t:0},dlgOpen:null};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const homeRegion=()=>store('mcr_region')||'us';
-function srvLoad(){try{SRV.list=(JSON.parse(store('mcr_servers')||'[]')||[]).filter(s=>s&&s.addr);}catch(e){SRV.list=[];}}
-function srvSaveList(){store('mcr_servers',JSON.stringify(SRV.list.slice(0,60)));}
+const srvKey=()=>SRV.kind==='battle'?'mcr_bservers':'mcr_servers';
+function srvLoad(){try{SRV.list=(JSON.parse(store(srvKey())||'[]')||[]).filter(s=>s&&s.addr);}catch(e){SRV.list=[];}}
+function srvSaveList(){store(srvKey(),JSON.stringify(SRV.list.slice(0,60)));}
 // "name" or "name:region" (like host:port; no region means the Americas region)
 function parseAddr(s){s=String(s||'').trim().toLowerCase();let region='us';const m=s.match(/^(.*):([a-z]+)$/);if(m&&PHOTON_REGIONS.some(r=>r[0]===m[2])){s=m[1];region=m[2];}
   s=s.replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').slice(0,40);return s?{room:s,region,full:s+(region!=='us'?':'+region:'')}:null;}
@@ -5995,20 +5974,23 @@ function pingIcon(c,st,rtt){c.width=10;c.height=8;const g=c.getContext('2d');g.c
 function defaultIcon(){const c=mkCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const gi=ICONS['b'+B.GRASS];if(gi)g.drawImage(gi,0,0,32,32);else{g.fillStyle='#5a8a3a';g.fillRect(0,0,32,32);}return c.toDataURL();}
 
 // ---------------- the Multiplayer screen ----------------
-function openMP(){initAudio();sfx('click');readName();hide('menu');hide('discPanel');srvLoad();SRV.sel=null;SRV.sig='';show('mpPanel');$('phStatus').textContent='';
+// kind: 'mp' (Multiplayer: every server) or 'battle' (Mini Games > Play Online: Battle and Battle Royale servers, with their own saved list)
+function openMP(kind){SRV.kind=kind==='battle'?'battle':kind==='mp'?'mp':SRV.kind;initAudio();sfx('click');readName();hide('menu');hide('discPanel');srvLoad();
+  $('mpTitle').textContent=SRV.kind==='battle'?'Battle Servers':'Play Multiplayer';SRV.sel=null;SRV.sig='';show('mpPanel');$('phStatus').textContent='';
   if(!store('mcr_appid'))dlgPhoton(true);else srvBrowseStart();srvRender(true);}
 function srvRows(){const rows=SRV.list.map((s,i)=>({t:'saved',i,key:'s'+i,name:s.name,addr:s.addr}));
   const home=homeRegion(),R=SRV.rooms[home];const pub=[];
-  if(R&&!R.loading&&!R.err)for(const r of R.list){if(!r.p||!+r.p.pub)continue;const full=r.name+(home!=='us'?':'+home:'');if(SRV.list.some(s=>{const a=parseAddr(s.addr);return a&&a.room===r.name&&a.region===home;}))continue;pub.push({t:'pub',key:'p'+full,name:r.name,addr:full});}
+  if(R&&!R.loading&&!R.err)for(const r of R.list){if(!r.p||!+r.p.pub)continue;if(SRV.kind==='battle'&&r.p.m!=='battle')continue;const full=r.name+(home!=='us'?':'+home:'');if(SRV.list.some(s=>{const a=parseAddr(s.addr);return a&&a.room===r.name&&a.region===home;}))continue;pub.push({t:'pub',key:'p'+full,name:r.name,addr:full});}
   return {rows,pub};}
 function srvRender(force){const box=$('srvList');if(!box||$('mpPanel').classList.contains('hidden'))return;const {rows,pub}=srvRows();
   const sig=JSON.stringify([rows.map(r=>[r.key,r.name,r.addr,JSON.stringify(srvStatus(r.addr).r||srvStatus(r.addr).st)]),pub.map(r=>[r.key,JSON.stringify(srvStatus(r.addr).r)]),SRV.sel&&SRV.sel.key]);
   if(!force&&sig===SRV.sig){srvAnimate();return;}SRV.sig=sig;const top=box.scrollTop;box.textContent='';
   const add=r=>{const s=srvStatus(r.addr);const row=document.createElement('div');row.className='srow'+(SRV.sel&&SRV.sel.key===r.key?' sel':'');row.setAttribute('role','option');row.dataset.key=r.key;
     const img=document.createElement('img');img.alt='';const ic=s.r&&s.r.p&&s.r.p.ic;img.src=typeof ic==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(ic)?ic:(srvRender.defIc||(srvRender.defIc=defaultIcon()));
-    const info=document.createElement('div');info.className='sinfo';const nm=document.createElement('div');nm.className='sname';nm.textContent=r.t==='pub'&&s.r&&s.r.p&&s.r.p.m==='battle'?r.name+'  [Battle]':r.name;
+    const info=document.createElement('div');info.className='sinfo';const nm=document.createElement('div');nm.className='sname';nm.textContent=r.name;const bp=s.st==='on'&&s.r.p&&s.r.p.m==='battle'?s.r.p:null;
+    if(bp){const tag=document.createElement('span');tag.className='stag';tag.textContent=battleTag(bp);nm.appendChild(tag);}
     const motd=document.createElement('div');motd.className='smotd';
-    if(s.st==='on')motd.textContent=String(s.r.p&&s.r.p.motd||'A Minecraft:realzanized Server').slice(0,90);
+    if(s.st==='on')motd.textContent=String(s.r.p&&s.r.p.motd||(bp?'A Battle Server':'A Minecraft:realzanized Server')).slice(0,90);
     else if(s.st==='ping')motd.textContent='Pinging...';else if(s.st==='noapp'){motd.textContent='Set a Photon App ID in Photon Settings to ping servers';motd.classList.add('err');}
     else if(s.st==='bad'){motd.textContent='That server address is not valid';motd.classList.add('err');}
     else{motd.textContent=s.st==='err'?s.msg:'Can\'t connect to server';motd.classList.add('err');}
@@ -6022,10 +6004,10 @@ function srvRender(force){const box=$('srvList');if(!box||$('mpPanel').classList
       up.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,-1);});dn.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,1);});mv.append(up,dn);row.appendChild(mv);}
     row.addEventListener('click',()=>{const now=performance.now();const dbl=SRV.lastClick.k===r.key&&now-SRV.lastClick.t<450;SRV.lastClick={k:r.key,t:now};SRV.sel=r;sfx('click');if(dbl){srvJoinSelected();return;}srvRender(true);});
     box.appendChild(row);};
-  if(!rows.length){const d=document.createElement('div');d.className='rnote';d.textContent='No servers yet. Add Server saves one by its address; Direct Connection joins once; Host Server opens one of your worlds to other players.';box.appendChild(d);}
+  if(!rows.length){const d=document.createElement('div');d.className='rnote';d.textContent=SRV.kind==='battle'?'No Battle servers saved yet. Host Server starts a Battle or Battle Royale server; friends join it with its address, or from Battle servers online now.':'No servers yet. Add Server saves one by its address; Direct Connection joins once; Host Server opens one of your worlds to other players.';box.appendChild(d);}
   rows.forEach(add);
   const h=document.createElement('div');h.className='shead';const R=SRV.rooms[homeRegion()];
-  h.textContent='Servers online now ('+regionName(homeRegion())+')'+(!store('mcr_appid')?'':R&&R.loading?': searching...':R&&R.err?': '+R.err:pub.length?'':': none right now');box.appendChild(h);
+  h.textContent=(SRV.kind==='battle'?'Battle servers online now (':'Servers online now (')+regionName(homeRegion())+')'+(!store('mcr_appid')?'':R&&R.loading?': searching...':R&&R.err?': '+R.err:pub.length?'':': none right now');box.appendChild(h);
   pub.forEach(add);box.scrollTop=top;srvButtons();}
 function srvAnimate(){for(const c of document.querySelectorAll('#srvList canvas.sping'))if(c.dataset.st==='ping')pingIcon(c,'ping',0);}
 function srvButtons(){const s=SRV.sel;$('srvJoin').disabled=!s;$('srvEdit').disabled=!(s&&s.t==='saved');$('srvDel').disabled=!(s&&s.t==='saved');}
@@ -6038,10 +6020,10 @@ $('srvAdd').addEventListener('click',()=>{sfx('click');dlgEdit(-1);});
 $('srvEdit').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgEdit(SRV.sel.i);}});
 $('srvDel').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgDelete(SRV.sel.i);}});
 $('srvRefresh').addEventListener('click',()=>{sfx('click');SRV.sig='';srvBrowseStart();});
-$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}dlgHost('menu');});
+$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}if(SRV.kind==='battle'){srvBrowseStop();hide('mpPanel');openBC(SET.mode==='br'?'br':'battle','mp');return;}dlgHost('menu');});
 $('srvPhoton').addEventListener('click',()=>{sfx('click');dlgPhoton(false);});
-$('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');});
-$('discBack').addEventListener('click',()=>{hide('discPanel');openMP();});
+$('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');if(SRV.kind==='battle')showMini(true);});
+$('discBack').addEventListener('click',()=>{hide('discPanel');openMP(SRV.kind);});
 addEventListener('keydown',e=>{if($('mpPanel').classList.contains('hidden')||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='Enter'&&SRV.sel){e.preventDefault();srvJoinSelected();}
   else if(e.code==='ArrowDown'||e.code==='ArrowUp'){const {rows,pub}=srvRows();const all=rows.concat(pub);if(!all.length)return;let i=all.findIndex(r=>SRV.sel&&r.key===SRV.sel.key);i=Math.max(0,Math.min(all.length-1,i+(e.code==='ArrowDown'?1:-1)));SRV.sel=all[i];srvRender(true);e.preventDefault();}
@@ -6088,8 +6070,8 @@ function srvJoin(addr,label){const a=parseAddr(addr);if(!a){$('phStatus').textCo
   const n=new PhotonNet(app,a.region,'any',myName,{join:a.room});net=n;SRV.joined={addr:a.full,room:a.room,region:a.region,name:label||a.full,mode:null};
   dlgConnecting(a.full,()=>{if(net===n){net=null;n.leave();}SRV.joined=null;dlgClose();srvBrowseStart();});
   n.tr.onstate=s=>{if(net===n&&!n.ready)dlgStatus(s.replace(/([a-z])([A-Z])/g,'$1 $2')+'...');};
-  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);};n.onLeave=onMemberLeave;
-  n.onHostChange=()=>{if(net!==n)return;if(SRV.joined&&SRV.joined.mode==='survival'){srvDisconnect('Server closed','Connection Lost');return;}onHostChanged();};
+  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);srvUpdateProps();};n.onLeave=id=>{onMemberLeave(id);srvUpdateProps();};
+  n.onHostChange=()=>{if(net!==n)return;if(SRV.joined&&SRV.joined.mode==='survival'){srvDisconnect('Server closed','Connection Lost');return;}onHostChanged();if(n.isHost())srvTakeOver(n,a);};
   n.onFail=msg=>{if(net!==n)return;srvDisconnect(msg,online?'Connection Lost':'Failed to connect to the server');};
   n.onReady=()=>{if(net!==n)return;const props=n.tr.props?n.tr.props():{};const mode=props.m==='battle'?'battle':'survival';SRV.joined.mode=mode;
     if(n.isHost()){srvDisconnect('Server closed: nobody is hosting '+a.full+' any more.','Failed to connect to the server');return;}   // only us in there: the host is gone
@@ -6102,17 +6084,22 @@ function srvJoin(addr,label){const a=parseAddr(addr);if(!a){$('phStatus').textCo
 function srvDisconnect(msg,title){if(SRV.discing)return;SRV.discing=true;try{if(net){const n=net;try{if(online&&!n.isHost()&&survival()&&player)netSend(N.PSAVE,{d:playerSave(player)},'host');}catch(e){}net=null;setTimeout(()=>n.leave(),60);}online=false;SRV.joined=null;
     if(MATCH.state!=='menu')toMenu();dlgClose();hideOverlays();$('loading').classList.add('hidden');hide('menu');hide('mpPanel');
     $('discTitle').textContent=title||'Connection Lost';$('discMsg').textContent=msg||'';show('discPanel');document.exitPointerLock&&document.exitPointerLock();}finally{SRV.discing=false;}}
+// a Battle server whose host dropped (rather than quit) carries on: the next player in becomes its host, so the round isn't lost
+function srvTakeOver(n,a){const p=n.tr.props?n.tr.props():{};SRV.mode='battle';SRV.hosting=true;SRV.joined=null;SRV.icon=typeof p.ic==='string'?p.ic:'';
+  SRV.cfg=Object.assign(srvDefaults(true),{room:a.room,region:a.region,full:a.full,motd:String(p.motd||'A Battle Server').slice(0,80),max:+p.mx||16,pub:!!+p.pub,wl:false,white:[],bans:{},ops:[]});SRV.bsig='';
+  chatMsg('The host left. You are now hosting '+a.full+'.','#ffff55',false);srvUpdateProps();}
 function srvJoinedInfo(info){SRV.info=info||null;SRV.amOp=!!(info&&(info.ops||[]).includes(myName.toLowerCase()));}
 
 // ---------------- hosting ----------------
-function srvDefaults(){let c=null;try{c=JSON.parse(store('mcr_lastsrv')||'null');}catch(e){}
-  return Object.assign({room:'realz-'+Math.random().toString(36).slice(2,7),region:homeRegion(),motd:'A Minecraft:realzanized Server',max:8,gm:'survival',pvp:true,pub:true,wl:false,white:[],ops:[],bans:{}},c||{},{white:(c&&c.white)||[],ops:(c&&c.ops)||[],bans:(c&&c.bans)||{}});}
+function srvDefaults(battle){let c=null;try{c=JSON.parse(store(battle?'mcr_lastbsrv':'mcr_lastsrv')||'null');}catch(e){}
+  return Object.assign({room:(battle?'battle-':'realz-')+Math.random().toString(36).slice(2,7),region:homeRegion(),motd:battle?'A Battle Server':'A Minecraft:realzanized Server',max:battle?16:8,gm:'survival',pvp:true,pub:true,wl:false,white:[],ops:[],bans:{}},c||{},{white:(c&&c.white)||[],ops:(c&&c.ops)||[],bans:(c&&c.bans)||{}});}
 function srvFullAddr(c){return c.room+(c.region!=='us'?':'+c.region:'');}
-// where: 'menu' (Host Server: pick a world or the Battle mini game), 'pause' (Open to Server), 'edit' (Server Settings while hosting)
-function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.assign(srvDefaults(),(loadWorldData(SURV.meta.id)||{}).srv||{},{gm:player&&player.gm||'survival'}):srvDefaults();
+// where: 'menu' (Host Server: pick a world or a mini game), 'battle' (Host Server on the Battle Servers screen), 'pause' (Open to Server), 'edit' (Server Settings while hosting)
+function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.assign(srvDefaults(),(loadWorldData(SURV.meta.id)||{}).srv||{},{gm:player&&player.gm||'survival'}):srvDefaults(where==='battle');
   const worlds=worldList();const live=where==='edit';
   dlgShow(`<h3>${where==='edit'?'Server Settings':where==='pause'?'Open to Server':'Host a Server'}</h3><div class="form">
-    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option></select>
+    ${where==='battle'?`<label for="hs_game">Game</label><select id="hs_game"><option value="battle">Battle</option><option value="br">Battle Royale</option></select>`:''}
+    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option><option value="br">Battle Royale mini game</option></select>
     <label for="hs_world" class="hs_sv">World</label><select id="hs_world" class="hs_sv">${worlds.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}${w.mode==='creative'?' (Creative)':''}</option>`).join('')}<option value="__new">Create a new world</option></select>`:''}
     <label for="hs_room">Server Address</label><input id="hs_room" type="text" maxlength="40" spellcheck="false" autocomplete="off" ${live?'disabled':''}>
     <label for="hs_reg">Region</label><select id="hs_reg" ${live?'disabled':''}>${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select>
@@ -6126,21 +6113,29 @@ function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.
     <div class="err" id="hs_err"></div>
     <div class="row"><button class="btn small" data-ok id="hs_ok">${live?'Done':'Start Server'}</button>${live?'<button class="btn small" id="hs_stop">Stop Server</button>':''}<button class="btn small" data-cancel id="hs_cancel">Cancel</button></div>`,b=>{
     const q=s=>b.querySelector(s);q('#hs_room').value=cur.room;q('#hs_reg').value=cur.region||'us';q('#hs_motd').value=cur.motd;q('#hs_max').value=String(cur.max);q('#hs_gm').value=cur.gm;q('#hs_pvp').value=cur.pvp===false?'0':'1';q('#hs_pub').value=cur.pub===false?'0':'1';q('#hs_wl').value=cur.wl?'1':'0';
-    if(q('#hs_world')&&SURV.lastWorld)q('#hs_world').value=SURV.lastWorld;
+    if(q('#hs_world')&&SURV.lastWorld)q('#hs_world').value=SURV.lastWorld;if(where==='battle')q('#hs_game').value=SET.mode==='br'?'br':'battle';
     const upd=()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);q('#hs_addr').textContent=a?a.full:'(type an address)';q('#hs_ok').disabled=!a;
-      const sv=!q('#hs_game')||q('#hs_game').value==='survival';for(const el of b.querySelectorAll('.hs_sv'))el.style.display=sv?'':'none';};
+      const sv=q('#hs_game')?q('#hs_game').value==='survival':!(live&&SRV.mode==='battle');for(const el of b.querySelectorAll('.hs_sv'))el.style.display=sv?'':'none';
+      const m=q('#hs_motd'),dm=['A Minecraft:realzanized Server','A Battle Server'];if(q('#hs_game')&&dm.includes(m.value))m.value=dm[sv?0:1];};
     upd();for(const s of ['#hs_room','#hs_reg','#hs_game'])if(q(s))q(s).addEventListener(s==='#hs_room'?'input':'change',upd);
     q('#hs_cancel').addEventListener('click',()=>{sfx('click');dlgClose();if(where!=='menu')$('resumeBtn').click();});
     if(q('#hs_stop'))q('#hs_stop').addEventListener('click',()=>{sfx('click');dlgClose();srvStop('Server closed');$('resumeBtn').click();});
     q('#hs_ok').addEventListener('click',()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);if(!a)return;
       const cfg=Object.assign({},cur,{room:a.room,region:a.region,full:a.full,motd:q('#hs_motd').value.trim().slice(0,80)||'A Minecraft:realzanized Server',max:+q('#hs_max').value,gm:q('#hs_gm').value,pvp:q('#hs_pvp').value==='1',pub:q('#hs_pub').value==='1',wl:q('#hs_wl').value==='1'});
-      if(live){SRV.cfg=cfg;srvCfgChanged();dlgClose();$('resumeBtn').click();return;}
-      const game=q('#hs_game')?q('#hs_game').value:'survival';const wid=q('#hs_world')?q('#hs_world').value:null;
+      if(live){SRV.cfg=cfg;srvCfgChanged();dlgClose();if(MATCH.mode==='survival')$('resumeBtn').click();else{hide('pause');if(MATCH.state==='lobby')openLobbyPanel();else lockPointer();}return;}
+      const game=q('#hs_game')?q('#hs_game').value:where==='battle'?'battle':'survival';const wid=q('#hs_world')?q('#hs_world').value:null;
       q('#hs_ok').disabled=true;q('#hs_err').textContent='Starting the server...';srvStart(cfg,where,game,wid,msg=>{q('#hs_ok').disabled=false;q('#hs_err').textContent=msg;});});},true);}
 async function makeIcon(url){if(!url)return null;try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});const c=mkCanvas(40,40),g=c.getContext('2d');const s=Math.min(img.width,img.height);
     g.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,40,40);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
-function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];return {m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||''};}
+function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];const p={m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||'',mx:c.max};
+  if(p.m==='battle'){p.bm=SET.mode==='br'?'br':'battle';p.cp=SET.comp?1:0;p.st=MATCH.state==='play'?'game':MATCH.state==='over'?'over':'lobby';p.mp=p.bm==='br'?'':String((MAPS.find(m=>m.id===(MATCH.state==='lobby'?nextMapId():MATCH.map))||{}).name||'');}
+  return p;}
+// what a Battle server's row says about it: mode, map, lobby or mid-round
+function battleTag(p){return '  ['+(p.bm==='br'?'Battle Royale':'Battle')+(+p.cp?' · Competitive':'')+(p.mp?' · '+p.mp:'')+' · '+(p.st==='game'?'In game':p.st==='over'?'Round over':'In lobby')+']';}
+// a hosted Battle server keeps its listing current as rounds start and end
+setInterval(()=>{if(!SRV.hosting||SRV.mode!=='battle'||!net||!SRV.cfg)return;const p=srvProps();const sig=[p.bm,p.cp,p.st,p.mp,p.pl].join('|');if(sig!==SRV.bsig){SRV.bsig=sig;net.tr.setProps&&net.tr.setProps(p);}},1500);
 async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');if(!app){onErr('Set your Photon App ID first (Photon Settings).');return;}readName();readOptions();
+  const battle=game==='battle'||game==='br';if(battle){SET.mode=game;store('bb_set',JSON.stringify(SET));writeOptions();game='battle';}
   let meta=null;if(game==='survival'){meta=where==='pause'?SURV.meta:wid&&wid!=='__new'?worldList().find(w=>w.id===wid):null;if(!meta&&where!=='pause')meta=newWorldMeta('Server World','','survival');SURV.lastWorld=meta&&meta.id;}
   SRV.icon=await makeIcon(meta&&meta.thumb)||'';SRV.mode=game;SRV.cfg=cfg;
   const n=new PhotonNet(app,cfg.region,game,myName,{create:{name:cfg.room,max:cfg.max,props:srvProps()}});
@@ -6150,15 +6145,15 @@ async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');i
   n.onFail=msg=>{if(net!==n&&n.ready)return;if(!n.ready){SRV.cfg=null;onErr(msg);return;}
     // lost Photon while hosting: the world carries on, offline
     net=null;online=false;SRV.hosting=false;try{n.leave();}catch(e){}if(survival()){if(player)player.id='p1';chatMsg('The server stopped: '+msg+' You are playing offline now.','#ff5555',false);}else{toMenu();srvDisconnect(msg,'Connection Lost');}};
-  n.onReady=()=>{store('mcr_lastsrv',JSON.stringify(Object.assign({},cfg,{full:undefined})));net=n;online=true;SRV.hosting=true;SRV.joined=null;srvBrowseStop();
-    if(game==='battle'){dlgClose();hide('mpPanel');player=null;ents=[];enterLobby();chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);srvUpdateProps();return;}
+  n.onReady=()=>{store(battle?'mcr_lastbsrv':'mcr_lastsrv',JSON.stringify(Object.assign({},cfg,{full:undefined})));net=n;online=true;SRV.hosting=true;SRV.joined=null;srvBrowseStop();
+    if(game==='battle'){dlgClose();hide('mpPanel');player=null;ents=[];MATCH.offlineLobby=false;enterLobby();chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);srvUpdateProps();return;}
     SRV.players=Object.assign({},(loadWorldData(meta.id)||{}).others||{});
     if(where==='pause'){const old=player.id;player.id='p'+n.myId;for(const m of mobs)if(m.owner===old)m.owner=player.id;dlgClose();$('resumeBtn').click();}
     else{dlgClose();hide('mpPanel');playWorld(meta,true);}
     chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);SURV.toast={t:5,txt:'Server open: '+cfg.full};srvUpdateProps();saveWorldSoon();};}
 function saveWorldSoon(){setTimeout(()=>{if(survival()&&SRV.hosting)saveWorld();},1500);}
 function srvUpdateProps(){if(!SRV.hosting||!net||!net.tr.setProps||!SRV.cfg)return;net.tr.setProps(srvProps());}
-function srvCfgChanged(){if(!SRV.cfg)return;store('mcr_lastsrv',JSON.stringify(SRV.cfg));srvUpdateProps();
+function srvCfgChanged(){if(!SRV.cfg)return;store(SRV.mode==='battle'?'mcr_lastbsrv':'mcr_lastsrv',JSON.stringify(SRV.cfg));srvUpdateProps();
   netSend(N.SRVINFO,{pvp:SRV.cfg.pvp,motd:SRV.cfg.motd,ops:SRV.cfg.ops,addr:SRV.cfg.full});if(survival())saveWorld();}
 // stop hosting: everyone else gets "Server closed"; the host keeps playing offline
 function srvStop(why){if(!SRV.hosting||!net)return;netSend(N.KICK,{all:1,r:why||'Server closed'});const n=net;setTimeout(()=>{try{n.leave();}catch(e){}},300);net=null;online=false;SRV.hosting=false;
@@ -6269,6 +6264,134 @@ function serverCmd(S,text){const a=text.replace(/^\//,'').trim().split(/\s+/);co
     return usage('/whitelist <on|off|list|add|remove> [player]');}
   case 'stop':{if(!(S.local&&SRV.hosting))return reply(SRV.hosting||!online?'Only the host can stop the server.':'You can only stop a server you are hosting.','#ff5555');reply('Stopping the server');srvStop('Server closed');return;}
   default:reply('Unknown command. Type /help for a list of commands.','#ff5555');}}
+
+// ================= Battle creator: Mini Games > Battle / Battle Royale (and Host Server on the Battle Servers screen) =================
+// A console-style create screen: tick boxes on the left, a description of whatever is selected on the right, then Create Casual or
+// Create Competitive. Online, the game is a Photon server (15h_servers.js); unticking Online Game plays offline with bots.
+const BC={mode:'battle',online:false,pub:true,invite:false,sel:0,ret:'mini',rep:0,snapT:-9,status:'',err:false,busy:false,cfg:null};
+const bcOpen=()=>{const p=$('bcPanel');return !!p&&!p.classList.contains('hidden');};
+const BC_ROUND={battle:[['Short',300],['Normal',600],['Long',900]],br:[['Short',.2],['Normal',.4],['Long',1]]};
+function bcRoundIdx(){const L=BC_ROUND[BC.mode],v=BC.mode==='br'?SET.brLen:SET.roundLen;let b=0;for(let i=1;i<L.length;i++)if(Math.abs(L[i][1]-v)<Math.abs(L[b][1]-v))b=i;return b;}
+function bcSaveSet(){store('bb_set',JSON.stringify(SET));writeOptions();}
+const BC_DESC={
+  mode:'Switch between Battle, rounds on the arena maps, and Battle Royale, one big island with a closing border.',
+  central:'When ticked, everyone starts the round around the middle of the arena instead of spread out around it.',
+  centralBR:'Battle Royale always spreads everyone out, so this only changes Battle.',
+  online:'When ticked, your game is a server that other players join with its address. Untick it to play offline against bots.',
+  pub:'When ticked, your server is listed in Battle servers online now, so anyone can find and join it. Untick it and only people you give the address to can join.',
+  fof:'Photon servers have no friends lists, so this isn\'t available. Use Invite Only to choose exactly who can join.',
+  invite:'When ticked, only the players you name in Server Settings can join. You and your operators always can.',
+  maps:'Pick the maps the game goes through, one after another.',
+  mapsBR:'Battle Royale is always played on its own island.',
+  server:'The server address, region, message of the day, player limit and invite list.',
+  round:'How long each round lasts.',
+  casual:'Create a Casual game: everyone keeps their own skin, and spectators fly around as bats.',
+  comp:'Create a Competitive game: skins that could give an advantage, such as see-through ones, are swapped for plain ones, and spectators are invisible to the players still fighting.'};
+function bcRows(){const br=BC.mode==='br',on=BC.online;
+  return [{k:'mode',t:'head'},
+    {k:'central',t:'chk',label:'Central Spawn',v:()=>SET.central&&!br,off:br,desc:br?'centralBR':'central',fn:()=>{SET.central=!SET.central;bcSaveSet();}},
+    {k:'online',t:'chk',label:'Online Game',v:()=>on,fn:()=>{BC.online=!BC.online;if(BC.online&&!store('mcr_appid'))dlgPhoton(true);}},
+    {k:'pub',t:'chk',label:'Public Game',v:()=>on&&BC.pub&&!BC.invite,off:!on||BC.invite,fn:()=>{BC.pub=!BC.pub;}},
+    {k:'fof',t:'chk',label:'Allow friends of friends',v:()=>false,off:true},
+    {k:'invite',t:'chk',label:'Invite Only',v:()=>on&&BC.invite,off:!on,fn:()=>{BC.invite=!BC.invite;if(BC.invite&&!(bcCfg().white||[]).length)bcServerDlg();}},
+    {k:'maps',t:'btn',label:'Select Maps',off:br,desc:br?'mapsBR':'maps',fn:()=>{openOptions('menu','maps');jDirect=true;}},
+    {k:'server',t:'btn',label:'Server Settings',off:!on,fn:bcServerDlg},
+    {k:'round',t:'slider'},
+    {k:'casual',t:'btn',label:'Create Casual',fn:()=>bcCreate(false)},
+    {k:'comp',t:'btn',label:'Create Competitive',fn:()=>bcCreate(true)}];}
+function bcCfg(){if(!BC.cfg)BC.cfg=srvDefaults(true);return BC.cfg;}
+// ---- open / close ----
+function openBC(mode,ret){initAudio();readName();BC.mode=mode==='br'?'br':'battle';BC.ret=ret||'mini';BC.cfg=srvDefaults(true);BC.pub=BC.cfg.pub!==false;BC.invite=!!BC.cfg.wl;
+  BC.online=ret==='mp'||!!store('mcr_appid');BC.status='';BC.err=false;BC.busy=false;
+  show('menu');if(!miniOpen)showMini(true);$('menuList').classList.add('hidden');show('bcPanel');$('splash').style.visibility='hidden';bcSnap();
+  const rows=bcRows();BC.sel=rows.findIndex(r=>r.k==='casual');bcRender();
+  setPrompts('prompts',[['A','Select',bcActivate],['B','Back',bcBack]]);}
+function bcReset(){hide('bcPanel');$('splash').style.visibility='';$('menuList').classList.remove('hidden');BC.busy=false;}
+function bcBack(){sfx('click');bcReset();if(BC.ret==='mp'){hide('menu');openMP('battle');return;}showMini(true);}
+// ---- drawing ----
+const bcText=(t,col,sh)=>pxCanvas(t,GS,col,!!sh);
+function bcWrap(el,text,col,maxW){el.textContent='';const words=String(text).split(' ');let line='';
+  const push=l=>{const c=pxCanvas(l,GS,col,true);c.style.display='block';el.appendChild(c);};
+  for(const w of words){const t=line?line+' '+w:w;if(line&&pxCanvas(t,GS,col,true).width>maxW){push(line);line=w;}else line=t;}if(line)push(line);}
+function bcCheck(){const S=GS,c=mkCanvas(11*S,11*S),g=c.getContext('2d');const px=(x,y,col)=>{g.fillStyle=col;g.fillRect(x*S,y*S,S,S);};
+  const pts=[[1,5],[2,6],[3,7],[4,6],[5,5],[6,4],[7,3],[8,2],[9,1]];   // a tick, two pixels thick with a dark edge, poking out of the top of the box
+  for(const [x,y] of pts){px(x,y+2,'#3b3300');px(x+1,y+2,'#3b3300');}for(const [x,y] of pts){px(x,y,'#fff35c');px(x,y+1,'#e0be14');}return c;}
+function bcSwords(){const S=GS,c=mkCanvas(22*S,22*S),g=c.getContext('2d');g.imageSmoothingEnabled=false;const ic=ICONS[BC.mode==='br'?'bow':'diamond_sword'];
+  if(ic){g.drawImage(ic,2*S,2*S,18*S,18*S);if(BC.mode!=='br'){g.save();g.translate(22*S,0);g.scale(-1,1);g.drawImage(ic,2*S,2*S,18*S,18*S);g.restore();}}return c;}
+function bcRender(){const P=$('bcPanel');if(!P)return;const L=$('bcLeft');L.textContent='';const rows=bcRows();
+  if(BC.sel<0||BC.sel>=rows.length||rows[BC.sel].off)BC.sel=rows.findIndex(r=>!r.off&&r.t!=='chk'&&r.k==='casual');
+  rows.forEach((r,i)=>{let el;const selC=i===BC.sel;
+    if(r.t==='head'){el=document.createElement('div');el.className='bcHead';const f=document.createElement('div');f.className='bcIcon';f.appendChild(bcSwords());
+      const lab=document.createElement('div');lab.className='bcHeadT';lab.appendChild(bcText(BC.mode==='br'?'Battle Royale':'Battle',selC?'#ffff55':'#404040',selC));el.append(f,lab);}
+    else if(r.t==='chk'){el=document.createElement('div');el.className='bcRow'+(r.off?' off':'');const box=document.createElement('span');box.className='bcBox';if(r.v())box.appendChild(bcCheck());
+      el.append(box,bcText(r.label,r.off?'#a0a0a0':selC?'#ffff55':'#404040',selC&&!r.off));}
+    else if(r.t==='btn'){el=document.createElement('button');el.className='jb bcBtn'+(r.off?' off':'')+(selC?' sel':'');el._label=r.label;jLabel(el);}
+    else if(r.t==='slider'){const L2=BC_ROUND[BC.mode];el=jSlider(()=>'Round Length: '+L2[bcRoundIdx()][0],()=>bcRoundIdx()/(L2.length-1),v=>{const i=Math.round(v*(L2.length-1));if(BC.mode==='br')SET.brLen=L2[i][1];else SET.roundLen=L2[i][1];},L2.length-1,()=>{bcSaveSet();});
+      el.classList.add('bcBtn');if(selC)el.classList.add('sel');}
+    el.dataset.i=i;el.setAttribute('role',r.t==='chk'?'checkbox':'button');if(r.t==='chk')el.setAttribute('aria-checked',String(!!r.v()));if(r.off)el.setAttribute('aria-disabled','true');
+    el.addEventListener('mouseenter',()=>{if(BC.sel!==i&&!r.off){BC.sel=i;bcRender();}});
+    if(r.t!=='slider')el.addEventListener('click',e=>{e.stopPropagation();if(r.off)return;BC.sel=i;bcActivate();});else el.addEventListener('pointerdown',()=>{BC.sel=i;});
+    L.appendChild(el);});
+  const st=document.createElement('div');st.className='bcStatus';if(BC.status)bcWrap(st,BC.status,BC.err?'#ff6060':'#404040',200*GS);L.appendChild(st);
+  const r=rows[BC.sel]||rows[0];bcWrap($('bcDesc'),BC_DESC[r.desc||r.k]||'',  '#ffffff',122*GS);}
+// ---- the picture under the description (battle_art.jpg next to index.html) ----
+const BC_ART=new Image();BC_ART.onload=()=>bcSnap();BC_ART.src='battle_art.jpg';
+function bcSnap(){const c=$('bcImg');if(!c)return;const g=c.getContext('2d');g.imageSmoothingEnabled=true;
+  if(BC_ART.complete&&BC_ART.naturalWidth){g.drawImage(BC_ART,0,0,c.width,c.height);}else{g.fillStyle='#2a3a4a';g.fillRect(0,0,c.width,c.height);}}
+// the menu rescales with the window: redraw the creator at the new size and keep its button prompts
+{const rl=refreshLCE;refreshLCE=function(){const r=rl.apply(this,arguments);if(bcOpen()){bcRender();setPrompts('prompts',[['A','Select',bcActivate],['B','Back',bcBack]]);}return r;};}
+// ---- input ----
+function bcMove(d){const rows=bcRows();let i=BC.sel;for(let n=0;n<rows.length;n++){i=(i+d+rows.length)%rows.length;if(!rows[i].off)break;}if(i!==BC.sel){BC.sel=i;sfx('click');bcRender();}}
+function bcActivate(){const r=bcRows()[BC.sel];if(!r||r.off||BC.busy)return;if(r.t==='head'){sfx('click');BC.mode=BC.mode==='br'?'battle':'br';bcRender();return;}
+  if(r.t==='slider')return;sfx('click');r.fn&&r.fn();if(bcOpen())bcRender();}
+function bcSide(d){const r=bcRows()[BC.sel];if(!r)return;if(r.t==='head'){bcActivate();return;}if(r.t!=='slider')return;const L=BC_ROUND[BC.mode];const i=clamp(bcRoundIdx()+d,0,L.length-1);
+  if(BC.mode==='br')SET.brLen=L[i][1];else SET.roundLen=L[i][1];bcSaveSet();sfx('click');bcRender();}
+const bcFree=()=>bcOpen()&&$('srvDlg').classList.contains('hidden')&&$('jOpt').classList.contains('hidden')&&$('dressPanel').classList.contains('hidden');
+document.addEventListener('keydown',e=>{if(!bcFree()||(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)))return;const c=e.code;
+  if(c==='ArrowDown'||c==='KeyS'){bcMove(1);e.preventDefault();}else if(c==='ArrowUp'||c==='KeyW'){bcMove(-1);e.preventDefault();}
+  else if(c==='ArrowLeft'||c==='KeyA'||c==='ArrowRight'||c==='KeyD'){bcSide(c==='ArrowLeft'||c==='KeyA'?-1:1);e.preventDefault();}
+  else if(c==='Enter'||c==='Space'){bcActivate();e.preventDefault();}else if(c==='Escape'||c==='Backspace'){bcBack();e.preventDefault();}
+  e.stopImmediatePropagation();},true);
+function bcPad(E,nav,navX,dt){if(!bcFree())return;BC.rep-=dt;if((nav||navX)&&BC.rep<=0){if(nav)bcMove(nav);else bcSide(navX);BC.rep=.22;}if(!nav&&!navX)BC.rep=0;if(E('a'))bcActivate();if(E('b'))bcBack();}
+// ---- Server Settings (address, region, MOTD, players, invite list) ----
+function bcServerDlg(){const cur=bcCfg();
+  dlgShow(`<h3>Server Settings</h3><div class="form">
+    <label for="bs_room">Server Address</label><input id="bs_room" type="text" maxlength="40" spellcheck="false" autocomplete="off">
+    <label for="bs_reg">Region</label><select id="bs_reg">${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select>
+    <label for="bs_motd">MOTD</label><input id="bs_motd" type="text" maxlength="80" autocomplete="off">
+    <label for="bs_max">Max Players</label><select id="bs_max">${[2,3,4,5,6,8,10,12,16,20].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+    <label for="bs_inv">Invited Players</label><input id="bs_inv" type="text" maxlength="400" spellcheck="false" autocomplete="off" placeholder="names, separated by commas"></div>
+    <div class="note">Players join with this address: <span class="addr" id="bs_addr"></span>. Invited players only matter when Invite Only is ticked.</div>
+    <div class="row"><button class="btn small" data-ok id="bs_ok">Done</button><button class="btn small" data-cancel id="bs_cancel">Cancel</button></div>`,b=>{
+    const q=s=>b.querySelector(s);q('#bs_room').value=cur.room;q('#bs_reg').value=cur.region||'us';q('#bs_motd').value=cur.motd;q('#bs_max').value=String(cur.max);q('#bs_inv').value=(cur.white||[]).join(', ');
+    const upd=()=>{const a=parseAddr(q('#bs_room').value+':'+q('#bs_reg').value);q('#bs_addr').textContent=a?a.full:'(type an address)';q('#bs_ok').disabled=!a;};
+    upd();q('#bs_room').addEventListener('input',upd);q('#bs_reg').addEventListener('change',upd);
+    q('#bs_cancel').addEventListener('click',()=>{sfx('click');dlgClose();bcRender();});
+    q('#bs_ok').addEventListener('click',()=>{const a=parseAddr(q('#bs_room').value+':'+q('#bs_reg').value);if(!a)return;sfx('click');
+      Object.assign(cur,{room:a.room,region:a.region,full:a.full,motd:q('#bs_motd').value.trim().slice(0,80)||'A Battle Server',max:+q('#bs_max').value,
+        white:[...new Set(q('#bs_inv').value.split(/[,\s]+/).map(s=>s.trim().toLowerCase()).filter(Boolean))].slice(0,50)});dlgClose();bcRender();});});}
+// ---- Create Casual / Create Competitive ----
+function bcCreate(comp){if(BC.busy)return;SET.mode=BC.mode;SET.comp=!!comp;bcSaveSet();
+  if(!BC.online){bcReset();try{srvBrowseStop();}catch(e){}showMini(false);startBattleSolo();return;}
+  if(!store('mcr_appid')){BC.status='Set your Photon App ID first, then press Create again.';BC.err=true;bcRender();dlgPhoton(true);return;}
+  const c=bcCfg(),a=parseAddr(c.room+':'+(c.region||'us'));if(!a){BC.status='Pick a server address in Server Settings.';BC.err=true;bcRender();return;}
+  const cfg=Object.assign({},c,{room:a.room,region:a.region,full:a.full,pub:BC.pub&&!BC.invite,wl:BC.invite,white:c.white||[],bans:c.bans||{},ops:c.ops||[]});
+  BC.busy=true;BC.status='Starting the server '+a.full+'...';BC.err=false;bcRender();try{srvBrowseStop();}catch(e){}
+  srvStart(cfg,'battle',BC.mode,null,msg=>{BC.busy=false;BC.status=msg;BC.err=true;if(bcOpen())bcRender();});}
+// the server started (or the game left the menu some other way): the creator closes
+{const tm=toMenu;toMenu=function(){bcReset();return tm.apply(this,arguments);};}
+setInterval(()=>{if(bcOpen()&&MATCH.state!=='menu')bcReset();},250);
+// ---- Competitive rules ----
+// skins with see-through parts on the body (they make a player harder to see) are swapped for a plain one
+const FAIR={};
+function skinFair(key){if(FAIR[key]!=null)return FAIR[key];if(key.startsWith('gen:'))return FAIR[key]=true;const T=skinTex(key);if(!T||!T.img||key.startsWith('?'))return true;
+  try{const I=T.img,s=I.width/64,c=mkCanvas(I.width,I.height),g=c.getContext('2d');g.drawImage(I,0,0);const d=g.getImageData(0,0,I.width,I.height).data;
+    const boxes=[[0,8,32,8],[0,20,56,12]].concat(I.height>=I.width?[[16,52,32,12]]:[]);let holes=0;
+    for(const [x0,y0,w,h] of boxes)for(let y=y0*s;y<(y0+h)*s;y++)for(let x=x0*s;x<(x0+w)*s;x++)if(d[(y*I.width+x)*4+3]<128)holes++;
+    return FAIR[key]=holes<=4*s*s;}catch(e){return FAIR[key]=true;}}
+function fairSkin(e){if(!SET.comp||MATCH.state==='menu'||!e||e.kind!=='player'||skinFair(e.skin||''))return e.skin;return 'gen:'+e.name;}
+// spectators are invisible (and silent) to the players still fighting
+const compHidesBats=()=>SET.comp&&MATCH.state==='play'&&player&&player.alive;
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.
