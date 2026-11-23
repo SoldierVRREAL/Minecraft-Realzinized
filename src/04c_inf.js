@@ -80,7 +80,7 @@ function genChunk(cx,cz){
   // terrain columns
   for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const c=colInfo(x,z);const k=lz*16+lx;GH[k]=c.h;GB[k]=c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;
     const D=BIOMES[c.b];const h=Math.min(WY-2,c.h);let top=D.top,fill=D.fill||B.DIRT;const n=hash2(x,z,S+31);
-    if(c.under){top=c.b===BIO.ocean?(fbm(x/20,z/20,S+32,2)<.45?B.GRAVEL:B.SAND):(n<.5?B.DIRT:B.GRAVEL);fill=top===B.GRAVEL?B.GRAVEL:top===B.SAND?B.SAND:B.DIRT;}
+    if(c.under){top=c.b===BIO.ocean?(fbm(x/20,z/20,S+32,2)<.45?B.GRAVEL:B.SAND):(n<.5?B.DIRT:B.GRAVEL);fill=top===B.GRAVEL?B.GRAVEL:top===B.SAND?B.SAND:B.DIRT;if(fbm(x/9,z/9,S+37,2)>.7)top=B.CLAY;}
     else if(c.beach){top=B.SAND;fill=B.SAND;}
     else if(D.k==='sakura'&&fbm(x/14,z/14,S+33,2)<.38)top=B.GRASS;
     else if(D.k==='redwood'&&fbm(x/12,z/12,S+34,2)<.42)top=B.GRASS;
@@ -97,7 +97,7 @@ function genChunk(cx,cz){
   // ground cover: grass tufts, flowers, petals, glowing plants...
   for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const k=lz*16+lx;if(GU[k]||GBE[k])continue;const x=x0+lx,z=z0+lz,h=GH[k];if(h+1>=WY)continue;const below=world[idx(x,h,z)];
     if(!below||!BD[below].solid||world[idx(x,h+1,z)])continue;const r=hash2(x,z,S+40);const D=BIOMES[GB[k]];let p=0;
-    switch(D.k){case 'plains':p=r<.22?B.TGRASS:r<.245?B.POPPY:r<.27?B.DANDELION:0;break;case 'forest':p=r<.14?B.TGRASS:r<.18?B.FERN:r<.19?B.POPPY:0;break;
+    switch(D.k){case 'plains':p=r<.22?B.TGRASS:r<.245?B.POPPY:r<.27?B.DANDELION:r<.2718?B.PUMPKIN:0;break;case 'forest':p=r<.14?B.TGRASS:r<.18?B.FERN:r<.19?B.POPPY:r<.1915?B.MELON:r<.1925?B.PUMPKIN:0;break;
       case 'sakura':p=r<.2?B.PETALS:r<.27?B.TGRASS:r<.28?B.POPPY:0;break;case 'crystal':p=r<.035?B.CRYSTAL_CLUSTER:r<.1?B.TGRASS:0;break;
       case 'redwood':p=r<.22?B.FERN:r<.3?B.TGRASS:0;break;case 'ashen':p=below===B.ASH&&r<.03?B.DEAD_BUSH:0;break;
       case 'mushroom':p=r<.06?B.GLOW_PLANT:r<.11?B.GLOW_SHROOM:0;break;case 'frozen':p=r<.04?B.FERN:0;break;}
@@ -141,7 +141,7 @@ function carveCaves(cx,cz){const x0=cx*16,z0=cz*16,S=WSEED;
 }
 // ore veins: [block, tries per chunk, min y, max y, vein size, biome bonus]
 const ORES=[[B.COAL_ORE,18,6,110,9],[B.IRON_ORE,12,4,64,7],[B.COBALT_ORE,6,4,50,6],[B.GOLD_ORE,3,4,32,6],[B.DIAMOND_ORE,1.4,2,16,5],
-  [B.RUBY_ORE,1.6,4,40,4,'ashen'],[B.SAPPHIRE_ORE,1.6,4,40,4,'frozen'],[B.MYTHRIL_ORE,.8,2,22,4,'crystal'],[B.AMETHYST_ORE,.8,2,26,4,'mushroom'],[B.CRYSTAL_ORE,0,10,64,6,'crystal']];
+  [B.RUBY_ORE,1.6,4,40,4,'ashen'],[B.SAPPHIRE_ORE,1.6,4,40,4,'frozen'],[B.MYTHRIL_ORE,.8,2,22,4,'crystal'],[B.AMETHYST_ORE,.8,2,26,4,'mushroom'],[B.CRYSTAL_ORE,0,10,64,6,'crystal'],[B.GRANITE,2,6,90,26],[B.DIORITE,2,6,90,26],[B.ANDESITE,2,6,90,26]];
 function placeOres(cx,cz){const x0=cx*16,z0=cz*16,S=WSEED;const kind=BIOMES[GB[8*16+8]].k;let n=0;
   for(const [ore,tries,y0,y1,size,bonus] of ORES){let t=tries;if(bonus===kind)t=t*3+(ore===B.CRYSTAL_ORE?8:0);const whole=Math.floor(t)+(hash2(cx,cz,S+70+n)<t%1?1:0);
     for(let v=0;v<whole;v++){n++;let x=x0+(hash3(cx,cz,n,S+71)*16|0),y=y0+(hash3(cx,cz,n,S+72)*(y1-y0)|0),z=z0+(hash3(cx,cz,n,S+73)*16|0);

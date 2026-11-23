@@ -21,6 +21,7 @@ function ruleBtn(id,name){const el=$(id);const text=()=>{if(el.type==='checkbox'
 JPAGES.main=()=>({title:'Options',items:[
   jSlider(()=>OPT.fov===70?'FOV: Normal':OPT.fov>=110?'FOV: Quake Pro':'FOV: '+OPT.fov,()=>(OPT.fov-30)/80,v=>{OPT.fov=Math.round(30+v*80);},80),
   ruleBtn('o_diff','Bot Difficulty'),
+  jBtn(()=>'Survival Difficulty: '+['Peaceful','Easy','Normal','Hard'][OPT.sdiff==null?2:OPT.sdiff],()=>{OPT.sdiff=((OPT.sdiff==null?2:OPT.sdiff)+1)%4;saveOpt();}),
   jBtn('Music & Sounds...',()=>jOpen('sound')),jBtn('Video Settings...',()=>jOpen('video')),
   jBtn('Controls...',()=>jOpen('controls')),jBtn(()=>'Mobile Controls: '+({auto:'Auto',on:'ON',off:'OFF'})[OPT.mobile],()=>{OPT.mobile=({auto:'on',on:'off',off:'auto'})[OPT.mobile];saveOpt();applyTouchSetting();}),
   jBtn('Game Rules...',()=>jOpen('rules')),jBtn('Maps...',()=>jOpen('maps')),

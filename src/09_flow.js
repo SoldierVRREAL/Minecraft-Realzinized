@@ -241,6 +241,7 @@ function onNetEvent(code,d,from){
     else if(MATCH.state==='over'){netSend(N.TOLOBBY,{},from);}
     break;}
   case N.LEAVE:break;
+  default:if(typeof mobNet==='function')mobNet(code,d,from,fromHost);
   }
 }
 function onMemberLeave(id){

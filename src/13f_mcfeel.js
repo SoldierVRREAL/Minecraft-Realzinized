@@ -45,6 +45,7 @@ function drawShadows(){if(!SHADOW_TEX||!mapInfo)return;useTex(VP,camPos);gl.enab
     if(gy<-50)return;const h=pos[1]-gy;if(h>2||h<-.1)return;const a=(1-h/2)*.5;gl.uniform4f(PT.u.tint,1,1,1,a);drawMesh(quadMesh,chain(M4.tr(pos[0],gy+.015,pos[2]),M4.sc(r*2,1,r*2)),SHADOW_TEX);};
   for(const e of ents){if(!e.alive||e.bat||e.effects.invis)continue;if(e===player&&camMode===0)continue;one(e.rpos||e.pos,.5);}
   for(const d of drops)one(d.pos,.15);
+  if(typeof mobs!=='undefined')for(const m of mobs)if(m.alive)one(m.rpos||m.pos,Math.min(1,(m.hw||.3)*1.4));
   gl.uniform4f(PT.u.tint,1,1,1,1);gl.depthMask(true);gl.disable(gl.BLEND);}
 // black selection box around the targeted block (only where blocks can be broken: Battle Royale)
 let edgeBuf=null;

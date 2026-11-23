@@ -8,12 +8,14 @@ class Ent{
     useT:0,using:null,collidedH:false,mot:[0,0,0],prev:null,rpos:null,acc:0,in:null,jump:false,jumpTicks:0,fallDist:0,inWeb:false,sneak:false,lastAttacker:null,lastAttackT:99,place:0,effects:{},absorb:0,fire:0,fireT:0,inWater:false,inLava:false,skin:'gen:'+name,color:0,sprint:false,net:null,isLocal:false,ready:false,bodyYaw:0});}
 }
 let ents=[],player=null,projs=[],drops=[],particles=[],feed=[],msgs=[],chat=[];
-const entById=id=>ents.find(e=>e.id===id);
+var mobs=[],mobTexDirty=true;   // mobs live in 15e_mobs.js
+const entById=id=>ents.find(e=>e.id===id)||(typeof mobs!=='undefined'?mobs.find(e=>e.id===id):undefined);
+const hitList=()=>typeof mobs!=='undefined'&&mobs.length?ents.concat(mobs):ents;
 const eyeH=e=>e.bat?0:e.sneak?1.54:EYE;
 const eye=e=>[e.pos[0],e.pos[1]+eyeH(e),e.pos[2]];
 const fwd=e=>[-Math.sin(e.yaw)*Math.cos(e.pitch),Math.sin(e.pitch),-Math.cos(e.yaw)*Math.cos(e.pitch)];
-const owned=e=>e&&(e.isLocal||(e.kind==='bot'&&isHost()));
-const maxHP=e=>20;
+const owned=e=>e&&(e.isLocal||((e.kind==='bot'||e.kind==='mob')&&isHost()));
+const maxHP=e=>e.maxHp||20;
 
 function fluidAt(x,y,z){const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));return b?BD[b].liquid:false;}
 function raycastBlock(o,d,maxD,ignoreFluid=true){
@@ -27,7 +29,7 @@ function raycastBlock(o,d,maxD,ignoreFluid=true){
 }
 function los(a,b){const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],L=Math.hypot(...d);if(L<.01)return true;return !raycastBlock(a,[d[0]/L,d[1]/L,d[2]/L],L);}
 function rayBox(o,d,mn,mx){let t0=0,t1=1e9;for(let i=0;i<3;i++){if(Math.abs(d[i])<1e-9){if(o[i]<mn[i]||o[i]>mx[i])return -1;continue;}let a=(mn[i]-o[i])/d[i],b=(mx[i]-o[i])/d[i];if(a>b)[a,b]=[b,a];t0=Math.max(t0,a);t1=Math.min(t1,b);if(t0>t1)return -1;}return t0;}
-const entBox=(e,p=.1)=>[[e.pos[0]-HW-p,e.pos[1]-p,e.pos[2]-HW-p],[e.pos[0]+HW+p,e.pos[1]+EH+p,e.pos[2]+HW+p]];
+const entBox=(e,p=.1)=>{const w=e.hw||HW,h=e.eh||EH;return [[e.pos[0]-w-p,e.pos[1]-p,e.pos[2]-w-p],[e.pos[0]+w+p,e.pos[1]+h+p,e.pos[2]+w+p]];};
 
 // ---------- inventory ----------
 const armorPts=e=>e.armor.reduce((s,a)=>s+(a?ITEMS[a].pts:0),0);
@@ -47,6 +49,7 @@ function weaponDmg(e){const s=e.inv[e.sel];let d=s&&ITEMS[s.id].type==='weapon'?
 function giveEffect(e,name,dur,amp){
   if(name==='heal'){e.health=Math.min(maxHP(e),e.health+(4<<amp));return;}
   if(name==='harm'){hurt(e,6<<amp,null,'magic',null,true,true);return;}
+  if(name==='milk'){e.effects={};e.absorb=0;return;}
   if(name==='ignite'){if(!e.effects.fireres&&!e.inWater)e.fire=Math.max(e.fire||0,dur);return;}   // Fire Aspect / Flame
   const cur=e.effects[name];if(cur&&cur.amp>amp&&cur.t>dur)return;e.effects[name]={t:dur,amp,tick:0};
   if(name==='absorption')e.absorb=Math.max(e.absorb,4*(amp+1));if(name==='fireres')e.fire=0;
@@ -68,7 +71,7 @@ function tickHunger(e,dt,moved){
   if(e.food>=18&&e.health<maxHP(e)&&!(MATCH.mode==='br'&&suddenDeath)){e.regenT+=dt;if(e.regenT>=4){e.regenT=0;e.health=Math.min(maxHP(e),e.health+1);exhaust(e,3);}}else e.regenT=0;
   if(e.food<=0){e.starveT+=dt;if(e.starveT>=4){e.starveT=0;e.invuln=0;hurt(e,1,null,'starve',null,true);}}else e.starveT=0;
 }
-function eatFood(e,id){const it=ITEMS[id];e.food=Math.min(20,e.food+it.food);e.sat=Math.min(e.food,e.sat+it.sat);if(it.fx)for(const [n,d,a] of it.fx)giveEffect(e,n,d,a);}
+function eatFood(e,id){const it=ITEMS[id];e.food=Math.min(20,e.food+it.food);e.sat=Math.min(e.food,e.sat+it.sat);if(it.fx&&(!it.fxChance||Math.random()<it.fxChance))for(const [n,d,a] of it.fx)giveEffect(e,n,d,a);}
 
 // ---------- damage ----------
 function hurt(e,amt,src,cause,kb,raw,ignoreInvuln){
@@ -86,9 +89,11 @@ function hurt(e,amt,src,cause,kb,raw,ignoreInvuln){
   creditTaken(e,amt);if(src&&src!==e){e.lastAttacker=src;e.lastAttackT=0;creditDamage(src,amt,cause);}
   if(fresh){
     if(kb)knockback(e,kb[0],kb[1],kb[2]||0,kb[3]||0,kb[4]||0);
-    sfx(cause==='fall'?(amt>4?'fallbig':'fall'):cause==='fire'||cause==='lava'?'burn':cause==='drown'?'drown':'hurt',{pos:e.pos});
+    if(e.kind==='mob')mobSnd(e,'hurt');else sfx(cause==='fall'?(amt>4?'fallbig':'fall'):cause==='fire'||cause==='lava'?'burn':cause==='drown'?'drown':'hurt',{pos:e.pos});
     if(cause==='fall'&&amt>0){const b=getB(Math.floor(e.pos[0]),Math.floor(e.pos[1]-.2),Math.floor(e.pos[2]));if(b)blockParticles(Math.floor(e.pos[0]),Math.floor(e.pos[1]-.2),Math.floor(e.pos[2]),b,Math.min(40,8+amt*4));}
   }
+  if(e.kind==='mob')mobHurt(e,src,cause);
+  if(e.health<=0&&e.kind!=='mob'&&useTotem(e))return true;
   if(e.health<=0)kill(e,src,cause);
   return true;
 }
@@ -101,7 +106,7 @@ function creditTaken(e,amt){if(!(amt>0))return;if(isHost())e.dmgTaken=(e.dmgTake
 function damage(t,amt,src,cause,kb,raw,fx){
   if(owned(t)){const ok=hurt(t,amt,src,cause,kb,raw);if(fx&&(ok||amt===0))for(const f of fx)giveEffect(t,...f);return ok;}
   // you hit someone on another computer: show the red flash and sound now instead of waiting for their reply to come back
-  if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();sfx('hurt',{pos:t.pos});}
+  if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();if(t.kind==='mob')mobSnd(t,'hurt');else sfx('hurt',{pos:t.pos});}
   const hs=src&&src.inv&&src.inv[src.sel];netSend(N.HIT,{t:t.id,d:amt,a:src?src.id:null,c:cause,kb,r:raw?1:0,fx,w:hs?hs.id:null},null);return true;
 }
 function deathText(e,killer,cause){
@@ -113,10 +118,11 @@ function deathText(e,killer,cause){
   if(cause==='lava')return killer?`${nm(e)} tried to swim in lava to escape ${nm(killer)}`:`${nm(e)} tried to swim in lava`;
   if(cause==='fire')return `${nm(e)} burned to death`;
   if(cause==='starve')return `${nm(e)} starved to death`;
+  if(cause==='explosion')return killer?`${was(e)} blown up by ${nm(killer)}`:`${nm(e)} blew up`;
   if(cause==='magic')return killer?`${was(e)} killed by ${nm(killer)} using magic`:`${was(e)} killed by magic`;
   return killer?`${was(e)} slain by ${nm(killer)}`:`${nm(e)} died`;
 }
-function kill(e,src,cause){
+function kill(e,src,cause){if(e.kind==='mob'){mobDie(e,src,cause);return;}
   let killer=src||(e.lastAttackT<8?e.lastAttacker:null);if(killer===e)killer=null;
   const msg={id:e.id,k:killer?killer.id:null,c:cause,inv:e.inv.filter(Boolean),armor:e.armor.filter(Boolean),pos:e.pos.slice()};
   netSend(N.DEATH,msg);onDeath(msg);
@@ -137,7 +143,7 @@ function onDeath(m){
 // ---------- melee ----------
 function meleeTarget(e,range){
   const o=eye(e),d=fwd(e);const bh=raycastBlock(o,d,range);const maxT=bh?bh.t:range;let best=null,bt=maxT;
-  for(const t of ents){if(t===e||!t.alive)continue;const b=entBox(t,.15);const tt=rayBox(o,d,b[0],b[1]);if(tt>=0&&tt<bt){bt=tt;best=t;}}
+  for(const t of hitList()){if(t===e||!t.alive)continue;const b=entBox(t,.15);const tt=rayBox(o,d,b[0],b[1]);if(tt>=0&&tt<bt){bt=tt;best=t;}}
   return best;
 }
 function doAttack(e,target){
@@ -147,7 +153,9 @@ function doAttack(e,target){
   const held=e.inv[e.sel],hid=held&&held.id;const extra=(e.sprint?1:0)+enchLvl(hid,'knockback'),fa=Math.max(enchLvl(hid,'fire_aspect'),MATCH.mode==='survival'&&toolTier(hid)==='ruby'?1:0);
   if(MATCH.mode==='survival'&&e.isLocal){if(toolTier(hid)==='amethyst')e.health=Math.min(maxHP(e),e.health+dmg*.2);wearHeld(e,ITEMS[hid]&&(ITEMS[hid].tool==='sword'||ITEMS[hid].tool==='axe')?1:2);}if(e.sprint){e.sprint=false;if(e.mot){e.mot[0]*=.6;e.mot[2]*=.6;}}
   if(e.effects.invis)delete e.effects.invis;
-  damage(t,dmg,e,'melee',[t.pos[0]-e.pos[0],t.pos[2]-e.pos[2],extra,-Math.sin(e.yaw),-Math.cos(e.yaw)],false,fa?[['ignite',4*fa,0]]:undefined);
+  const fx=fa?[['ignite',4*fa,0]]:[];if(hid==='frost_dagger')fx.push(['slowness',4,1]);
+  damage(t,dmg,e,'melee',[t.pos[0]-e.pos[0],t.pos[2]-e.pos[2],extra,-Math.sin(e.yaw),-Math.cos(e.yaw)],false,fx.length?fx:undefined);
+  if(hid==='magma_hammer')hammerQuake(e,t,dmg);
 }
 
 // ---------- projectiles (arrows, splash potions) ----------
@@ -155,12 +163,14 @@ function spawnProj(kind,pos,vel,owner,dmg,pot,net=true){projs.push({kind,pos,vel
 const bowCharge=sec=>{const t=sec;return Math.min(1,(t*t+2*t)/3);};
 function fireBow(e,f){if(f<.1)return;const ai=hasItem(e,'arrow');if(ai<0)return;const bs=e.inv[e.sel],inf=enchLvl(bs&&bs.id,'infinity');if(!inf)consume(e,ai);const d=fwd(e),o=eye(e);const g=()=>(Math.random()+Math.random()+Math.random()-1.5)*.0075*1.2;
   const v=[d[0]+g(),d[1]+g(),d[2]+g()];const L=Math.hypot(...v);const sp=f*3;
-  spawnProj('arrow',[o[0]-Math.cos(e.yaw)*.16,o[1]-.1,o[2]+Math.sin(e.yaw)*.16],[v[0]/L*sp,v[1]/L*sp,v[2]/L*sp],e,f>=1?1:0);{const pr=projs[projs.length-1],bi=bs&&ITEMS[bs.id];if(bi&&bi.ench)pr.en=bi.ench;if(inf)pr.noPick=true;}sfx('bow',{pos:e.pos});}
+  spawnProj('arrow',[o[0]-Math.cos(e.yaw)*.16,o[1]-.1,o[2]+Math.sin(e.yaw)*.16],[v[0]/L*sp,v[1]/L*sp,v[2]/L*sp],e,f>=1?1:0);{const pr=projs[projs.length-1],bi=bs&&ITEMS[bs.id];if(bi&&bi.ench)pr.en=bi.ench;if(inf)pr.noPick=true;
+    if(bi&&bi.multishot)for(const a of [-.14,.14]){const c=Math.cos(a),s=Math.sin(a);spawnProj('arrow',pr.pos.slice(),[pr.vel[0]*c-pr.vel[2]*s,pr.vel[1],pr.vel[0]*s+pr.vel[2]*c],e,pr.dmg);projs[projs.length-1].noPick=true;}}sfx('bow',{pos:e.pos});}
 function throwSplash(e,id){const p=e.pitch+20*Math.PI/180;const d=[-Math.sin(e.yaw)*Math.cos(p),Math.sin(p),-Math.cos(e.yaw)*Math.cos(p)],o=eye(e),sp=.5;spawnProj('splash',[o[0],o[1]-.1,o[2]],[d[0]*sp,d[1]*sp,d[2]*sp],e,0,id);sfx('bow',{pos:e.pos});}
 function splashImpact(p){
   const it=ITEMS[p.pot];spawnParticles(p.pos[0],p.pos[1],p.pos[2],30,hexRGB(it.color),4);sfx('glass',{pos:p.pos});
   if(!owned(p.owner))return;
-  for(const e of ents){if(!e.alive)continue;const d=dist(p.pos,[e.pos[0],e.pos[1]+1,e.pos[2]]);if(d>4.1)continue;const k=1-d/4.1*.75;
+  if(ITEMS[p.pot]&&ITEMS[p.pot].egg){eggImpact(p);return;}
+  for(const e of hitList()){if(!e.alive)continue;const d=dist(p.pos,[e.pos[0],e.pos[1]+1,e.pos[2]]);if(d>4.1)continue;const k=1-d/4.1*.75;
     const fx=it.fx.map(([n,dur,amp])=>n==='harm'?null:[n,Math.round(dur*k),amp]).filter(Boolean);
     const harm=it.fx.find(f=>f[0]==='harm');
     if(harm)damage(e,(6<<harm[2])*k,p.owner,'magic',null,true,fx);else damage(e,0,p.owner,'magic',null,true,fx);}
@@ -175,7 +185,7 @@ function updateProjs(dt){
         for(let k=0;k<3;k++)a.pos[k]+=a.vel[k]/n;
         const b=getB(Math.floor(a.pos[0]),Math.floor(a.pos[1]),Math.floor(a.pos[2]));
         if(b&&BD[b].solid){if(a.kind==='splash'){splashImpact(a);a.dead=true;}else{a.stuck=true;a.age=0;sfx('arrowhit',{pos:a.pos});}break;}
-        for(const e of ents){if(!e.alive||(e===a.owner&&a.age<.25))continue;const bb=entBox(e,.15);
+        for(const e of hitList()){if(!e.alive||(e===a.owner&&a.age<.25))continue;const bb=entBox(e,.15);
           if(a.pos[0]>bb[0][0]&&a.pos[0]<bb[1][0]&&a.pos[1]>bb[0][1]&&a.pos[1]<bb[1][1]&&a.pos[2]>bb[0][2]&&a.pos[2]<bb[1][2]){
             if(a.kind==='splash')splashImpact(a);
             else if(owned(a.owner)){let dmg=Math.ceil(sp*2);if(a.dmg)dmg+=Math.floor(Math.random()*(dmg/2+2));const en=a.en||{};if(en.power)dmg+=en.power*.5+.5;

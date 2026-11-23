@@ -13,7 +13,7 @@ const offBox=(a,x,y,z)=>[a[0]+x,a[1]+y,a[2]+z,a[3]+x,a[4]+y,a[5]+z];
 function offY(b,e,d){if(e[3]>b[0]&&e[0]<b[3]&&e[5]>b[2]&&e[2]<b[5]){if(d>0&&e[4]<=b[1])d=Math.min(d,b[1]-e[4]);else if(d<0&&e[1]>=b[4])d=Math.max(d,b[4]-e[1]);}return d;}
 function offX(b,e,d){if(e[4]>b[1]&&e[1]<b[4]&&e[5]>b[2]&&e[2]<b[5]){if(d>0&&e[3]<=b[0])d=Math.min(d,b[0]-e[3]);else if(d<0&&e[0]>=b[3])d=Math.max(d,b[3]-e[0]);}return d;}
 function offZ(b,e,d){if(e[3]>b[0]&&e[0]<b[3]&&e[4]>b[1]&&e[1]<b[4]){if(d>0&&e[5]<=b[2])d=Math.min(d,b[2]-e[5]);else if(d<0&&e[2]>=b[5])d=Math.max(d,b[5]-e[2]);}return d;}
-const entAABB=e=>[e.pos[0]-HW,e.pos[1],e.pos[2]-HW,e.pos[0]+HW,e.pos[1]+EH,e.pos[2]+HW];
+const entAABB=e=>{const w=e.hw||HW,h=e.eh||EH;return [e.pos[0]-w,e.pos[1],e.pos[2]-w,e.pos[0]+w,e.pos[1]+h,e.pos[2]+w];};
 const blockUnder=e=>getB(Math.floor(e.pos[0]),Math.floor(e.pos[1]-.2),Math.floor(e.pos[2]));
 function slipperiness(e){const b=getB(Math.floor(e.pos[0]),Math.floor(e.pos[1])-1,Math.floor(e.pos[2]));return b===B.ICE?.98:b===B.SLIME?.8:.6;}
 function onLadder(e){const b=getB(Math.floor(e.pos[0]),Math.floor(e.pos[1]),Math.floor(e.pos[2]));return !!(b&&BD[b].ladder);}
@@ -92,7 +92,7 @@ function mcTick(e){
 function physics(e,dt,wx,wz){
   if(!e.mot)e.mot=[0,0,0];if(!e.prev||dist(e.prev,e.pos)>8)e.prev=e.pos.slice();
   const k=.98*(e.sneak?.3:1)*(e.using?.2:1);
-  e.in={wx:wx*k,wz:wz*k,jump:!!e.jump,attr:.1*speedMul(e)};
+  e.in={wx:wx*k,wz:wz*k,jump:!!e.jump,attr:.1*speedMul(e)*(e.spdK||1)};
   e.acc=(e.acc||0)+dt;let moved=0,n=0;
   while(e.acc>=TICK&&n<5){e.acc-=TICK;moved+=mcTick(e);n++;}
   if(n===5)e.acc=0;

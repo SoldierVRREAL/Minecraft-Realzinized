@@ -11,7 +11,8 @@ function newWorldMeta(name,seedText){const meta={id:'w'+Date.now().toString(36)+
 function loadWorldData(id){try{return JSON.parse(store('mcr_w_'+id)||'null');}catch(e){return null;}}
 function playerSave(p){return p?{pos:p.pos.map(v=>+v.toFixed(2)),yaw:p.yaw,inv:p.inv,armor:p.armor,hp:p.alive?p.health:20,food:p.alive?p.food:20,sat:p.sat,sel:p.sel}:null;}
 function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;
-  const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN]};
+  const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN],
+    pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health}))};
   let ok=true;try{localStorage.setItem('mcr_w_'+SURV.meta.id,JSON.stringify(data));}catch(e){ok=false;}
   const l=worldList();const m=l.find(w=>w.id===SURV.meta.id);if(m){m.played=Date.now();m.day=GZ.day;saveWorldList([m,...l.filter(w=>w!==m)]);}
   if(!ok)chatMsg('Could not save the world: browser storage is full.','#ff5555',false);infDirtySave=false;return ok;}
@@ -35,6 +36,7 @@ function beginSurvival(o){
   if(me){player.pos=me.pos.slice();player.yaw=me.yaw||0;me.inv.forEach((s,i)=>{if(i<36)player.inv[i]=s;});player.armor=me.armor||[null,null,null,null];player.health=me.hp||20;player.food=me.food==null?20:me.food;player.sat=me.sat||5;player.sel=me.sel||0;}
   else{player.pos=SURV.spawn.slice();for(const [id,n] of STARTER)addItem(player,id,n);}
   player.vel=[0,0,0];player.mot=[0,0,0];player.fallDist=0;ents.push(player);
+  mobs=[];primed=[];for(const pt of o.pets||[])if(MOB_T[pt.t])spawnMob(pt.t,pt.p,{owner:player.id,hp:pt.hp});   // tamed wolves come back with the world
   spectate.mode='bat';SURV.loading=true;GZ.tp=perfT;$('saveBtn').classList.toggle('hidden',!SURV.meta);
   const el=$('loading');$('loadTitle').textContent=o.join?'Joining world':'Generating world';$('loadTip').textContent=SURV_TIPS[Math.random()*SURV_TIPS.length|0];loadLogo();$('loadBar').style.width='0%';el.classList.remove('hidden');
 }
@@ -86,7 +88,7 @@ function captureThumb(){try{const c=mkCanvas(192,108),g=c.getContext('2d');const
   const url=c.toDataURL('image/jpeg',.72);if(!SURV.meta)return;const l=worldList();const m=l.find(x=>x.id===SURV.meta.id);if(m){m.thumb=url;m.day=GZ.day;saveWorldList(l);}}catch(e){}}
 $('saveBtn').addEventListener('click',()=>{if(saveWorld()){SURV.toast={t:3,txt:'Game saved'};sfx('pick');}else SURV.toast={t:3,txt:'Could not save the game'};$('resumeBtn').click();});
 function playWorld(meta,keepNet){sfx('click');if(!keepNet){if(net){net.leave();net=null;}online=false;}const data=loadWorldData(meta.id);
-  beginSurvival({meta,seed:data&&data.seed!=null?data.seed:meta.seed,edits:data?editsFromJSON(data.edits):new Map(),time:data?data.time:null,day:data&&data.day,spawn:data?data.spawn:null,me:data?data.player:null,chests:data&&data.chests,furn:data&&data.furn});}
+  beginSurvival({meta,seed:data&&data.seed!=null?data.seed:meta.seed,edits:data?editsFromJSON(data.edits):new Map(),time:data?data.time:null,day:data&&data.day,spawn:data?data.spawn:null,me:data?data.player:null,chests:data&&data.chests,furn:data&&data.furn,pets:data&&data.pets});}
 $('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value);$('w_seed').value='';playWorld(meta);});
 $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('menu');});
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});

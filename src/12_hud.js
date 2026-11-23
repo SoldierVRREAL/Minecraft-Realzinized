@@ -40,7 +40,7 @@ function drawHUD(){
     if(MATCH.state==='lobby'){if(dist(camPos,e.pos)<64)nameTagMC(e,e.ready?'#77ff77':'#ffffff');}
     else if(MATCH.mode==='battle'&&MATCH.showdown)nameTagMC(e,PLAYER_COLORS[e.color%16]);
     else if(MATCH.mode==='battle'&&dist(camPos,e.pos)<6&&!e.effects.invis&&los(camPos,eye(e)))nameTag(e);}
-  if(MATCH.mode==='survival'&&MATCH.state==='play'){survNameTags();drawGadgetHUD();}
+  if(MATCH.mode==='survival'&&MATCH.state==='play'){survNameTags();drawGadgetHUD();drawMobHUD();}
   if(MATCH.state==='lobby')drawLobbyHud();
   else if(showDebug){}
   else if(MATCH.mode==='br')drawBRHud();
@@ -117,6 +117,7 @@ function drawHotbar(){
     for(let i=0;i<n;i++){const e=list[i],x=Math.round(hx+i*slot+(slot-pw)/2);hc.fillStyle='rgba(0,0,0,.7)';hc.fillRect(x-1,by-1,pw+2,bh+2);
       if(e){const on=lob||e.alive;hc.fillStyle=on?PLAYER_COLORS[e.color%16]:'#3a3a3a';hc.fillRect(x,by,pw,bh);if(on){hc.fillStyle='rgba(255,255,255,.35)';hc.fillRect(x,by,pw,Math.max(1,bh/3|0));}}
       else{hc.fillStyle='rgba(70,70,70,.5)';hc.fillRect(x,by,pw,bh);}}}
+  else if(typeof drawLocatorBar==='function')drawLocatorBar(G);
   if(MATCH.state==='lobby')return;   // the lobby HUD is just the player strip and the hotbar
   const hy2=G.hy2;
   // hearts (left) with absorption + poison

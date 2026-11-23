@@ -74,7 +74,7 @@ function abilityBreak(x,y,z,b,id,p){const tier=toolTier(id),it=ITEMS[id];if(!it)
       if(nb&&ok.has(nb)&&mineTime(nb,id)!=null&&nb!==B.CHEST&&nb!==B.FURNACE)extra.push([nx,ny,nz]);}}
   for(const [ex,ey,ez] of extra){const nb=getB(ex,ey,ez);if(!nb)continue;setBlockNet(ex,ey,ez,0);survDrop(ex,ey,ez,nb,id);wearHeld(p,1);if(!p.inv[p.sel])break;}
   if(extra.length)sfx('dig',{pos:[x,y,z],mat:blockMat(b)});}
-function survDrop(x,y,z,b,id){let d=mineDrops(b,id);if(!d)return;if(toolTier(id)==='ruby'&&ITEMS[id].tool==='pickaxe'&&SMELT[d])d=SMELT[d];
+function survDrop(x,y,z,b,id){extraDrops(x,y,z,b,id);let d=mineDrops(b,id);if(!d)return;if(toolTier(id)==='ruby'&&ITEMS[id].tool==='pickaxe'&&SMELT[d])d=SMELT[d];
   requestDrop([x+.5,y-.6,z+.5],d,1,[(Math.random()-.5)*1.5,2.5,(Math.random()-.5)*1.5]);if(BD[b].leaves&&Math.random()<.06)requestDrop([x+.5,y-.6,z+.5],b===B.LEAVES?'apple':'stick',1);}
 // ---------- the crafting / furnace screen ----------
 const CR={open:false,mode:'inv',n:2,grid:[],cur:null,fk:null,hover:null};
