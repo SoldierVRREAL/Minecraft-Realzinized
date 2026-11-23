@@ -109,7 +109,7 @@ function render(){
   fovMod+=((OPT.dynfov===false?1:tf)-fovMod)*Math.min(1,dtFrame*10);const fov=OPT.fov*fovMod*Math.PI/180;const P=M4.persp(fov,W/H,.05,400);
   if(MATCH.state==='menu'&&panoTex){drawPanorama(P,camYaw,camPitch*.3);drawHUD();return;}
   let pre=M4.id();
-  if(player&&player.alive&&spectate.mode!=='follow'&&MATCH.state!=='menu'){const sp=player.onGround?Math.min(.1,Math.hypot(player.mot?player.mot[0]:0,player.mot?player.mot[2]:0)):0;bobAmp+=(sp-bobAmp)*Math.min(1,dtFrame*8);
+  if(player&&player.alive&&MATCH.state!=='menu'){const sp=player.onGround?Math.min(.1,Math.hypot(player.mot?player.mot[0]:0,player.mot?player.mot[2]:0)):0;bobAmp+=(sp-bobAmp)*Math.min(1,dtFrame*8);
     const f1=-player.walkT/1.0,a=OPT.bob?bobAmp:0;const ht=player.hurtT>0?Math.sin(Math.pow(player.hurtT/.5,4)*Math.PI)*14*Math.PI/180:0;
     pre=chain(M4.rz(-ht),M4.tr(Math.sin(f1*Math.PI)*a*.5,-Math.abs(Math.cos(f1*Math.PI)*a),0),M4.rz(Math.sin(f1*Math.PI)*a*3*Math.PI/180),M4.rx(Math.abs(Math.cos(f1*Math.PI-.2)*a)*5*Math.PI/180));}
   if(INF&&GZ.shake>0){const k=GZ.shake*.06;pre=chain(pre,M4.rz((Math.random()-.5)*k),M4.rx((Math.random()-.5)*k));}
@@ -130,8 +130,8 @@ function render(){
   drawWorld(fogF);
   // entities
   useTex(VP,camPos);
-  for(const e of ents){if(e===player&&player.alive&&spectate.mode!=='follow'&&!camMode)continue;if(e===player&&!player.alive&&spectate.mode==='bat')continue;
-    if(e.bat&&!e.alive){drawBat(e);continue;}if(!e.alive)continue;drawHumanoid(e);}
+  for(const e of ents){if(e===player&&player.alive&&!camMode)continue;if(e===player&&!player.alive&&spectate.mode==='bat')continue;
+    if(e.bat&&!e.alive){if(e!==player&&compHidesBats())continue;drawBat(e);continue;}if(!e.alive)continue;drawHumanoid(e);}
   if(INF)drawMobs(fogF);
   // chests are tile-entity models (TileEntityChestRenderer), lid animated
   for(const c of chests.values()){if(getB(c.x,c.y,c.z)!==B.CHEST)continue;if(Math.hypot(c.x+.5-camPos[0],c.z+.5-camPos[2])>fogF+8)continue;
@@ -187,7 +187,7 @@ function limbTick(e){if(e._lt===perfT)return;e._lt=perfT;   // once per frame, e
   const dts=dtFrame*20;const v=Math.hypot(e.vel[0],e.vel[2])/20;const tgt=Math.min(1,v*4);
   e.limbAmt=(e.limbAmt||0)+(tgt-(e.limbAmt||0))*(1-Math.pow(.6,dts));e.limbSwing=(e.limbSwing||0)+e.limbAmt*dts;}
 function drawHumanoid(e){
-  const invis=e.effects.invis;const S=skinTex(e.skin);const M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
+  const invis=e.effects.invis;const S=skinTex(fairSkin(e));const M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
   const rp=e.rpos||e.pos;const by=e.bodyYaw==null?e.yaw:e.bodyYaw;const base=chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
   const headYaw=e.yaw-by,headPitch=-e.pitch;  // vanilla: positive pitch looks down
   const ls=(e.limbSwing||0)*.6662,la=e.limbAmt||0;const age=perfT*20+(e.color||0)*7;

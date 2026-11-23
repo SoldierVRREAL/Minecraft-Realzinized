@@ -5,11 +5,12 @@
 // The host is the server: it decides who may join (bans, whitelist), keeps every player's inventory and position in its world save,
 // and runs the commands (/list /msg /me /say /kick /ban /pardon /op /deop /whitelist /gamemode /defaultgamemode /tp /time /seed /stop).
 Object.assign(N,{KICK:45,CMD:46,SETGM:47,PSAVE:48,TPTO:49,SRVINFO:50});
-const SRV={list:[],sel:null,browsers:[],rooms:{},cfg:null,hosting:false,joined:null,info:null,players:{},amOp:false,sig:'',lastClick:{k:null,t:0},dlgOpen:null};
+const SRV={kind:'mp',list:[],sel:null,browsers:[],rooms:{},cfg:null,hosting:false,joined:null,info:null,players:{},amOp:false,sig:'',lastClick:{k:null,t:0},dlgOpen:null};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const homeRegion=()=>store('mcr_region')||'us';
-function srvLoad(){try{SRV.list=(JSON.parse(store('mcr_servers')||'[]')||[]).filter(s=>s&&s.addr);}catch(e){SRV.list=[];}}
-function srvSaveList(){store('mcr_servers',JSON.stringify(SRV.list.slice(0,60)));}
+const srvKey=()=>SRV.kind==='battle'?'mcr_bservers':'mcr_servers';
+function srvLoad(){try{SRV.list=(JSON.parse(store(srvKey())||'[]')||[]).filter(s=>s&&s.addr);}catch(e){SRV.list=[];}}
+function srvSaveList(){store(srvKey(),JSON.stringify(SRV.list.slice(0,60)));}
 // "name" or "name:region" (like host:port; no region means the Americas region)
 function parseAddr(s){s=String(s||'').trim().toLowerCase();let region='us';const m=s.match(/^(.*):([a-z]+)$/);if(m&&PHOTON_REGIONS.some(r=>r[0]===m[2])){s=m[1];region=m[2];}
   s=s.replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').slice(0,40);return s?{room:s,region,full:s+(region!=='us'?':'+region:'')}:null;}
@@ -32,20 +33,23 @@ function pingIcon(c,st,rtt){c.width=10;c.height=8;const g=c.getContext('2d');g.c
 function defaultIcon(){const c=mkCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const gi=ICONS['b'+B.GRASS];if(gi)g.drawImage(gi,0,0,32,32);else{g.fillStyle='#5a8a3a';g.fillRect(0,0,32,32);}return c.toDataURL();}
 
 // ---------------- the Multiplayer screen ----------------
-function openMP(){initAudio();sfx('click');readName();hide('menu');hide('discPanel');srvLoad();SRV.sel=null;SRV.sig='';show('mpPanel');$('phStatus').textContent='';
+// kind: 'mp' (Multiplayer: every server) or 'battle' (Mini Games > Play Online: Battle and Battle Royale servers, with their own saved list)
+function openMP(kind){SRV.kind=kind==='battle'?'battle':kind==='mp'?'mp':SRV.kind;initAudio();sfx('click');readName();hide('menu');hide('discPanel');srvLoad();
+  $('mpTitle').textContent=SRV.kind==='battle'?'Battle Servers':'Play Multiplayer';SRV.sel=null;SRV.sig='';show('mpPanel');$('phStatus').textContent='';
   if(!store('mcr_appid'))dlgPhoton(true);else srvBrowseStart();srvRender(true);}
 function srvRows(){const rows=SRV.list.map((s,i)=>({t:'saved',i,key:'s'+i,name:s.name,addr:s.addr}));
   const home=homeRegion(),R=SRV.rooms[home];const pub=[];
-  if(R&&!R.loading&&!R.err)for(const r of R.list){if(!r.p||!+r.p.pub)continue;const full=r.name+(home!=='us'?':'+home:'');if(SRV.list.some(s=>{const a=parseAddr(s.addr);return a&&a.room===r.name&&a.region===home;}))continue;pub.push({t:'pub',key:'p'+full,name:r.name,addr:full});}
+  if(R&&!R.loading&&!R.err)for(const r of R.list){if(!r.p||!+r.p.pub)continue;if(SRV.kind==='battle'&&r.p.m!=='battle')continue;const full=r.name+(home!=='us'?':'+home:'');if(SRV.list.some(s=>{const a=parseAddr(s.addr);return a&&a.room===r.name&&a.region===home;}))continue;pub.push({t:'pub',key:'p'+full,name:r.name,addr:full});}
   return {rows,pub};}
 function srvRender(force){const box=$('srvList');if(!box||$('mpPanel').classList.contains('hidden'))return;const {rows,pub}=srvRows();
   const sig=JSON.stringify([rows.map(r=>[r.key,r.name,r.addr,JSON.stringify(srvStatus(r.addr).r||srvStatus(r.addr).st)]),pub.map(r=>[r.key,JSON.stringify(srvStatus(r.addr).r)]),SRV.sel&&SRV.sel.key]);
   if(!force&&sig===SRV.sig){srvAnimate();return;}SRV.sig=sig;const top=box.scrollTop;box.textContent='';
   const add=r=>{const s=srvStatus(r.addr);const row=document.createElement('div');row.className='srow'+(SRV.sel&&SRV.sel.key===r.key?' sel':'');row.setAttribute('role','option');row.dataset.key=r.key;
     const img=document.createElement('img');img.alt='';const ic=s.r&&s.r.p&&s.r.p.ic;img.src=typeof ic==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(ic)?ic:(srvRender.defIc||(srvRender.defIc=defaultIcon()));
-    const info=document.createElement('div');info.className='sinfo';const nm=document.createElement('div');nm.className='sname';nm.textContent=r.t==='pub'&&s.r&&s.r.p&&s.r.p.m==='battle'?r.name+'  [Battle]':r.name;
+    const info=document.createElement('div');info.className='sinfo';const nm=document.createElement('div');nm.className='sname';nm.textContent=r.name;const bp=s.st==='on'&&s.r.p&&s.r.p.m==='battle'?s.r.p:null;
+    if(bp){const tag=document.createElement('span');tag.className='stag';tag.textContent=battleTag(bp);nm.appendChild(tag);}
     const motd=document.createElement('div');motd.className='smotd';
-    if(s.st==='on')motd.textContent=String(s.r.p&&s.r.p.motd||'A Minecraft:realzanized Server').slice(0,90);
+    if(s.st==='on')motd.textContent=String(s.r.p&&s.r.p.motd||(bp?'A Battle Server':'A Minecraft:realzanized Server')).slice(0,90);
     else if(s.st==='ping')motd.textContent='Pinging...';else if(s.st==='noapp'){motd.textContent='Set a Photon App ID in Photon Settings to ping servers';motd.classList.add('err');}
     else if(s.st==='bad'){motd.textContent='That server address is not valid';motd.classList.add('err');}
     else{motd.textContent=s.st==='err'?s.msg:'Can\'t connect to server';motd.classList.add('err');}
@@ -59,10 +63,10 @@ function srvRender(force){const box=$('srvList');if(!box||$('mpPanel').classList
       up.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,-1);});dn.addEventListener('click',e=>{e.stopPropagation();srvMove(r.i,1);});mv.append(up,dn);row.appendChild(mv);}
     row.addEventListener('click',()=>{const now=performance.now();const dbl=SRV.lastClick.k===r.key&&now-SRV.lastClick.t<450;SRV.lastClick={k:r.key,t:now};SRV.sel=r;sfx('click');if(dbl){srvJoinSelected();return;}srvRender(true);});
     box.appendChild(row);};
-  if(!rows.length){const d=document.createElement('div');d.className='rnote';d.textContent='No servers yet. Add Server saves one by its address; Direct Connection joins once; Host Server opens one of your worlds to other players.';box.appendChild(d);}
+  if(!rows.length){const d=document.createElement('div');d.className='rnote';d.textContent=SRV.kind==='battle'?'No Battle servers saved yet. Host Server starts a Battle or Battle Royale server; friends join it with its address, or from Battle servers online now.':'No servers yet. Add Server saves one by its address; Direct Connection joins once; Host Server opens one of your worlds to other players.';box.appendChild(d);}
   rows.forEach(add);
   const h=document.createElement('div');h.className='shead';const R=SRV.rooms[homeRegion()];
-  h.textContent='Servers online now ('+regionName(homeRegion())+')'+(!store('mcr_appid')?'':R&&R.loading?': searching...':R&&R.err?': '+R.err:pub.length?'':': none right now');box.appendChild(h);
+  h.textContent=(SRV.kind==='battle'?'Battle servers online now (':'Servers online now (')+regionName(homeRegion())+')'+(!store('mcr_appid')?'':R&&R.loading?': searching...':R&&R.err?': '+R.err:pub.length?'':': none right now');box.appendChild(h);
   pub.forEach(add);box.scrollTop=top;srvButtons();}
 function srvAnimate(){for(const c of document.querySelectorAll('#srvList canvas.sping'))if(c.dataset.st==='ping')pingIcon(c,'ping',0);}
 function srvButtons(){const s=SRV.sel;$('srvJoin').disabled=!s;$('srvEdit').disabled=!(s&&s.t==='saved');$('srvDel').disabled=!(s&&s.t==='saved');}
@@ -75,10 +79,10 @@ $('srvAdd').addEventListener('click',()=>{sfx('click');dlgEdit(-1);});
 $('srvEdit').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgEdit(SRV.sel.i);}});
 $('srvDel').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgDelete(SRV.sel.i);}});
 $('srvRefresh').addEventListener('click',()=>{sfx('click');SRV.sig='';srvBrowseStart();});
-$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}dlgHost('menu');});
+$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}if(SRV.kind==='battle'){srvBrowseStop();hide('mpPanel');openBC(SET.mode==='br'?'br':'battle','mp');return;}dlgHost('menu');});
 $('srvPhoton').addEventListener('click',()=>{sfx('click');dlgPhoton(false);});
-$('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');});
-$('discBack').addEventListener('click',()=>{hide('discPanel');openMP();});
+$('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');if(SRV.kind==='battle')showMini(true);});
+$('discBack').addEventListener('click',()=>{hide('discPanel');openMP(SRV.kind);});
 addEventListener('keydown',e=>{if($('mpPanel').classList.contains('hidden')||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='Enter'&&SRV.sel){e.preventDefault();srvJoinSelected();}
   else if(e.code==='ArrowDown'||e.code==='ArrowUp'){const {rows,pub}=srvRows();const all=rows.concat(pub);if(!all.length)return;let i=all.findIndex(r=>SRV.sel&&r.key===SRV.sel.key);i=Math.max(0,Math.min(all.length-1,i+(e.code==='ArrowDown'?1:-1)));SRV.sel=all[i];srvRender(true);e.preventDefault();}
@@ -125,8 +129,8 @@ function srvJoin(addr,label){const a=parseAddr(addr);if(!a){$('phStatus').textCo
   const n=new PhotonNet(app,a.region,'any',myName,{join:a.room});net=n;SRV.joined={addr:a.full,room:a.room,region:a.region,name:label||a.full,mode:null};
   dlgConnecting(a.full,()=>{if(net===n){net=null;n.leave();}SRV.joined=null;dlgClose();srvBrowseStart();});
   n.tr.onstate=s=>{if(net===n&&!n.ready)dlgStatus(s.replace(/([a-z])([A-Z])/g,'$1 $2')+'...');};
-  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);};n.onLeave=onMemberLeave;
-  n.onHostChange=()=>{if(net!==n)return;if(SRV.joined&&SRV.joined.mode==='survival'){srvDisconnect('Server closed','Connection Lost');return;}onHostChanged();};
+  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);srvUpdateProps();};n.onLeave=id=>{onMemberLeave(id);srvUpdateProps();};
+  n.onHostChange=()=>{if(net!==n)return;if(SRV.joined&&SRV.joined.mode==='survival'){srvDisconnect('Server closed','Connection Lost');return;}onHostChanged();if(n.isHost())srvTakeOver(n,a);};
   n.onFail=msg=>{if(net!==n)return;srvDisconnect(msg,online?'Connection Lost':'Failed to connect to the server');};
   n.onReady=()=>{if(net!==n)return;const props=n.tr.props?n.tr.props():{};const mode=props.m==='battle'?'battle':'survival';SRV.joined.mode=mode;
     if(n.isHost()){srvDisconnect('Server closed: nobody is hosting '+a.full+' any more.','Failed to connect to the server');return;}   // only us in there: the host is gone
@@ -139,17 +143,22 @@ function srvJoin(addr,label){const a=parseAddr(addr);if(!a){$('phStatus').textCo
 function srvDisconnect(msg,title){if(SRV.discing)return;SRV.discing=true;try{if(net){const n=net;try{if(online&&!n.isHost()&&survival()&&player)netSend(N.PSAVE,{d:playerSave(player)},'host');}catch(e){}net=null;setTimeout(()=>n.leave(),60);}online=false;SRV.joined=null;
     if(MATCH.state!=='menu')toMenu();dlgClose();hideOverlays();$('loading').classList.add('hidden');hide('menu');hide('mpPanel');
     $('discTitle').textContent=title||'Connection Lost';$('discMsg').textContent=msg||'';show('discPanel');document.exitPointerLock&&document.exitPointerLock();}finally{SRV.discing=false;}}
+// a Battle server whose host dropped (rather than quit) carries on: the next player in becomes its host, so the round isn't lost
+function srvTakeOver(n,a){const p=n.tr.props?n.tr.props():{};SRV.mode='battle';SRV.hosting=true;SRV.joined=null;SRV.icon=typeof p.ic==='string'?p.ic:'';
+  SRV.cfg=Object.assign(srvDefaults(true),{room:a.room,region:a.region,full:a.full,motd:String(p.motd||'A Battle Server').slice(0,80),max:+p.mx||16,pub:!!+p.pub,wl:false,white:[],bans:{},ops:[]});SRV.bsig='';
+  chatMsg('The host left. You are now hosting '+a.full+'.','#ffff55',false);srvUpdateProps();}
 function srvJoinedInfo(info){SRV.info=info||null;SRV.amOp=!!(info&&(info.ops||[]).includes(myName.toLowerCase()));}
 
 // ---------------- hosting ----------------
-function srvDefaults(){let c=null;try{c=JSON.parse(store('mcr_lastsrv')||'null');}catch(e){}
-  return Object.assign({room:'realz-'+Math.random().toString(36).slice(2,7),region:homeRegion(),motd:'A Minecraft:realzanized Server',max:8,gm:'survival',pvp:true,pub:true,wl:false,white:[],ops:[],bans:{}},c||{},{white:(c&&c.white)||[],ops:(c&&c.ops)||[],bans:(c&&c.bans)||{}});}
+function srvDefaults(battle){let c=null;try{c=JSON.parse(store(battle?'mcr_lastbsrv':'mcr_lastsrv')||'null');}catch(e){}
+  return Object.assign({room:(battle?'battle-':'realz-')+Math.random().toString(36).slice(2,7),region:homeRegion(),motd:battle?'A Battle Server':'A Minecraft:realzanized Server',max:battle?16:8,gm:'survival',pvp:true,pub:true,wl:false,white:[],ops:[],bans:{}},c||{},{white:(c&&c.white)||[],ops:(c&&c.ops)||[],bans:(c&&c.bans)||{}});}
 function srvFullAddr(c){return c.room+(c.region!=='us'?':'+c.region:'');}
-// where: 'menu' (Host Server: pick a world or the Battle mini game), 'pause' (Open to Server), 'edit' (Server Settings while hosting)
-function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.assign(srvDefaults(),(loadWorldData(SURV.meta.id)||{}).srv||{},{gm:player&&player.gm||'survival'}):srvDefaults();
+// where: 'menu' (Host Server: pick a world or a mini game), 'battle' (Host Server on the Battle Servers screen), 'pause' (Open to Server), 'edit' (Server Settings while hosting)
+function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.assign(srvDefaults(),(loadWorldData(SURV.meta.id)||{}).srv||{},{gm:player&&player.gm||'survival'}):srvDefaults(where==='battle');
   const worlds=worldList();const live=where==='edit';
   dlgShow(`<h3>${where==='edit'?'Server Settings':where==='pause'?'Open to Server':'Host a Server'}</h3><div class="form">
-    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option></select>
+    ${where==='battle'?`<label for="hs_game">Game</label><select id="hs_game"><option value="battle">Battle</option><option value="br">Battle Royale</option></select>`:''}
+    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option><option value="br">Battle Royale mini game</option></select>
     <label for="hs_world" class="hs_sv">World</label><select id="hs_world" class="hs_sv">${worlds.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}${w.mode==='creative'?' (Creative)':''}</option>`).join('')}<option value="__new">Create a new world</option></select>`:''}
     <label for="hs_room">Server Address</label><input id="hs_room" type="text" maxlength="40" spellcheck="false" autocomplete="off" ${live?'disabled':''}>
     <label for="hs_reg">Region</label><select id="hs_reg" ${live?'disabled':''}>${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select>
@@ -163,21 +172,29 @@ function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.
     <div class="err" id="hs_err"></div>
     <div class="row"><button class="btn small" data-ok id="hs_ok">${live?'Done':'Start Server'}</button>${live?'<button class="btn small" id="hs_stop">Stop Server</button>':''}<button class="btn small" data-cancel id="hs_cancel">Cancel</button></div>`,b=>{
     const q=s=>b.querySelector(s);q('#hs_room').value=cur.room;q('#hs_reg').value=cur.region||'us';q('#hs_motd').value=cur.motd;q('#hs_max').value=String(cur.max);q('#hs_gm').value=cur.gm;q('#hs_pvp').value=cur.pvp===false?'0':'1';q('#hs_pub').value=cur.pub===false?'0':'1';q('#hs_wl').value=cur.wl?'1':'0';
-    if(q('#hs_world')&&SURV.lastWorld)q('#hs_world').value=SURV.lastWorld;
+    if(q('#hs_world')&&SURV.lastWorld)q('#hs_world').value=SURV.lastWorld;if(where==='battle')q('#hs_game').value=SET.mode==='br'?'br':'battle';
     const upd=()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);q('#hs_addr').textContent=a?a.full:'(type an address)';q('#hs_ok').disabled=!a;
-      const sv=!q('#hs_game')||q('#hs_game').value==='survival';for(const el of b.querySelectorAll('.hs_sv'))el.style.display=sv?'':'none';};
+      const sv=q('#hs_game')?q('#hs_game').value==='survival':!(live&&SRV.mode==='battle');for(const el of b.querySelectorAll('.hs_sv'))el.style.display=sv?'':'none';
+      const m=q('#hs_motd'),dm=['A Minecraft:realzanized Server','A Battle Server'];if(q('#hs_game')&&dm.includes(m.value))m.value=dm[sv?0:1];};
     upd();for(const s of ['#hs_room','#hs_reg','#hs_game'])if(q(s))q(s).addEventListener(s==='#hs_room'?'input':'change',upd);
     q('#hs_cancel').addEventListener('click',()=>{sfx('click');dlgClose();if(where!=='menu')$('resumeBtn').click();});
     if(q('#hs_stop'))q('#hs_stop').addEventListener('click',()=>{sfx('click');dlgClose();srvStop('Server closed');$('resumeBtn').click();});
     q('#hs_ok').addEventListener('click',()=>{const a=parseAddr(q('#hs_room').value+':'+q('#hs_reg').value);if(!a)return;
       const cfg=Object.assign({},cur,{room:a.room,region:a.region,full:a.full,motd:q('#hs_motd').value.trim().slice(0,80)||'A Minecraft:realzanized Server',max:+q('#hs_max').value,gm:q('#hs_gm').value,pvp:q('#hs_pvp').value==='1',pub:q('#hs_pub').value==='1',wl:q('#hs_wl').value==='1'});
-      if(live){SRV.cfg=cfg;srvCfgChanged();dlgClose();$('resumeBtn').click();return;}
-      const game=q('#hs_game')?q('#hs_game').value:'survival';const wid=q('#hs_world')?q('#hs_world').value:null;
+      if(live){SRV.cfg=cfg;srvCfgChanged();dlgClose();if(MATCH.mode==='survival')$('resumeBtn').click();else{hide('pause');if(MATCH.state==='lobby')openLobbyPanel();else lockPointer();}return;}
+      const game=q('#hs_game')?q('#hs_game').value:where==='battle'?'battle':'survival';const wid=q('#hs_world')?q('#hs_world').value:null;
       q('#hs_ok').disabled=true;q('#hs_err').textContent='Starting the server...';srvStart(cfg,where,game,wid,msg=>{q('#hs_ok').disabled=false;q('#hs_err').textContent=msg;});});},true);}
 async function makeIcon(url){if(!url)return null;try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});const c=mkCanvas(40,40),g=c.getContext('2d');const s=Math.min(img.width,img.height);
     g.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,40,40);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
-function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];return {m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||''};}
+function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];const p={m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||'',mx:c.max};
+  if(p.m==='battle'){p.bm=SET.mode==='br'?'br':'battle';p.cp=SET.comp?1:0;p.st=MATCH.state==='play'?'game':MATCH.state==='over'?'over':'lobby';p.mp=p.bm==='br'?'':String((MAPS.find(m=>m.id===(MATCH.state==='lobby'?nextMapId():MATCH.map))||{}).name||'');}
+  return p;}
+// what a Battle server's row says about it: mode, map, lobby or mid-round
+function battleTag(p){return '  ['+(p.bm==='br'?'Battle Royale':'Battle')+(+p.cp?' · Competitive':'')+(p.mp?' · '+p.mp:'')+' · '+(p.st==='game'?'In game':p.st==='over'?'Round over':'In lobby')+']';}
+// a hosted Battle server keeps its listing current as rounds start and end
+setInterval(()=>{if(!SRV.hosting||SRV.mode!=='battle'||!net||!SRV.cfg)return;const p=srvProps();const sig=[p.bm,p.cp,p.st,p.mp,p.pl].join('|');if(sig!==SRV.bsig){SRV.bsig=sig;net.tr.setProps&&net.tr.setProps(p);}},1500);
 async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');if(!app){onErr('Set your Photon App ID first (Photon Settings).');return;}readName();readOptions();
+  const battle=game==='battle'||game==='br';if(battle){SET.mode=game;store('bb_set',JSON.stringify(SET));writeOptions();game='battle';}
   let meta=null;if(game==='survival'){meta=where==='pause'?SURV.meta:wid&&wid!=='__new'?worldList().find(w=>w.id===wid):null;if(!meta&&where!=='pause')meta=newWorldMeta('Server World','','survival');SURV.lastWorld=meta&&meta.id;}
   SRV.icon=await makeIcon(meta&&meta.thumb)||'';SRV.mode=game;SRV.cfg=cfg;
   const n=new PhotonNet(app,cfg.region,game,myName,{create:{name:cfg.room,max:cfg.max,props:srvProps()}});
@@ -187,15 +204,15 @@ async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');i
   n.onFail=msg=>{if(net!==n&&n.ready)return;if(!n.ready){SRV.cfg=null;onErr(msg);return;}
     // lost Photon while hosting: the world carries on, offline
     net=null;online=false;SRV.hosting=false;try{n.leave();}catch(e){}if(survival()){if(player)player.id='p1';chatMsg('The server stopped: '+msg+' You are playing offline now.','#ff5555',false);}else{toMenu();srvDisconnect(msg,'Connection Lost');}};
-  n.onReady=()=>{store('mcr_lastsrv',JSON.stringify(Object.assign({},cfg,{full:undefined})));net=n;online=true;SRV.hosting=true;SRV.joined=null;srvBrowseStop();
-    if(game==='battle'){dlgClose();hide('mpPanel');player=null;ents=[];enterLobby();chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);srvUpdateProps();return;}
+  n.onReady=()=>{store(battle?'mcr_lastbsrv':'mcr_lastsrv',JSON.stringify(Object.assign({},cfg,{full:undefined})));net=n;online=true;SRV.hosting=true;SRV.joined=null;srvBrowseStop();
+    if(game==='battle'){dlgClose();hide('mpPanel');player=null;ents=[];MATCH.offlineLobby=false;enterLobby();chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);srvUpdateProps();return;}
     SRV.players=Object.assign({},(loadWorldData(meta.id)||{}).others||{});
     if(where==='pause'){const old=player.id;player.id='p'+n.myId;for(const m of mobs)if(m.owner===old)m.owner=player.id;dlgClose();$('resumeBtn').click();}
     else{dlgClose();hide('mpPanel');playWorld(meta,true);}
     chatMsg('Server started. Players join with the address '+cfg.full,'#55ff55',false);SURV.toast={t:5,txt:'Server open: '+cfg.full};srvUpdateProps();saveWorldSoon();};}
 function saveWorldSoon(){setTimeout(()=>{if(survival()&&SRV.hosting)saveWorld();},1500);}
 function srvUpdateProps(){if(!SRV.hosting||!net||!net.tr.setProps||!SRV.cfg)return;net.tr.setProps(srvProps());}
-function srvCfgChanged(){if(!SRV.cfg)return;store('mcr_lastsrv',JSON.stringify(SRV.cfg));srvUpdateProps();
+function srvCfgChanged(){if(!SRV.cfg)return;store(SRV.mode==='battle'?'mcr_lastbsrv':'mcr_lastsrv',JSON.stringify(SRV.cfg));srvUpdateProps();
   netSend(N.SRVINFO,{pvp:SRV.cfg.pvp,motd:SRV.cfg.motd,ops:SRV.cfg.ops,addr:SRV.cfg.full});if(survival())saveWorld();}
 // stop hosting: everyone else gets "Server closed"; the host keeps playing offline
 function srvStop(why){if(!SRV.hosting||!net)return;netSend(N.KICK,{all:1,r:why||'Server closed'});const n=net;setTimeout(()=>{try{n.leave();}catch(e){}},300);net=null;online=false;SRV.hosting=false;

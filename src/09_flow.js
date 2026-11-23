@@ -1,5 +1,5 @@
 // ================= match flow: settings, start/end, lobby hub, phases, chests, MCBR timeline, net handlers =================
-const SET={mode:'battle',roundLen:600,hunger:1,refill:120,grace:30,showdown:true,takeAll:true,central:true,bots:5,difficulty:1,
+const SET={mode:'battle',roundLen:600,hunger:1,refill:120,grace:30,showdown:true,takeAll:true,central:true,comp:false,bots:5,difficulty:1,
   maps:{temple:true,cavern:true,cove:true,crucible:true,skyhold:true},brLen:.2,brExtra:true,enchants:true,lobbyWait:45};
 const MATCH={state:'menu',mode:'battle',map:null,seed:0,gameT:0,showdown:false,refillAt:0,mapIdx:0,lobbyCD:-1,winner:null,phaseT:0,graceAnn:false,edits:[],nextMap:null};
 let suddenDeath=false,br=null,myName='Player',mySkin='gen:Player',online=false;
@@ -52,7 +52,7 @@ function snapshotFor(joinId){
 
 // ---------- lobby hub (online) ----------
 function enterLobby(){
-  MATCH.state='lobby';generateMap('hub',1,false);buildMesh();br=null;suddenDeath=false;
+  MATCH.state='lobby';generateMap('hub',1,false);buildMesh();br=null;suddenDeath=false;spectate.mode='bat';spectate.target=null;
   projs=[];drops=[];particles=[];msgs=[];
   const keep=ents.filter(e=>e.kind==='player');ents=keep;
   for(const e of ents){e.alive=true;e.bat=false;e.spectator=false;e.health=20;e.food=20;e.sat=5;e.effects={};e.absorb=0;e.fire=0;e.inv=new Array(9).fill(null);e.armor=[null,null,null,null];e.kills=0;e.dmgDealt=0;e.ready=false;
@@ -230,7 +230,7 @@ function onNetEvent(code,d,from){
   case N.ANN:msgs.push({t:d.d,txt:d.t,sub:d.s||''});break;
   case N.CHAT:if(d&&d.p){chat.push({t:10,txt:`<${String(d.n||'Player').slice(0,16)}> ${String(d.m||'').slice(0,100)}`,col:'#ffffff'});if(chat.length>8)chat.shift();sfx('click');break;}chat.push({t:10,txt:String(d.t||'').slice(0,120),col:/^#[0-9a-f]{3,6}$/i.test(d.c)?d.c:'#fff'});if(chat.length>8)chat.shift();break;
   case N.BLOCK:applyBlock(d[0],d[1],d[2],d[3]);break;
-  case N.SQUEAK:{const e=entById(d.id);if(e){spawnParticles(e.pos[0],e.pos[1],e.pos[2],4,[.3,.2,.15],1.5);if(player&&dist(e.pos,player.pos)<24)sfx('squeak');}break;}
+  case N.SQUEAK:{const e=entById(d.id);if(e&&!compHidesBats()){spawnParticles(e.pos[0],e.pos[1],e.pos[2],4,[.3,.2,.15],1.5);if(player&&dist(e.pos,player.pos)<24)sfx('squeak');}break;}
   case N.LOBBY:if(!fromHost)return;if(MATCH.state!=='lobby')enterLobby();MATCH.lobbyCD=d.cd;MATCH.nextMap=d.next;Object.assign(SET,d.set);for(const e of ents)e.ready=d.ready.includes(e.id);break;
   case N.READY:{const e=entById('p'+from);if(e)e.ready=d.r;break;}
   case N.END:if(!fromHost)return;applyEnd(d);break;

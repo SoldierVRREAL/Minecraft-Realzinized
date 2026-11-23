@@ -1,5 +1,5 @@
 // ================= Java-style Options screens (Options / Video Settings / Music & Sounds / Controls / Game Rules / Maps) =================
-let jPage='main',jReturn='menu';
+let jPage='main',jReturn='menu',jDirect=false;   // jDirect: Done goes straight back (opened on one page from elsewhere)
 const JPAGES={};
 function jLabel(b){const t=typeof b._label==='function'?b._label():b._label;b.textContent='';const off=b.classList.contains('off');
   const n=pxCanvas(t,GS,off?'#a0a0a0':'#e0e0e0'),s=pxCanvas(t,GS,off?'#a0a0a0':'#ffffa0');n.className='n';s.className='s';if(b._knob)b.appendChild(b._knob);b.append(n,s);b.setAttribute('aria-label',t);}
@@ -59,9 +59,9 @@ function jRender(){const P=JPAGES[jPage]();pxSet($('jTitle'),P.title,'#ffffff');
   if(P.items.length%2)P.items[P.items.length-1].classList.add('full');
   const f=$('jFoot');f.textContent='';f.appendChild(jBtn('Done',jBack,'wide'));const hb=document.createElement('button');hb.id='jDoneHidden';hb.className='hidden';hb.addEventListener('click',jBack);f.appendChild(hb);const first=g.querySelector('.jb:not(.off)');}
 function jOpen(page){jPage=page;jRender();}
-function jBack(){if(jPage==='main'||(jPage==='rules'&&jReturn==='lobbyPanel'))jClose();else jOpen('main');}
+function jBack(){if(jPage==='main'||jDirect||(jPage==='rules'&&jReturn==='lobbyPanel'))jClose();else jOpen('main');}
 function jClose(silent){hide('jOpt');if(!silent)show(jReturn);}
-function openOptions(ret,page){jReturn=ret||'menu';['menu','pause','lobbyPanel'].forEach(hide);show('jOpt');jOpen(page||'main');}
+function openOptions(ret,page){jReturn=ret||'menu';jDirect=false;['menu','pause','lobbyPanel'].forEach(hide);show('jOpt');jOpen(page||'main');}
 $('pauseOpts').addEventListener('click',()=>{sfx('click');openOptions('pause');});
 document.addEventListener('keydown',e=>{if($('jOpt').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;if(e.code==='Escape'||e.code==='Backspace'){jBack();e.preventDefault();}},true);
 // FPS counter

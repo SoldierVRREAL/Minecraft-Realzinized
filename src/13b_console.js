@@ -12,10 +12,11 @@ function pollPad(dt){
   if(!padActive&&(Object.values(B).some(Boolean)||Math.abs(lx)+Math.abs(ly)+Math.abs(rx)+Math.abs(ry)>.3)){padActive=true;if(locked)document.exitPointerLock();}
   if(!padActive){padPrev=B;return;}
   const menuOpen=!$('menu').classList.contains('hidden');
-  const panel=['jOpt','optPanel','onlinePanel','packPanel','lobbyPanel','results','pause','lbPanel','dressPanel'].find(id=>!$(id).classList.contains('hidden'));
+  const panel=['jOpt','optPanel','packPanel','lobbyPanel','results','pause','lbPanel','dressPanel'].find(id=>!$(id).classList.contains('hidden'));
   padRepeat-=dt;const nav=ly<-.5||B.up?-1:ly>.5||B.down?1:0;const navX=lx<-.5||B.left?-1:lx>.5||B.right?1:0;
-  if(menuOpen&&!panel){if(nav&&padRepeat<=0){setMSel(mSel+nav);sfx('click');padRepeat=.22;}if(!nav)padRepeat=0;if(E('a')){MBTN()[mSel].click();}if(E('b'))menuBack();if(E('x'))openDress();}
-  else if(panel){if(E('b')){const back={jOpt:'jDoneHidden',lbPanel:'lbClose',dressPanel:'dressClose',optPanel:'optClose',onlinePanel:'onlineClose',packPanel:'packClose',lobbyPanel:'lobbyClose',results:'menuBtn',pause:'resumeBtn'}[panel];$(back).click();}
+  if(menuOpen&&!panel&&bcOpen())bcPad(E,nav,navX,dt);
+  else if(menuOpen&&!panel){if(nav&&padRepeat<=0){setMSel(mSel+nav);sfx('click');padRepeat=.22;}if(!nav)padRepeat=0;if(E('a')){MBTN()[mSel].click();}if(E('b'))menuBack();if(E('x'))openDress();}
+  else if(panel){if(E('b')){const back={jOpt:'jDoneHidden',lbPanel:'lbClose',dressPanel:'dressClose',optPanel:'optClose',packPanel:'packClose',lobbyPanel:'lobbyClose',results:online?'lobbyBtn':'menuBtn',pause:'resumeBtn'}[panel];if(!(panel==='results'&&$('results').classList.contains('reslock')))$(back).click();}
     if(panel==='pause'&&E('a'))$('resumeBtn').click();if(panel==='results'&&E('a')&&!$('nextBtn').classList.contains('hidden'))$('nextBtn').click();if(panel==='lobbyPanel'&&E('a'))$('lobbyReady').click();}
   else if(chestOpen){ // chest screen: stick/d-pad cursor, A take or put back, LB take everything, B exit
     if((nav||navX)&&padRepeat<=0){const total=CHEST_SLOTS+9,lo=chestOpen.inv?CHEST_SLOTS:0,n=total-lo;let c=chestCursor-lo;if(navX)c+=navX;if(nav)c+=nav*9;chestCursor=lo+((c%n)+n)%n;renderChest();sfx('click');padRepeat=.16;}if(!nav&&!navX)padRepeat=0;

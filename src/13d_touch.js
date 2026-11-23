@@ -40,7 +40,7 @@ const lookEnd=e=>{const L=looks.get(e.pointerId);if(!L)return;clearTimeout(L.tim
   if(L.moved<10&&performance.now()-L.t<300){lmb=true;lmbEdge=true;setTimeout(()=>{lmb=false;},60);}};
 $('tLook').addEventListener('pointerup',lookEnd);$('tLook').addEventListener('pointercancel',lookEnd);
 // show the controls only while actually playing
-const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','onlinePanel','packPanel','dressPanel','lbPanel','loading'];
+const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading'];
 function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');});
   TUI.classList.toggle('hidden',!on);if(!on)return;
   const alive=player.alive,lobby=MATCH.state==='lobby';

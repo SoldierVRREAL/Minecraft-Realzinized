@@ -178,7 +178,22 @@ body.touch #clickResume{display:none!important}
 .lbt{border-collapse:collapse}.lbt td{padding:calc(var(--S)*2px) calc(var(--S)*6px)}.lbt tr:first-child td{border-bottom:calc(var(--S)*1px) solid #8b8b8b}
 .srvpanel{width:min(760px,96vw)}.srvtitle{text-align:center}.srvlist{max-height:48vh;min-height:30vh}.srvbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px}.srvbtns .btn{flex:1 1 0;margin:0;min-width:110px}
 .srow{display:flex;gap:10px;align-items:center;padding:5px 8px;color:#fff;text-shadow:2px 2px 0 #000;border:2px solid transparent;cursor:pointer;user-select:none}.srow:hover{background:rgba(255,255,255,.08)}.srow.sel{border-color:#fff;background:rgba(0,0,0,.35)}
-.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}.srow .sname{font-size:21px}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
+.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}#results.reslock button{pointer-events:none;opacity:.6}#bcPanel{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:calc(var(--S)*3px);margin-top:calc(var(--S)*10px)}
+#bcLeft{width:calc(var(--S)*214px);padding:calc(var(--S)*6px) calc(var(--S)*7px);display:flex;flex-direction:column;gap:calc(var(--S)*2px);background:#e4e4e4;overflow:visible;max-height:none;
+  box-shadow:0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #fff,inset calc(var(--S)*-2px) calc(var(--S)*-2px) 0 #8a8a8a}
+.bcHead{display:flex;align-items:flex-start;gap:calc(var(--S)*3px);cursor:pointer;margin-bottom:calc(var(--S)*2px)}
+.bcIcon{width:calc(var(--S)*24px);height:calc(var(--S)*24px);display:flex;align-items:center;justify-content:center;background:#c9c9c9;box-shadow:inset 0 0 0 calc(var(--S)*1px) #555,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #f4f4f4}
+.bcIcon canvas,.bcHeadT canvas,.bcRow canvas,#bcDesc canvas,.bcStatus canvas{image-rendering:pixelated}.bcHeadT{padding-top:calc(var(--S)*2px)}
+.bcRow{display:flex;align-items:center;gap:calc(var(--S)*3px);min-height:calc(var(--S)*12px);cursor:pointer}.bcRow.off{cursor:default}
+.bcBox{position:relative;flex:0 0 auto;width:calc(var(--S)*9px);height:calc(var(--S)*9px);background:#fff;box-shadow:inset 0 0 0 calc(var(--S)*1px) #5c5c5c,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #c8c8c8}
+.bcRow.off .bcBox{background:#d6d6d6}.bcBox canvas{position:absolute;left:0;top:calc(var(--S)*-3px)}
+#bcLeft .bcBtn{width:100%;margin-top:calc(var(--S)*1px)}#bcLeft .bcBtn.sel:not(.off){background-image:var(--btnSel)}#bcLeft .bcBtn.sel:not(.off) canvas.n{display:none}#bcLeft .bcBtn.sel:not(.off) canvas.s{display:block}
+#bcLeft .jslider.sel .knob{background-image:var(--btnSel)}.bcStatus{min-height:calc(var(--S)*4px)}
+#bcRight{width:calc(var(--S)*132px);padding:calc(var(--S)*4px);display:flex;flex-direction:column;justify-content:space-between;gap:calc(var(--S)*4px);background:rgba(58,78,98,.74);
+  box-shadow:0 0 0 calc(var(--S)*1px) rgba(220,230,240,.85),0 0 0 calc(var(--S)*2px) rgba(0,0,0,.35)}
+#bcImg{display:block;width:100%;height:auto;box-shadow:0 0 0 calc(var(--S)*1px) #000,0 0 0 calc(var(--S)*2.5px) #e6c43a,0 0 0 calc(var(--S)*3.5px) #6a5310;margin:calc(var(--S)*3px)}
+#bcImg{width:calc(100% - var(--S)*6px)}
+.srow .sname{font-size:21px}.srow .stag{font-size:17px;color:#ffd060;white-space:nowrap}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
 .srow .smotd.err{color:#ff5555}.srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.srow .splay{font-size:18px;color:#aaa}.srow .sping{width:20px;height:16px;image-rendering:pixelated}.srow .smove{display:flex;flex-direction:column;gap:2px}.srow .smove button{font:14px monospace;padding:0 4px;background:#555;color:#fff;border:1px solid #000;cursor:pointer;visibility:hidden}.srow:hover .smove button{visibility:visible}
 .shead{padding:6px 8px 2px;color:#ffff55;font-size:18px;text-shadow:2px 2px 0 #000;border-top:1px solid rgba(255,255,255,.2)}.srvstatus{min-height:1.2em;margin-top:4px;font-size:18px;text-align:center}
 .srvdlg{width:min(560px,94vw);display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden}.srvdlg .form{overflow:auto;min-height:0;flex:0 1 auto;padding:2px}.srvdlg.wide{width:min(900px,96vw)}@media(min-width:760px){.srvdlg.wide .form{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr)}}.srvdlg .form label{font-size:19px}.srvdlg h3{text-align:center}.srvdlg .note{font-size:16px}.srvdlg .err{color:#a00000;min-height:1.1em;text-align:center}.srvdlg .addr{font:22px 'VT323',monospace;background:#000;color:#55ff55;padding:4px 8px;text-align:center;user-select:all}
@@ -204,6 +219,7 @@ body.touch #clickResume{display:none!important}
     <button class="lbtn mini hidden" id="practiceBtn">Practice</button>
     <button class="lbtn mini hidden" id="lbBtn">Leaderboards</button>
   </div>
+  <div id="bcPanel" class="hidden"><div id="bcLeft" class="lpanel"></div><div id="bcRight"><div id="bcDesc" aria-live="polite"></div><canvas id="bcImg" width="660" height="418" aria-hidden="true"></canvas></div></div>
   <div id="prompts" class="lprompts"></div>
   <div id="verL" class="ver" data-t="Minecraft:realzanized Browser Edition">Minecraft:realzanized Browser Edition</div><div id="verR" class="ver" data-t="Copyright Logjang AB. Do not distribute!">Copyright Logjang AB. Do not distribute!</div>
 </div>
@@ -252,22 +268,6 @@ body.touch #clickResume{display:none!important}
   </div>
   <h3>Select Maps</h3><div class="maps" id="mapChecks"></div>
   <div class="row"><button class="btn small" id="optClose">Done</button></div>
-</div></div>
-
-<div id="onlinePanel" class="screen hidden"><div class="panel">
-  <h3>Play Online</h3>
-  <div class="form">
-    <label for="n_kind">Connection</label><select id="n_kind"><option value="relay">Internet</option><option value="local">Same browser, other tabs (test)</option></select>
-    <label for="n_room">Room code</label><input id="n_room" type="text" maxlength="24" value="battle">
-    <label for="n_server">Game server (optional)</label><input id="n_server" type="text" maxlength="120" placeholder="e.g. my-battle.onrender.com or 192.168.1.20:8080">
-  </div>
-  <div id="browse"><div class="bhead"><span>Open games</span><span id="browseWhere" class="bwhere"></span><button class="btn small" id="browseRefresh">Refresh</button></div>
-    <div id="roomList"><div class="rnote">Looking for games...</div></div>
-    <label class="bchk"><input type="checkbox" id="n_public" checked> List my room here when I host</label></div>
-  <div class="note">Pick a game from the list, or everyone types the same room code and presses Connect. The first player in a room hosts: it runs the bots, chests and round timer.
-  If you run the game's own server (<code>node server/server.js</code>), players on it connect to it automatically, or type its address above. Without one, the game uses free public relays, so pick an unusual room code.</div>
-  <div id="status"></div>
-  <div class="row"><button class="btn small" id="connectBtn">Connect</button><button class="btn small" id="onlineClose">Back</button></div>
 </div></div>
 
 <div id="packPanel" class="screen hidden"><div class="panel">
@@ -333,7 +333,7 @@ body.touch #clickResume{display:none!important}
   <div class="note">Worlds are saved in this browser every 30 seconds and when you leave.</div>
 </div></div>
 <div id="mpPanel" class="screen hidden"><div class="panel srvpanel">
-  <h3 class="srvtitle">Play Multiplayer</h3>
+  <h3 class="srvtitle" id="mpTitle">Play Multiplayer</h3>
   <div id="srvList" class="wlist srvlist" role="listbox" aria-label="Servers"></div>
   <div id="phStatus" class="srvstatus"></div>
   <div class="srvbtns"><button class="btn small" id="srvJoin">Join Server</button><button class="btn small" id="srvDirect">Direct Connection</button><button class="btn small" id="srvAdd">Add Server</button></div>

@@ -1,6 +1,6 @@
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
-const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
+const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
 // raw mouse input (unadjustedMovement) skips OS acceleration, but on macOS it inflates movement while a mouse button is held,
@@ -154,7 +154,7 @@ $('practiceBtn').addEventListener('click',()=>{initAudio();sfx('click');readName
 const MBTN=()=>[...document.querySelectorAll('#menuList .lbtn')].filter(b=>!b.classList.contains('hidden'));let mSel=0;
 function setMSel(i){const b=MBTN();mSel=(i+b.length)%b.length;b.forEach((x,j)=>x.classList.toggle('sel',j===mSel));}
 document.querySelectorAll('#menuList .lbtn').forEach(b=>b.addEventListener('mouseenter',()=>{const i=MBTN().indexOf(b);if(i>=0&&mSel!==i){setMSel(i);sfx('click');}}));setMSel(0);
-document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
+document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden')||bcOpen()||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='ArrowDown'||e.code==='KeyS'){setMSel(mSel+1);sfx('click');e.preventDefault();}else if(e.code==='ArrowUp'||e.code==='KeyW'){setMSel(mSel-1);sfx('click');e.preventDefault();}
   else if(e.code==='Enter'||e.code==='Space'){MBTN()[mSel].click();e.preventDefault();}});
 // stone-letter logo
@@ -193,25 +193,8 @@ $('optClose').addEventListener('click',()=>{readOptions();hide('optPanel');show(
 function startBattleSolo(){initAudio();sfx('click');readName();online=false;if(net){net.leave();net=null;}MATCH.mapIdx=MATCH.mapIdx||0;hide('menu');showLoading('Loading level',()=>{player=null;ents=[];hostStartMatch();});}
 $('soloBtn').addEventListener('click',()=>openWorlds());
 $('mpBtn').addEventListener('click',()=>openMP());
-// ---- server browser: rooms announce themselves; pick one to join ----
-let browser=null;
-function stopBrowse(){if(browser){browser.close();browser=null;}}
-function startBrowse(){stopBrowse();const box=$('roomList');if($('n_kind').value!=='relay'){box.innerHTML='<div class="rnote">Room list works with Internet connections.</div>';return;}
-  box.innerHTML='<div class="rnote">Looking for games...</div>';$('browseWhere').textContent='';
-  browser=browseRooms($('n_server').value,(list,url,err)=>{if(!$('onlinePanel').classList.contains('hidden')||true){
-    if(err){box.innerHTML='<div class="rnote"></div>';box.firstChild.textContent=err;return;}
-    $('browseWhere').textContent=url?'on '+url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,''):'';
-    if(!list.length){box.innerHTML='<div class="rnote">No open games right now. Type a room code and press Connect to start one.</div>';return;}
-    box.textContent='';for(const r of list){const b=document.createElement('button');b.className='room';b.type='button';
-      const nm=document.createElement('span');nm.className='rn';nm.textContent=r.room+(r.host?'  ·  '+r.host:'');
-      const st=document.createElement('span');st.className='rs';const mp=(MAPS.find(m=>m.id===r.map)||{}).name||(r.map==='br'?'Battle Royale':r.map||'');st.textContent=(r.mode==='br'?'Battle Royale':'Battle')+(mp&&r.mode!=='br'?' · '+mp:'')+' · '+(r.state==='lobby'?'In lobby':'In game '+fmtTime(r.gt||0));
-      const pp=document.createElement('span');pp.className='rp';pp.textContent=(r.n||0)+'/'+(r.max||16);
-      b.append(nm,st,pp);b.addEventListener('click',()=>{$('n_room').value=r.room;sfx('click');$('connectBtn').click();});box.appendChild(b);}}});}
-$('browseRefresh').addEventListener('click',()=>{sfx('click');startBrowse();});
-$('n_server').addEventListener('change',()=>{if(!$('onlinePanel').classList.contains('hidden'))startBrowse();});
-$('n_kind').addEventListener('change',()=>{if(!$('onlinePanel').classList.contains('hidden'))startBrowse();});
-$('onlineBtn').addEventListener('click',()=>{initAudio();sfx('click');readName();hide('menu');show('onlinePanel');startBrowse();});
-$('onlineClose').addEventListener('click',()=>{stopBrowse();hide('onlinePanel');show('menu');});
+// Mini Games > Play Online: the Battle Servers screen (Photon servers, see 15h_servers.js)
+$('onlineBtn').addEventListener('click',()=>{showMini(false);openMP('battle');});
 // leaving the page: say goodbye so the room doesn't wait for a timeout
 addEventListener('pagehide',()=>{try{survLeave();}catch(e){}try{if(net)net.leave();}catch(e){}});addEventListener('beforeunload',()=>{try{if(net&&online)net.post({t:'bye',from:net.myId});}catch(e){}});
 $('packBtn').addEventListener('click',()=>{sfx('click');hide('menu');show('packPanel');refreshPackList();});
@@ -227,32 +210,21 @@ function refreshSkinPicker(){const row=$('skinRow');const opts=availableSkins().
   for(const k of opts){const c=mkCanvas(16,16);const g=c.getContext('2d');g.imageSmoothingEnabled=false;const S=skinTex(k).img;g.drawImage(S,8,8,8,8,0,0,16,16);g.drawImage(S,40,8,8,8,0,0,16,16);c.title=k.replace(/^(pack|gen):/,'');if(k===mySkin)c.classList.add('on');
     c.addEventListener('click',()=>{mySkin=k;store('bb_skin',k);refreshSkinPicker();sfx('click');});row.appendChild(c);}}
 $('nameIn').addEventListener('change',()=>{if(mySkin.startsWith('gen:'))mySkin='gen:'+($('nameIn').value||'Player');refreshSkinPicker();});
-$('n_server').value=store('bb_server')||'';$('n_kind').value=store('bb_nkind3')||'relay';$('n_room').value=store('bb_room')||'battle';
-$('connectBtn').addEventListener('click',async()=>{
-  const kind=$('n_kind').value,room=($('n_room').value||'battle').trim();store('bb_nkind3',kind);store('bb_server',$('n_server').value.trim());store('bb_room',room);
-  if(net){net.leave();net=null;}readOptions();
-  const ready=()=>{stopBrowse();online=true;setNetStatus('Connected. '+(net.isHost()?'You are the host.':'Joining host...'));hide('onlinePanel');player=null;ents=[];
-    if(net.isHost())enterLobby();else{enterLobby();netSend(N.HELLO,{},'host');}};
-  const wire=()=>{net.onEvent=onNetEvent;net.onJoin=()=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;};net.onLeave=onMemberLeave;net.onHostChange=onHostChanged;};
-  if(kind==='local'){setNetStatus('Joining room "'+room+'" in this browser...');net=new LocalNet(room,myName);wire();net.onReady=ready;return;}
-  if(kind==='relay'){setNetStatus('Connecting to the relay...');const n=new RelayNet(room,myName,$('n_server').value);net=n;wire();
-    n.getAdvert=()=>$('n_public').checked?{host:myName,n:n.list().length,max:16,mode:SET.mode,map:MATCH.state==='play'||MATCH.state==='over'?MATCH.map:nextMapId(),state:MATCH.state==='lobby'?'lobby':'game',gt:Math.round(MATCH.gameT||0)}:null;
-    n.onReconnecting=()=>{if(net===n)chatMsg('Connection lost. Reconnecting...','#ffaa00',false);};
-    n.onReconnected=down=>{if(net!==n)return;chatMsg('Reconnected.','#55ff55',false);if(down>6500&&!n.isHost())netSend(N.HELLO,{},'host');};   // gone long enough to have missed things: ask the host to catch us upn.tr.trying=url=>{if(net===n&&!n.ready)setNetStatus('Connecting to '+url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,'')+'...');};
-    n.onReady=()=>{if(net!==n)return;setNetStatus('Connected to '+(n.tr.url||'relay').replace(/^wss?:\/\//,'').replace(/\/mqtt$/,''));ready();};
-    n.onFail=msg=>{if(net!==n)return;const wasOnline=online;net=null;n.leave();if(wasOnline){toMenu();hide('menu');show('onlinePanel');startBrowse();}setNetStatus(msg);};return;}
-  setNetStatus('Pick a connection type.');
-});
 $('resumeBtn').addEventListener('click',()=>{paused=false;hide('pause');lockPointer();});
 $('leaveBtn').addEventListener('click',()=>toMenu());
-$('menuBtn').addEventListener('click',()=>toMenu());
+// online, leaving from the end-of-round scoreboard asks first: the round ending must never drop you off the server by a stray click, tap or B press
+$('menuBtn').addEventListener('click',()=>{if(!online||!net){toMenu();return;}sfx('click');
+  dlgShow(`<h3>Leave the server?</h3><div class="note" style="text-align:center">The round is over. Stay and you go back to the lobby for the next round.</div>
+    <div class="row"><button class="btn small" data-ok data-cancel id="lv_stay">Stay</button><button class="btn small" id="lv_go">Leave Server</button></div>`,b=>{
+    b.querySelector('#lv_stay').addEventListener('click',()=>{sfx('click');dlgClose();});b.querySelector('#lv_go').addEventListener('click',()=>{sfx('click');dlgClose();toMenu();});});SRV.dlgOpen='leave';});
 // back to the lobby after a round (online: the host takes everyone there; solo: a lobby that counts down to the next round)
-function backToLobby(){hide('results');if(online){if(isHost()){netSend(N.TOLOBBY,{});enterLobby();}else if(MATCH.state!=='lobby')enterLobby();}else{MATCH.offlineLobby=true;enterLobby();}}
+function backToLobby(){hide('results');if(typeof SRV!=='undefined'&&SRV.dlgOpen==='leave')dlgClose();if(online){if(isHost()){netSend(N.TOLOBBY,{});enterLobby();}else if(MATCH.state!=='lobby')enterLobby();}else{MATCH.offlineLobby=true;enterLobby();}}
 $('lobbyBtn').addEventListener('click',backToLobby);
 $('nextBtn').addEventListener('click',()=>{hide('results');if(!online){showLoading('Loading level',()=>{player=null;ents=[];hostStartMatch();});}});
 function toMenu(){survLeave();$('saveBtn').classList.add('hidden');if(net){net.leave();net=null;}online=false;MATCH.offlineLobby=false;MATCH.state='menu';player=null;ents=[];document.exitPointerLock&&document.exitPointerLock();hideOverlays();show('menu');setMSel(0);generateMap('skyhold',1,false);buildMesh();refreshSkinPicker();}
 function openLobbyPanel(){document.exitPointerLock&&document.exitPointerLock();show('lobbyPanel');const host=isHost();
-  $('lobbyInfo').innerHTML=`<div class="note">Room: <b>${($('n_room').value||'').replace(/</g,'&lt;')}</b> · ${net?net.kind:''}${net&&net.tr&&net.tr.url?' via '+net.tr.url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,'').replace(/</g,'&lt;'):''}${net&&net.ping!=null?' · ping '+Math.round(net.ping)+' ms':''} · ${host?'You are the host':'Host decides the options'}<br>Mode: ${SET.mode==='br'?'Battle Royale':'Battle'} · Round ${SET.roundLen?SET.roundLen/60+' min':'unlimited'} · Grace ${SET.grace||'off'} · Hunger ${({0.5:'slow',1:'normal',2:'fast'})[SET.hunger]} · Bots ${SET.bots}<br>Players: ${ents.filter(e=>e.kind==='player').map(e=>(e.ready?'✓ ':'')+e.name.replace(/</g,'&lt;')+(e===player?(net&&net.ping!=null?' ('+Math.round(net.ping)+' ms)':''):(e.ping!=null?' ('+e.ping+' ms)':''))).join(', ')}</div>`;
+  const addr=SRV.hosting?SRV.cfg&&SRV.cfg.full:SRV.info&&SRV.info.addr||(SRV.joined&&SRV.joined.addr)||'';
+  $('lobbyInfo').innerHTML=`<div class="note">${online?'Server: <b>'+esc(addr)+'</b> · Photon':'Offline'}${net&&net.ping!=null?' · ping '+Math.round(net.ping)+' ms':''} · ${host?(online?'You are the host':'You decide the options'):'Host decides the options'}<br>Mode: ${SET.mode==='br'?'Battle Royale':'Battle'} · Round ${SET.roundLen?SET.roundLen/60+' min':'unlimited'} · Grace ${SET.grace||'off'} · Hunger ${({0.5:'slow',1:'normal',2:'fast'})[SET.hunger]} · Bots ${SET.bots}<br>Players: ${ents.filter(e=>e.kind==='player').map(e=>(e.ready?'✓ ':'')+e.name.replace(/</g,'&lt;')+(e===player?(net&&net.ping!=null?' ('+Math.round(net.ping)+' ms)':''):(e.ping!=null?' ('+e.ping+' ms)':''))).join(', ')}</div>`;
   $('lobbyStart').classList.toggle('hidden',!host);$('lobbyOpts').classList.toggle('hidden',!host);}
 $('lobbyReady').addEventListener('click',()=>{toggleReady();openLobbyPanel();});
 $('lobbyStart').addEventListener('click',()=>{if(isHost()){hide('lobbyPanel');hostStartMatch();}});
@@ -287,7 +259,9 @@ function showResults(m){
     const k=document.createElement('span');k.className='k';k.textContent=r.k||0;const aw=document.createElement('span');aw.className='sbIco';aw.appendChild(iconCanvas((AWARDS[r.aw]||AWARDS.contender)[1],26));
     d.append(dot,nm,k,aw);d.addEventListener('mouseenter',()=>resPick(i));d.addEventListener('click',()=>resPick(i));box.appendChild(d);});
   resN=rows.length;let sel=rows.findIndex(r=>r.id===me);resPick(sel<0?0:sel);$('sbTime').textContent=fmtClock(m.t!=null?m.t:MATCH.gameT);
-  $('resNote').textContent=online?'Returning to the lobby in a few seconds.':'Back to the lobby in a few seconds, or pick Next map.';$('nextBtn').classList.toggle('hidden',online);$('menuBtn').textContent=online?'Leave Game':'Menu';show('results');
+  $('resNote').textContent=online?'Returning to the lobby in a few seconds.':'Back to the lobby in a few seconds, or pick Next map.';$('nextBtn').classList.toggle('hidden',online);$('menuBtn').textContent=online?'Leave Server':'Menu';show('results');
+  // the scoreboard pops up mid-fight: ignore clicks and taps on its buttons for a moment so attacks don't land on them
+  const rb=$('results');rb.classList.add('reslock');clearTimeout(rb._lk);rb._lk=setTimeout(()=>rb.classList.remove('reslock'),1500);
   const ends=m;setTimeout(()=>{if(MATCH.state==='over'&&!$('results').classList.contains('hidden')&&lastResults===ends)backToLobby();},online?9500:15000);lastResults=ends;
 }
 document.addEventListener('keydown',e=>{if($('results').classList.contains('hidden')||!resPick||!resN)return;if(e.code==='ArrowDown'||e.code==='KeyS'){resPick((resSel+1)%resN);e.preventDefault();}else if(e.code==='ArrowUp'||e.code==='KeyW'){resPick((resSel+resN-1)%resN);e.preventDefault();}});

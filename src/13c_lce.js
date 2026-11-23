@@ -48,7 +48,7 @@ function menuPrompts(){const list=[['A','Select',()=>{const b=MBTN()[mSel];b&&b.
 function showMini(on){if(on!==miniOpen)showBattleLogo(on);miniOpen=on;document.querySelectorAll('#menuList .lbtn').forEach(b=>b.classList.toggle('hidden',b.classList.contains('mini')!==on));setMSel(0);menuPrompts();}
 function menuBack(){if(miniOpen){sfx('click');showMini(false);}}
 $('miniBtn').addEventListener('click',()=>{sfx('click');showMini(true);});
-const startMode=m=>{SET.mode=m;store('bb_set',JSON.stringify(SET));writeOptions();showMini(false);startBattleSolo();};
+const startMode=m=>{sfx('click');openBC(m,'mini');};   // Battle / Battle Royale open the create screen (15j_battlecreate.js)
 $('battleBtn').addEventListener('click',()=>startMode('battle'));$('brBtn').addEventListener('click',()=>startMode('br'));
 // ---- Leaderboards (stats kept in this browser) ----
 function loadStats(){try{return JSON.parse(store('bb_stats')||'{}')||{};}catch(e){return {};}}
@@ -109,15 +109,8 @@ function pvGeom(slim){if(PV.geo[slim])return PV.geo[slim];const P={};const A=(n,
 function shadedSkin(key){const S0=skinTex(key);let c=PV.shade[key];if(c&&c.src===S0.img)return c;
   const mk=f=>{const cc=mkCanvas(S0.img.width,S0.img.height),g=cc.getContext('2d');g.drawImage(S0.img,0,0);if(f<1){g.globalCompositeOperation='source-atop';g.fillStyle=`rgba(0,0,0,${1-f})`;g.fillRect(0,0,cc.width,cc.height);}return cc;};
   return PV.shade[key]={src:S0.img,slim:S0.slim,l:[mk(1),mk(.8),mk(.6),mk(.5)]};}
-function drawPreview(){
-  const vis=(!$('menu').classList.contains('hidden')||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
-  const c=$('pvCanvas');const dpr=Math.min(2,devicePixelRatio||1);const cw=Math.round(c.clientWidth*dpr),ch=Math.round(c.clientHeight*dpr);if(!cw||!ch)return;if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
-  const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,ch);g.imageSmoothingEnabled=false;
-  const T=shadedSkin(mySkin),G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;const k=ch/2.05,ox=cw/2,oy=ch*.985;
-  const r=c.getBoundingClientRect();const mx=clamp((PV.mx-(r.left+r.width/2))/Math.max(300,innerWidth*.4),-1,1),my=clamp((PV.my-(r.top+r.height*.15))/Math.max(300,innerHeight*.5),-1,1);
-  const t=perfT,by=-.4+Math.sin(t*.4)*.06,ht=clamp(-mx*1.1-by,-1.1,1.1),pit=clamp(-my*.9,-.8,.8),idle=Math.sin(t*1.3)*.05,sw=Math.sin(t*1.3)*.04;
-  const base=M4.ry(by);const parts={head:chain(base,M4.tr(0,1.5,0),M4.ry(ht),M4.rx(-pit)),body:chain(base,M4.tr(0,1.5,0)),rarm:chain(base,M4.tr(5/16,22/16,0),M4.rx(sw),M4.rz(.05+idle)),
-    larm:chain(base,M4.tr(-5/16,22/16,0),M4.rx(-sw),M4.rz(-.05-idle)),rleg:chain(base,M4.tr(1.9/16,.75,0)),lleg:chain(base,M4.tr(-1.9/16,.75,0))};
+// a player model drawn into a 2D canvas: parts = matrices for head/body/arms/legs, k = pixels per block, (ox,oy) = feet
+function drawSkinModel(g,T,parts,k,ox,oy){const G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;
   const quads=[];
   for(const [pn,ov] of [['head','hat'],['body','jacket'],['rarm','rsleeve'],['larm','lsleeve'],['rleg','rpants'],['lleg','lpants']]){const m=parts[pn];const o0=xform(m,[0,0,0]);
     for(const name of [pn,ov]){const V=G[name];for(let q=0;q<V.length;q+=48){const vi=[0,1,2,5].map(j=>q+j*8);
@@ -130,6 +123,16 @@ function drawPreview(){
     const mxp=(A[0]+B[0]+C[0]+D[0])/4,myp=(A[1]+B[1]+C[1]+D[1])/4;const grow=p=>{const vx=p[0]-mxp,vy=p[1]-myp,l=Math.hypot(vx,vy)||1;return [p[0]+vx/l*.6,p[1]+vy/l*.6];};
     g.save();g.beginPath();const pts=[A,B,C,D].map(grow);g.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<4;i++)g.lineTo(pts[i][0],pts[i][1]);g.closePath();g.clip();
     g.setTransform(a,b,cc,d,e,f);const u0=Math.min(A[3],B[3]),v0=Math.min(A[4],D[4]);g.drawImage(T.l[li],u0,v0,Math.abs(du),Math.abs(dv),u0,v0,Math.abs(du),Math.abs(dv));g.restore();g.setTransform(1,0,0,1,0,0);}}
+function drawPreview(){
+  const vis=((!$('menu').classList.contains('hidden')&&!bcOpen())||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
+  const c=$('pvCanvas');const dpr=Math.min(2,devicePixelRatio||1);const cw=Math.round(c.clientWidth*dpr),ch=Math.round(c.clientHeight*dpr);if(!cw||!ch)return;if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
+  const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,ch);g.imageSmoothingEnabled=false;
+  const T=shadedSkin(mySkin),G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;const k=ch/2.05,ox=cw/2,oy=ch*.985;
+  const r=c.getBoundingClientRect();const mx=clamp((PV.mx-(r.left+r.width/2))/Math.max(300,innerWidth*.4),-1,1),my=clamp((PV.my-(r.top+r.height*.15))/Math.max(300,innerHeight*.5),-1,1);
+  const t=perfT,by=-.4+Math.sin(t*.4)*.06,ht=clamp(-mx*1.1-by,-1.1,1.1),pit=clamp(-my*.9,-.8,.8),idle=Math.sin(t*1.3)*.05,sw=Math.sin(t*1.3)*.04;
+  const base=M4.ry(by);const parts={head:chain(base,M4.tr(0,1.5,0),M4.ry(ht),M4.rx(-pit)),body:chain(base,M4.tr(0,1.5,0)),rarm:chain(base,M4.tr(5/16,22/16,0),M4.rx(sw),M4.rz(.05+idle)),
+    larm:chain(base,M4.tr(-5/16,22/16,0),M4.rx(-sw),M4.rz(-.05-idle)),rleg:chain(base,M4.tr(1.9/16,.75,0)),lleg:chain(base,M4.tr(-1.9/16,.75,0))};
+  drawSkinModel(g,T,parts,k,ox,oy);}
 // ---- per-frame hook ----
 let lceLastPad=null;
 function tickLCE(dt){tickTouch();tickCrosshair();tickRunParticles();if(lceLastPad!==padActive){lceLastPad=padActive;if(chestOpen)renderChest();}drawPreview();}
@@ -138,7 +141,7 @@ document.addEventListener('keydown',e=>{const inInput=e.target&&e.target.tagName
   if(!$('dressPanel').classList.contains('hidden')){if(e.code==='Escape'||(e.code==='Enter'&&inInput)){closeDress();e.preventDefault();}else if(!inInput&&(e.code==='ArrowLeft'||e.code==='ArrowRight')){cycleSkin(e.code==='ArrowLeft'?-1:1);e.preventDefault();}else if(!inInput&&e.code==='KeyX')$('skinFile').click();return;}
   if(inInput)return;
   if(!$('lbPanel').classList.contains('hidden')&&(e.code==='Escape'||e.code==='Backspace'||e.code==='Enter')){closeLB();return;}
-  if(!$('menu').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
+  if(!$('menu').classList.contains('hidden')&&!bcOpen()&&$('srvDlg').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
 refreshLCE();
 
 // the Battle mini games keep their own logo; the title screen shows Minecraft:realzanized
