@@ -176,6 +176,15 @@ body.touch #clickResume{display:none!important}
 #xhair i,#xhair b{position:absolute;background:#fff;display:block}#xhair i{left:-9px;top:-1px;width:18px;height:2px}#xhair b{left:-1px;top:-9px;width:2px;height:18px}
 #chatBar{position:fixed;left:4px;right:4px;bottom:4px;z-index:6}#chatIn{width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:0;color:#fff;font:20px 'VT323',monospace;padding:3px 6px;outline:none}
 .lbt{border-collapse:collapse}.lbt td{padding:calc(var(--S)*2px) calc(var(--S)*6px)}.lbt tr:first-child td{border-bottom:calc(var(--S)*1px) solid #8b8b8b}
+.srvpanel{width:min(760px,96vw)}.srvtitle{text-align:center}.srvlist{max-height:48vh;min-height:30vh}.srvbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px}.srvbtns .btn{flex:1 1 0;margin:0;min-width:110px}
+.srow{display:flex;gap:10px;align-items:center;padding:5px 8px;color:#fff;text-shadow:2px 2px 0 #000;border:2px solid transparent;cursor:pointer;user-select:none}.srow:hover{background:rgba(255,255,255,.08)}.srow.sel{border-color:#fff;background:rgba(0,0,0,.35)}
+.srow img,.srow canvas.sicon{width:56px;height:56px;flex:none;image-rendering:pixelated;background:#203040}.srow .sinfo{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.05}.srow .sname{font-size:21px}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
+.srow .smotd.err{color:#ff5555}.srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.srow .splay{font-size:18px;color:#aaa}.srow .sping{width:20px;height:16px;image-rendering:pixelated}.srow .smove{display:flex;flex-direction:column;gap:2px}.srow .smove button{font:14px monospace;padding:0 4px;background:#555;color:#fff;border:1px solid #000;cursor:pointer;visibility:hidden}.srow:hover .smove button{visibility:visible}
+.shead{padding:6px 8px 2px;color:#ffff55;font-size:18px;text-shadow:2px 2px 0 #000;border-top:1px solid rgba(255,255,255,.2)}.srvstatus{min-height:1.2em;margin-top:4px;font-size:18px;text-align:center}
+.srvdlg{width:min(560px,94vw);display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden}.srvdlg .form{overflow:auto;min-height:0;flex:0 1 auto;padding:2px}.srvdlg.wide{width:min(900px,96vw)}@media(min-width:760px){.srvdlg.wide .form{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr)}}.srvdlg .form label{font-size:19px}.srvdlg h3{text-align:center}.srvdlg .note{font-size:16px}.srvdlg .err{color:#a00000;min-height:1.1em;text-align:center}.srvdlg .addr{font:22px 'VT323',monospace;background:#000;color:#55ff55;padding:4px 8px;text-align:center;user-select:all}
+#discPanel{background:rgba(40,20,10,.85)}#discMsg{white-space:pre-line;max-width:80vw;text-align:center}
+#tabList{position:fixed;left:50%;top:8px;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font:18px 'VT323',monospace;padding:4px 6px;z-index:6;pointer-events:none;text-shadow:2px 2px 0 #3f3f3f;min-width:260px}
+#tabList .th{text-align:center;padding:2px 6px}#tabList .tf{text-align:center;color:#aaa;padding:2px 6px}#tabList .tr{display:flex;justify-content:space-between;gap:16px;background:rgba(255,255,255,.12);margin:1px 0;padding:0 4px}#tabList canvas{width:20px;height:16px;image-rendering:pixelated}
 </style>
 </head>
 <body>
@@ -281,9 +290,10 @@ body.touch #clickResume{display:none!important}
 <button class="hidden" id="takeAll"></button><button class="hidden" id="closeChest"></button></div>
 
 <div id="pause" class="screen hidden"><div class="lhead" id="pauseTitle" data-t="Game menu" style="margin-bottom:calc(var(--S)*14px)">Game menu</div><div class="menuList" style="margin-top:0">
-  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn hidden" id="saveBtn">Save Game</button><button class="lbtn hidden" id="gmBtn">Game Mode: Survival</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
+  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn hidden" id="saveBtn">Save Game</button><button class="lbtn hidden" id="gmBtn">Game Mode: Survival</button><button class="lbtn hidden" id="openSrvBtn">Open to Server</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
 <div id="jOpt" class="screen hidden jscreen"><div id="jTitle"></div><div id="jGrid"></div><div id="jFoot"></div></div>
 <div id="xhair" class="hidden"><i></i><b></b></div>
+<div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
 <div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
   <button class="tb" id="tPause" aria-label="Pause"><b>II</b></button><button class="tb" id="tInv" aria-label="Inventory"><b>E</b></button><button class="tb" id="tDrop" aria-label="Drop item"><b>Q</b></button>
@@ -322,15 +332,15 @@ body.touch #clickResume{display:none!important}
   <div class="row"><button class="btn small" id="wCreate">Create New World</button><button class="btn small" id="wImport">Import Save</button><button class="btn small" id="wBack">Back</button></div><input id="wImportFile" type="file" accept=".mcrworld,application/json" class="hidden">
   <div class="note">Worlds are saved in this browser every 30 seconds and when you leave.</div>
 </div></div>
-<div id="mpPanel" class="screen hidden"><div class="panel" style="width:min(600px,94vw)">
-  <h3>Multiplayer</h3>
-  <div class="note" style="margin-top:0">Everyone who enters the same Photon Realtime App ID plays together: Connect joins an open game, or starts one if nobody is playing. Make a free App ID at dashboard.photonengine.com (choose Realtime).</div>
-  <div class="form"><label for="ph_app">Photon Realtime App ID</label><input id="ph_app" type="text" maxlength="64" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false" autocomplete="off">
-    <label for="ph_mode">Game</label><select id="ph_mode"><option value="survival">Survival (endless world)</option><option value="battle">Battle mini game</option></select>
-    <label for="ph_region">Region (everyone the same)</label><select id="ph_region"><option value="us">Americas</option><option value="usw">US West</option><option value="eu">Europe</option><option value="asia">Asia</option><option value="jp">Japan</option><option value="au">Australia</option><option value="sa">South America</option><option value="kr">Korea</option><option value="in">India</option></select></div>
-  <div id="phStatus"></div>
-  <div class="row"><button class="btn small" id="phConnect">Connect</button><button class="btn small" id="phBack">Back</button></div>
+<div id="mpPanel" class="screen hidden"><div class="panel srvpanel">
+  <h3 class="srvtitle">Play Multiplayer</h3>
+  <div id="srvList" class="wlist srvlist" role="listbox" aria-label="Servers"></div>
+  <div id="phStatus" class="srvstatus"></div>
+  <div class="srvbtns"><button class="btn small" id="srvJoin">Join Server</button><button class="btn small" id="srvDirect">Direct Connection</button><button class="btn small" id="srvAdd">Add Server</button></div>
+  <div class="srvbtns"><button class="btn small" id="srvEdit">Edit</button><button class="btn small" id="srvDel">Delete</button><button class="btn small" id="srvRefresh">Refresh</button><button class="btn small" id="srvHost">Host Server</button><button class="btn small" id="srvPhoton">Photon Settings</button><button class="btn small" id="phBack">Back</button></div>
 </div></div>
+<div id="srvDlg" class="screen hidden"><div class="panel srvdlg" id="srvDlgBox"></div></div>
+<div id="discPanel" class="screen hidden"><h2 id="discTitle">Connection Lost</h2><div id="discMsg" class="sub"></div><div class="row"><button class="btn" id="discBack">Back to Server List</button></div></div>
 <div id="deathPanel" class="screen hidden" style="background:rgba(110,0,0,.5)"><h2 id="deathTitle">You died!</h2><div id="deathSub" class="sub"></div>
   <div class="row"><button class="btn" id="respawnBtn">Respawn</button><button class="btn" id="deathMenu">Title Screen</button></div></div>
 <div id="clickResume" class="screen hidden" style="background:rgba(0,0,0,.25)"><h2>Click to play</h2></div>

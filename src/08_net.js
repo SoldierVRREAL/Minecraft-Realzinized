@@ -10,7 +10,7 @@ function netSend(code,data,to){
 class MeshNet{
   constructor(room,name,transport,opt){
     this.kind=opt.kind;this.tr=transport;this.myId=1+Math.floor(Math.random()*1e8);this.name=String(name).slice(0,16);this.members=new Map();this.opt=opt;
-    this.members.set(this.myId,{id:this.myId,name:this.name,seen:Date.now(),joined:Date.now()});this.ready=false;this.left=false;
+    this.members.set(this.myId,{id:this.myId,name:this.name,seen:Date.now(),joined:Date.now()});this.ready=false;this.left=false;this.blocked=new Set();   // blocked = kicked / banned players: ignore everything they send
     transport.onmessage=m=>{try{this.recv(m);}catch(e){}};transport.will={t:'bye',from:this.myId,will:1};   // the relay sends this for us if the connection dies
     transport.open(()=>{if(this.left)return;this.hb=setInterval(()=>this.beat(),opt.hb);this.beat();
       setTimeout(()=>{if(this.left)return;let mx=0;for(const m of this.members.values())if(m.id!==this.myId)mx=Math.max(mx,m.joined);
@@ -23,7 +23,7 @@ class MeshNet{
     const me=this.members.get(this.myId);this.post({t:'hb',from:this.myId,name:this.name,joined:me.joined,r:this.ready?1:0,pt:Math.round(performance.now())});const now=Date.now();
     for(const [id,m] of [...this.members]){if(id!==this.myId&&now-m.seen>this.opt.timeout){this.members.delete(id);if(m.r)this.onLeave&&this.onLeave(id);this.checkHost();}}}
   recv(m){if(m&&m.from===this.myId){if(m.t==='hb'&&m.pt)this.notePing(performance.now()-m.pt);return;}   // our own heartbeat coming back = round trip to the relay
-    if(!m||typeof m.from!=='number')return;
+    if(!m||typeof m.from!=='number'||this.blocked.has(m.from))return;
     if(m.t==='hb'){const had=this.members.has(m.from);const ex=this.members.get(m.from)||{id:m.from};ex.seen=Date.now();ex.name=String(m.name||'Player').slice(0,16);ex.joined=+m.joined||Date.now();const wasR=ex.r;ex.r=!!m.r;this.members.set(m.from,ex);
       if(ex.r&&!wasR&&this.ready)this.onJoin&&this.onJoin(m.from,ex.name);if(!had||ex.r!==wasR)this.checkHost();return;}
     if(m.t==='bye'&&m.will){const ex=this.members.get(m.from);if(ex)ex.seen=Math.min(ex.seen,Date.now()-this.opt.timeout+3500);return;}   // dropped, not left: 3.5 s to reconnect before they count as gone
@@ -36,6 +36,7 @@ class MeshNet{
   checkHost(){if(!this.ready)return;const h=this.hostId();if(this._h!==h){this._h=h;this.onHostChange&&this.onHostChange(h);}}
   inRoom(){return this.ready;}
   send(code,data,to){this.post({t:'ev',from:this.myId,code,data:data===undefined?null:data,to:to||null});}
+  block(id){this.blocked.add(id);const ex=this.members.get(id);if(ex){this.members.delete(id);if(ex.r)this.onLeave&&this.onLeave(id);this.checkHost();}}
   list(){return [...this.members.values()].filter(m=>m.id===this.myId||m.r).map(m=>({id:m.id,name:m.name}));}
   leave(){this.left=true;clearInterval(this.hb);try{this.tr.post({t:'bye',from:this.myId});}catch(e){}setTimeout(()=>{try{this.tr.close();}catch(e){}},150);}
 }

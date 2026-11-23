@@ -104,6 +104,7 @@ function addWpn(e,w,amt){if(!w)return;const m=e.wpn||(e.wpn={});m[w]=(m[w]||0)+a
 function creditTaken(e,amt){if(!(amt>0))return;if(isHost())e.dmgTaken=(e.dmgTaken||0)+amt;else netSend(N.DEALT,{tk:e.id,d:amt});}
 // route damage to whoever owns the target
 function damage(t,amt,src,cause,kb,raw,fx){
+  if(MATCH.mode==='survival'&&src&&src!==t&&src.kind==='player'&&t.kind==='player'&&!srvPvp())return false;   // the server has PvP turned off
   if(owned(t)){const ok=hurt(t,amt,src,cause,kb,raw);if(fx&&(ok||amt===0))for(const f of fx)giveEffect(t,...f);return ok;}
   // you hit someone on another computer: show the red flash and sound now instead of waiting for their reply to come back
   if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();if(t.kind==='mob')mobSnd(t,'hurt');else sfx('hurt',{pos:t.pos});}

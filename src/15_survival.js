@@ -10,9 +10,9 @@ function newWorldMeta(name,seedText,mode){const meta={mode:mode==='creative'?'cr
   const l=worldList();l.unshift(meta);saveWorldList(l);return meta;}
 function loadWorldData(id){try{return JSON.parse(store('mcr_w_'+id)||'null');}catch(e){return null;}}
 function playerSave(p){return p?{gm:p.gm||'survival',fly:!!p.flying,pos:p.pos.map(v=>+v.toFixed(2)),yaw:p.yaw,inv:p.inv,armor:p.armor,hp:p.alive?p.health:20,food:p.alive?p.food:20,sat:p.sat,sel:p.sel}:null;}
-function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;
+function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;const data0=loadWorldData(SURV.meta.id);
   const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN],
-    pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health}))};
+    pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health})),srv:SRV.cfg||(data0&&data0.srv)||null,others:Object.assign({},data0&&data0.others,SRV.players)};
   let ok=true;try{localStorage.setItem('mcr_w_'+SURV.meta.id,JSON.stringify(data));}catch(e){ok=false;}
   const l=worldList();const m=l.find(w=>w.id===SURV.meta.id);if(m){m.played=Date.now();m.day=GZ.day;saveWorldList([m,...l.filter(w=>w!==m)]);}
   if(!ok)chatMsg('Could not save the world: browser storage is full.','#ff5555',false);infDirtySave=false;return ok;}
@@ -95,26 +95,11 @@ $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('m
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});
 $('respawnBtn').addEventListener('click',survRespawn);
 $('deathMenu').addEventListener('click',()=>{hide('deathPanel');toMenu();});
-// ---------- Multiplayer through Photon (App ID only) ----------
-function openMP(){initAudio();sfx('click');readName();hide('menu');$('ph_app').value=store('mcr_appid')||'';$('ph_region').value=store('mcr_region')||'us';$('ph_mode').value=store('mcr_mpmode')||'survival';$('phStatus').textContent='';show('mpPanel');}
-$('phBack').addEventListener('click',()=>{sfx('click');if(net&&!online){net.leave();net=null;}hide('mpPanel');show('menu');});
-$('phConnect').addEventListener('click',()=>{const app=$('ph_app').value.trim(),region=$('ph_region').value,mode=$('ph_mode').value;
-  if(!/^[0-9a-f-]{20,}$/i.test(app)){$('phStatus').textContent='Paste your Photon Realtime App ID (it looks like 1a2b3c4d-....).';return;}
-  store('mcr_appid',app);store('mcr_region',region);store('mcr_mpmode',mode);if(net){net.leave();net=null;}readOptions();
-  $('phStatus').textContent='Connecting to Photon...';const n=new PhotonNet(app,region,mode,myName);net=n;
-  n.tr.onstate=s=>{if(net===n&&!n.ready)$('phStatus').textContent='Photon: '+s.replace(/([a-z])([A-Z])/g,'$1 $2')+'...';};
-  n.onEvent=onNetEvent;n.onJoin=(id,name)=>{if(isHost()&&MATCH.state==='lobby')MATCH.phaseT=0;if(survival())chatMsg(name+' joined the game','#ffff55',false);};n.onLeave=onMemberLeave;n.onHostChange=onHostChanged;
-  n.onFail=msg=>{if(net!==n)return;const was=online;net=null;n.leave();if(was){toMenu();openMP();}$('phStatus').textContent=msg;};
-  n.onReady=()=>{if(net!==n)return;online=true;$('phStatus').textContent='Connected. '+(n.isHost()?'You are the host.':'Joining the host...');player=null;ents=[];
-    if(mode==='survival'){if(n.isHost()){const id='online_'+(hashStr(app)>>>0).toString(36);let meta=worldList().find(w=>w.id===id);
-        if(!meta){meta={id,name:'Online World',seed:seedFrom(''),created:Date.now(),played:Date.now()};saveWorldList([meta,...worldList()]);}hide('mpPanel');playWorld(meta,true);}
-      else{hide('mpPanel');const el=$('loading');$('loadTitle').textContent='Joining world';el.classList.remove('hidden');$('loadBar').style.width='5%';netSend(N.HELLO,{},'host');
-        setTimeout(()=>{if(net===n&&MATCH.mode!=='survival'&&!n.isHost()){netSend(N.HELLO,{},'host');}},4000);}}
-    else{hide('mpPanel');if(n.isHost())enterLobby();else{enterLobby();netSend(N.HELLO,{},'host');}}};});
+// ---------- Multiplayer: see 15h_servers.js (server list, hosting, commands) ----------
 // what a joining player needs to build the same world
 function survSnapshot(joinId){return {mode:'survival',gm:SURV.meta&&SURV.meta.mode,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),chests:[...chests].map(([k,c])=>[k,c.items]),
   ents:ents.filter(e=>e.kind==='player').map(e=>({id:e.id,name:e.name,skin:e.skin,sp:[e.pos[0],e.pos[1],e.pos[2],e.yaw]})),drops:drops.filter(d=>d.did>0).map(d=>({did:d.did,pos:d.pos,vel:[0,0,0],id:d.id,count:d.count,age:1,spin:0}))};}
-function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,gm:d.gm,join:true});}
+function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,gm:d.gm,me:d.me||null,join:true});srvJoinedInfo(d.srv);}
 // render distance grew past what the chunk ring holds: rebuild it around the player (edits and time are kept)
 function restartSurvivalStream(){if(!INF)return;const ed=worldEdits,seed=WSEED;infInit(infRingFor(OPT.chunks),seed,ed);infRD=Math.min(OPT.chunks,infMaxRD());
   SURV.loading=true;$('loadTitle').textContent='Loading chunks';$('loadBar').style.width='0%';$('loading').classList.remove('hidden');}

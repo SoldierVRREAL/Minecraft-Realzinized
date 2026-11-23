@@ -15,6 +15,8 @@ function procButton(sel){const c=mkCanvas(200,20),g=c.getContext('2d');const bas
   for(let y=0;y<20;y++)for(let x=0;x<200;x++){const n=(hash2(x>>1,y>>1,sel?31:30)-.5)*18;g.fillStyle=`rgb(${base[0]+n|0},${base[1]+n|0},${base[2]+n|0})`;g.fillRect(x,y,1,1);}
   g.fillStyle=sel===true?'#c8ccf4':sel==='off'?'#505050':'#a8a8a8';g.fillRect(1,1,198,1);g.fillRect(1,1,1,17);g.fillStyle=sel===true?'#5b609e':sel==='off'?'#1c1c1c':'#4a4a4a';g.fillRect(1,17,198,2);g.fillRect(198,1,1,18);
   g.strokeStyle='#000';g.lineWidth=1;g.strokeRect(.5,.5,199,19);return c;}
+// change a pixel-font menu button's label
+function setLbtn(b,t){if(!b||b.dataset.t===t&&b.firstChild)return;b.dataset.t=t;b.textContent='';const n=pxCanvas(t,GS,'#e0e0e0'),s=pxCanvas(t,GS,'#ffffa0');n.className='n';s.className='s';b.append(n,s);b.setAttribute('aria-label',t);}
 function refreshLCE(){
   const fitS=clamp(Math.min(Math.round(innerHeight/360),Math.floor(innerWidth*.92/210)),1,4);const S=OPT.gui?clamp(Math.min(OPT.gui,Math.floor(innerWidth*.92/210)),1,4):fitS;GS=S;document.documentElement.style.setProperty('--S',S);
   const G=PACK.gui||{};document.documentElement.style.setProperty('--btn',`url(${(G.btn||procButton(false)).toDataURL()})`);document.documentElement.style.setProperty('--btnSel',`url(${(G.btn_hover||procButton(true)).toDataURL()})`);document.documentElement.style.setProperty('--btnOff',`url(${(G.btn_off||procButton('off')).toDataURL()})`);

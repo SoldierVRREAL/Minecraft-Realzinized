@@ -73,15 +73,8 @@ document.addEventListener('mousedown',e=>{if(e.button!==1||!locked||!player||!pl
 // ---- switching game mode ----
 function setGameMode(m,quiet){const p=player;if(!p)return;p.gm=m==='creative'?'creative':'survival';if(p.gm!=='creative')p.flying=false;else{p.health=maxHP(p);p.food=20;p.fire=0;}
   if(CR.open&&(CR.mode==='creative'||CR.mode==='inv'))chestClose(false);if(!quiet)chatMsg('Your game mode has been updated to '+(p.gm==='creative'?'Creative':'Survival')+' Mode','#aaaaaa',false);gmBtnRefresh();}
-function canSwitchMode(){return MATCH.mode==='survival'&&(!online||isHost());}
-function gmBtnRefresh(){const b=$('gmBtn');if(!b)return;const on=MATCH.mode==='survival'&&MATCH.state==='play'&&!!player;b.classList.toggle('hidden',!on);if(on){b.textContent='Game Mode: '+(player.gm==='creative'?'Creative':'Survival');b.disabled=!canSwitchMode();b.title=canSwitchMode()?'':'Only the host can change game modes online';}}
-$('gmBtn').addEventListener('click',()=>{if(!canSwitchMode()||!player)return;sfx('click');setGameMode(player.gm==='creative'?'survival':'creative');});
+function canSwitchMode(){return MATCH.mode==='survival'&&(!online||isHost()||!!SRV.amOp);}
+function gmBtnRefresh(){const b=$('gmBtn');if(!b)return;const on=MATCH.mode==='survival'&&MATCH.state==='play'&&!!player;b.classList.toggle('hidden',!on);if(on){setLbtn(b,'Game Mode: '+(player.gm==='creative'?'Creative':'Survival'));b.disabled=!canSwitchMode();b.title=canSwitchMode()?'':'Only the host can change game modes online';}}
+$('gmBtn').addEventListener('click',()=>{if(!canSwitchMode()||!player)return;sfx('click');const g=player.gm==='creative'?'survival':'creative';if(online&&!isHost())runCommand('/gamemode '+g);else setGameMode(g);});
 {const sh=show;show=function(id){if(id==='pause')gmBtnRefresh();sh(id);};}
-// chat commands: /gamemode, /time
-function runCommand(m){const a=m.slice(1).trim().split(/\s+/),c=(a[0]||'').toLowerCase();
-  if(c==='gamemode'||c==='gm'){if(MATCH.mode!=='survival'){chatMsg('Game modes only work in Survival worlds.','#ff5555',false);return;}if(!canSwitchMode()){chatMsg('Only the host can change game modes online.','#ff5555',false);return;}
-    const v=(a[1]||'').toLowerCase();const mode=['creative','c','1'].includes(v)?'creative':['survival','s','0'].includes(v)?'survival':null;if(!mode){chatMsg('Usage: /gamemode <survival|creative>','#ff5555',false);return;}setGameMode(mode);return;}
-  if(c==='time'&&(a[1]||'').toLowerCase()==='set'){if(online&&!isHost()){chatMsg('Only the host can change the time.','#ff5555',false);return;}
-    const v=(a[2]||'').toLowerCase();const t={day:.03,sunrise:0,noon:.25,sunset:.5,night:.6,midnight:.75}[v];if(t==null){chatMsg('Usage: /time set <day|noon|sunset|night|midnight>','#ff5555',false);return;}worldTime=t;if(net)netSend(N.WTIME,{t:worldTime});chatMsg('Set the time to '+v,'#aaaaaa',false);return;}
-  if(c==='help'){chatMsg('Commands: /gamemode <survival|creative>, /time set <day|noon|night|midnight>','#aaaaaa',false);return;}
-  chatMsg('Unknown command. Type /help for a list.','#ff5555',false);}
+// chat commands live in 15h_servers.js (they run on the server host, with operator permissions)
