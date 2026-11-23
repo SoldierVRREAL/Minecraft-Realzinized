@@ -120,6 +120,7 @@ function drawHotbar(){
   else if(typeof drawLocatorBar==='function')drawLocatorBar(G);
   if(MATCH.state==='lobby')return;   // the lobby HUD is just the player strip and the hotbar
   const hy2=G.hy2;
+  if(p.gm==='creative'&&MATCH.mode==='survival'){if(selShow>0){const it=p.inv[p.sel];if(it){hc.globalAlpha=Math.min(1,selShow);txt(ITEMS[it.id].name,W/2,hy2+4*G.s,16,ITEMS[it.id].ench?'#55ffff':'#fff','center');hc.globalAlpha=1;}}return;}   // Creative: no hearts, hunger or armour
   // hearts (left) with absorption + poison
   const pois=!!p.effects.poison;for(let i=0;i<10;i++){const v=clamp(p.health-i*2,0,2)/2;const x=left+i*step,y=hy2+(p.health<=4?(Math.random()-.5)*3:0);
     if(PACK.gui.heart_full){spr('heart_container',x,y,9*s,9*s);if(v>0)spr(pois?(v>=1?'heart_poison_full':'heart_poison_half'):(v>=1?'heart_full':'heart_half'),x,y,9*s,9*s);}

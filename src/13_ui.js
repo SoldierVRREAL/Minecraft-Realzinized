@@ -77,6 +77,7 @@ function updatePlayer(dt){
   if(!canSprint||p.collidedH)p.sprint=false;else if((keys.ControlLeft||keys.ControlRight||sprintTap||(padActive&&padIn.sprint&&fw>.8)||(touchActive&&touchIn.sprint&&fw>.8))&&canSprint)p.sprint=true;
   if(!p.sprint)sprintTap=false;
   p.jump=canMove&&!!(keys.Space||(padActive&&padIn.jump)||(touchActive&&touchIn.jump));
+  if(p.gm!=='creative'||!INF)p.flying=false;else creFlyEdge(p);if(p.flying){p.flyDown=p.sneak;p.sneak=false;if(p.onGround&&p.flyDown)p.flying=false;}
   const moved=physics(p,dt,wx,wz);
   if(MATCH.state==='play'||MATCH.state==='over')tickOwned(p,dt,moved);
   if(!p.alive)return;
@@ -84,6 +85,7 @@ function updatePlayer(dt){
   // left mouse: attack, or mine blocks in Battle Royale
   if(lmb&&!p.using){const tgt=meleeTarget(p,3.2);
     if(tgt||!canBuild()){mining=null;if(lmbEdge)doAttack(p,tgt||null);}
+    else if(p.gm==='creative'&&INF){mining=null;creativeMine(p,dt);}
     else{const h=raycastBlock(eye(p),fwd(p),4.5);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
       if(h&&(h.b!==B.CHEST||MATCH.mode==='survival')&&T){if(!mining||mining.x!==h.x||mining.y!==h.y||mining.z!==h.z)mining={x:h.x,y:h.y,z:h.z,b:h.b,t:0};mining.T=T;mining.t+=dt;if(p.swing<=0)p.swing=1;
         if(((mining.t*5)|0)!==(((mining.t-dt)*5)|0))sfx('mine',{pos:[h.x,h.y,h.z],mat:blockMat(h.b)});if(mining.t>=T){breakBlock(h.x,h.y,h.z,p);mining=null;}}else mining=null;}}
@@ -97,7 +99,7 @@ function updatePlayer(dt){
       else if(it&&it.type==='food'&&(p.food<20||it.always)){p.using='eat';p.useT=0;}
       else if(it&&it.type==='potion'){p.using='drink';p.useT=0;}
       else if(it&&it.type==='splash'){throwSplash(p,s.id);consume(p,p.sel);p.swing=1;}
-      else if(it&&it.type==='bow'&&hasItem(p,'arrow')>=0){p.using='bow';p.useT=0;}
+      else if(it&&it.type==='bow'&&(hasItem(p,'arrow')>=0||p.gm==='creative')){p.using='bow';p.useT=0;}
       else if(it&&it.tool==='sword'){p.using='block';p.useT=0;}
     }}
   if(p.using==='eat'||p.using==='drink'){if(!rmb||!it||(p.using==='eat'&&it.type!=='food')||(p.using==='drink'&&it.type!=='potion'))p.using=null;
@@ -114,7 +116,7 @@ function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;
   show('chestUI');renderChest();return true;}
 function chestClose(relock){if(!chestOpen)return;if(chestOpen.craft)craftClose();if(chestOpen.lce)lcClose();if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
 const INV_SCREEN={inv:true,items:[]};let invHover=null;
-function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;if(MATCH.mode==='survival')return craftOpen('inv');chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
+function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;if(MATCH.mode==='survival')return craftOpen(player.gm==='creative'?'creative':'inv');chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
 function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?ITEMS[id].name:''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
 function slotCanvas(id,count){const S=GS,px=18*S,c=mkCanvas(px,px),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(ICONS[id],S,S,16*S,16*S);
   if(count>1){const t=pxCanvas(String(count),S,'#ffffff');g.drawImage(t,px-t.width,px-t.height+S);}return c;}

@@ -6,10 +6,10 @@ const canBuild=()=>MATCH.mode==='br'||MATCH.mode==='survival';
 function worldList(){try{return JSON.parse(store('mcr_worlds')||'[]')||[];}catch(e){return [];}}
 function saveWorldList(l){store('mcr_worlds',JSON.stringify(l.slice(0,40)));}
 function seedFrom(text){text=String(text||'').trim();if(!text)return (Math.random()*2**31)|0;if(/^-?\d{1,10}$/.test(text))return (+text)|0;return hashStr(text)|0;}
-function newWorldMeta(name,seedText){const meta={id:'w'+Date.now().toString(36)+(Math.random()*1e4|0),name:(name||'New World').trim().slice(0,32)||'New World',seed:seedFrom(seedText),created:Date.now(),played:Date.now()};
+function newWorldMeta(name,seedText,mode){const meta={mode:mode==='creative'?'creative':'survival',id:'w'+Date.now().toString(36)+(Math.random()*1e4|0),name:(name||'New World').trim().slice(0,32)||'New World',seed:seedFrom(seedText),created:Date.now(),played:Date.now()};
   const l=worldList();l.unshift(meta);saveWorldList(l);return meta;}
 function loadWorldData(id){try{return JSON.parse(store('mcr_w_'+id)||'null');}catch(e){return null;}}
-function playerSave(p){return p?{pos:p.pos.map(v=>+v.toFixed(2)),yaw:p.yaw,inv:p.inv,armor:p.armor,hp:p.alive?p.health:20,food:p.alive?p.food:20,sat:p.sat,sel:p.sel}:null;}
+function playerSave(p){return p?{gm:p.gm||'survival',fly:!!p.flying,pos:p.pos.map(v=>+v.toFixed(2)),yaw:p.yaw,inv:p.inv,armor:p.armor,hp:p.alive?p.health:20,food:p.alive?p.food:20,sat:p.sat,sel:p.sel}:null;}
 function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;
   const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN],
     pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health}))};
@@ -34,7 +34,8 @@ function beginSurvival(o){
   player=new Ent(myId,myName,'player');player.isLocal=true;player.skin=mySkin;player.inv=new Array(36).fill(null);player.color=ents.length;
   const me=o.me;
   if(me){player.pos=me.pos.slice();player.yaw=me.yaw||0;me.inv.forEach((s,i)=>{if(i<36)player.inv[i]=s;});player.armor=me.armor||[null,null,null,null];player.health=me.hp||20;player.food=me.food==null?20:me.food;player.sat=me.sat||5;player.sel=me.sel||0;}
-  else{player.pos=SURV.spawn.slice();for(const [id,n] of STARTER)addItem(player,id,n);}
+  player.gm=(me&&me.gm)||o.gm||(SURV.meta&&SURV.meta.mode)||'survival';player.flying=!!(me&&me.fly)&&player.gm==='creative';
+  if(!me){player.pos=SURV.spawn.slice();if(player.gm!=='creative')for(const [id,n] of STARTER)addItem(player,id,n);}
   player.vel=[0,0,0];player.mot=[0,0,0];player.fallDist=0;ents.push(player);
   mobs=[];primed=[];for(const pt of o.pets||[])if(MOB_T[pt.t])spawnMob(pt.t,pt.p,{owner:player.id,hp:pt.hp});   // tamed wolves come back with the world
   spectate.mode='bat';SURV.loading=true;GZ.tp=perfT;$('saveBtn').classList.toggle('hidden',!SURV.meta);
@@ -70,7 +71,7 @@ function renderWorldList(){const box=$('worldList');box.textContent='';const l=w
     const th=document.createElement(w.thumb?'img':'div');th.className='wthumb';if(w.thumb){th.src=w.thumb;th.alt='';}
     const info=document.createElement('span');info.className='winfo';const nm=document.createElement('span');nm.className='rn';nm.textContent=w.name;
     const st=document.createElement('span');st.className='rs';const kb=Math.round(((localStorage.getItem('mcr_w_'+w.id)||'').length)/1024);
-    st.textContent=(w.id.startsWith('online_')?'Online world · ':'')+'Day '+((w.day||0)+1)+' · '+new Date(w.played||w.created).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' · '+(kb?kb+' KB':'new');
+    st.textContent=(w.id.startsWith('online_')?'Online world · ':'')+(w.mode==='creative'?'Creative · ':'')+'Day '+((w.day||0)+1)+' · '+new Date(w.played||w.created).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' · '+(kb?kb+' KB':'new');
     info.append(nm,st);b.append(th,info);b.addEventListener('click',()=>playWorld(w));
     const ex=document.createElement('button');ex.className='wdel wexp';ex.textContent='Export';ex.title='Download '+w.name+' as a file';ex.addEventListener('click',()=>exportWorld(w));
     const del=document.createElement('button');del.className='wdel';del.textContent='Delete';del.title='Delete '+w.name;
@@ -89,7 +90,7 @@ function captureThumb(){try{const c=mkCanvas(192,108),g=c.getContext('2d');const
 $('saveBtn').addEventListener('click',()=>{if(saveWorld()){SURV.toast={t:3,txt:'Game saved'};sfx('pick');}else SURV.toast={t:3,txt:'Could not save the game'};$('resumeBtn').click();});
 function playWorld(meta,keepNet){sfx('click');if(!keepNet){if(net){net.leave();net=null;}online=false;}const data=loadWorldData(meta.id);
   beginSurvival({meta,seed:data&&data.seed!=null?data.seed:meta.seed,edits:data?editsFromJSON(data.edits):new Map(),time:data?data.time:null,day:data&&data.day,spawn:data?data.spawn:null,me:data?data.player:null,chests:data&&data.chests,furn:data&&data.furn,pets:data&&data.pets});}
-$('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value);$('w_seed').value='';playWorld(meta);});
+$('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value,$('w_mode').value);$('w_seed').value='';playWorld(meta);});
 $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('menu');});
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});
 $('respawnBtn').addEventListener('click',survRespawn);
@@ -111,9 +112,9 @@ $('phConnect').addEventListener('click',()=>{const app=$('ph_app').value.trim(),
         setTimeout(()=>{if(net===n&&MATCH.mode!=='survival'&&!n.isHost()){netSend(N.HELLO,{},'host');}},4000);}}
     else{hide('mpPanel');if(n.isHost())enterLobby();else{enterLobby();netSend(N.HELLO,{},'host');}}};});
 // what a joining player needs to build the same world
-function survSnapshot(joinId){return {mode:'survival',seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),chests:[...chests].map(([k,c])=>[k,c.items]),
+function survSnapshot(joinId){return {mode:'survival',gm:SURV.meta&&SURV.meta.mode,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),chests:[...chests].map(([k,c])=>[k,c.items]),
   ents:ents.filter(e=>e.kind==='player').map(e=>({id:e.id,name:e.name,skin:e.skin,sp:[e.pos[0],e.pos[1],e.pos[2],e.yaw]})),drops:drops.filter(d=>d.did>0).map(d=>({did:d.did,pos:d.pos,vel:[0,0,0],id:d.id,count:d.count,age:1,spin:0}))};}
-function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,join:true});}
+function survApplyStart(d){beginSurvival({meta:null,seed:d.seed,edits:editsFromJSON(d.edits),time:d.time,spawn:d.spawn,ents:d.ents,drops:d.drops,chests:d.chests,gm:d.gm,join:true});}
 // render distance grew past what the chunk ring holds: rebuild it around the player (edits and time are kept)
 function restartSurvivalStream(){if(!INF)return;const ed=worldEdits,seed=WSEED;infInit(infRingFor(OPT.chunks),seed,ed);infRD=Math.min(OPT.chunks,infMaxRD());
   SURV.loading=true;$('loadTitle').textContent='Loading chunks';$('loadBar').style.width='0%';$('loading').classList.remove('hidden');}

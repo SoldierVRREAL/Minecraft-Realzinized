@@ -65,9 +65,11 @@ function mcTick(e){
   if(e.inWater){e.fallDist=0;e.fire=0;}
   if(e.jumpTicks>0)e.jumpTicks--;
   for(let i=0;i<3;i++)if(Math.abs(e.mot[i])<.005)e.mot[i]=0;
-  if(I.jump){if(e.inWater||e.inLava)e.mot[1]+=.04;else if(e.onGround&&e.jumpTicks===0){mcJump(e);e.jumpTicks=10;}}else e.jumpTicks=0;
+  if(e.flying){}else if(I.jump){if(e.inWater||e.inLava)e.mot[1]+=.04;else if(e.onGround&&e.jumpTicks===0){mcJump(e);e.jumpTicks=10;}}else e.jumpTicks=0;
   let moved=0;
-  if(e.inWater||e.inLava){const y0=e.pos[1];moveFlying(e,I.wx,I.wz,.02);moved=moveEntity(e,e.mot[0],e.mot[1],e.mot[2]);const k=e.inWater?.8:.5;
+  if(e.flying){   // Creative flight (EntityPlayer: fly speed 0.05, x2 sprinting; jump/sneak move 0.15 up/down; vertical speed x0.6 a tick)
+    if(I.jump)e.mot[1]+=.15;if(e.flyDown)e.mot[1]-=.15;moveFlying(e,I.wx,I.wz,e.sprint?.1:.05);moved=moveEntity(e,e.mot[0],e.mot[1],e.mot[2]);e.mot[0]*=.91;e.mot[2]*=.91;e.mot[1]*=.6;e.fallDist=0;}
+  else if(e.inWater||e.inLava){const y0=e.pos[1];moveFlying(e,I.wx,I.wz,.02);moved=moveEntity(e,e.mot[0],e.mot[1],e.mot[2]);const k=e.inWater?.8:.5;
     e.mot[0]*=k;e.mot[1]*=k;e.mot[2]*=k;e.mot[1]-=.02;
     if(e.collidedH){const t=offBox(entAABB(e),e.mot[0],e.mot[1]+.6-e.pos[1]+y0,e.mot[2]);if(!collisionBoxes(t).length&&!liquidIn(t,e.inWater?'water':'lava'))e.mot[1]=.3;}}
   else{

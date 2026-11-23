@@ -42,7 +42,7 @@ function addItem(e,id,count){
   return count;
 }
 const hasItem=(e,id)=>e.inv.findIndex(s=>s&&s.id===id);
-function consume(e,i){const s=e.inv[i];if(!s)return;s.count--;if(s.count<=0)e.inv[i]=null;}
+function consume(e,i){const s=e.inv[i];if(!s||e.gm==='creative')return;s.count--;if(s.count<=0)e.inv[i]=null;}
 function weaponDmg(e){const s=e.inv[e.sel];let d=s&&ITEMS[s.id].type==='weapon'?ITEMS[s.id].dmg:1;const st=e.effects.strength,wk=e.effects.weakness;if(wk)d-=.5*(wk.amp+1);if(st)d*=1+1.3*(st.amp+1);if(s&&ITEMS[s.id].type==='weapon')d+=1.25*enchLvl(s.id,'sharpness');return Math.max(0,d);}
 
 // ---------- effects ----------
@@ -64,7 +64,7 @@ function speedMul(e){let m=1;if(e.effects.speed)m*=1+.2*(e.effects.speed.amp+1);
 
 // ---------- hunger (1.8 exhaustion model, scaled by the Hunger Rate option) ----------
 function exhaust(e,v){e.exh+=v*(SET.hunger||1);}
-function tickHunger(e,dt,moved){
+function tickHunger(e,dt,moved){if(e.gm==='creative'){e.food=20;e.sat=Math.min(5,e.sat||5);e.exh=0;e.fire=0;e.air=300;return;}
   if(e.sprint&&e.onGround)exhaust(e,.1*moved);else if(e.onGround)exhaust(e,.01*moved);
   if(e.inWater)exhaust(e,.015*moved);
   while(e.exh>=4){e.exh-=4;if(e.sat>0)e.sat=Math.max(0,e.sat-1);else e.food=Math.max(0,e.food-1);}
@@ -75,7 +75,7 @@ function eatFood(e,id){const it=ITEMS[id];e.food=Math.min(20,e.food+it.food);e.s
 
 // ---------- damage ----------
 function hurt(e,amt,src,cause,kb,raw,ignoreInvuln){
-  if(!e.alive)return false;
+  if(!e.alive)return false;if(e.gm==='creative'&&cause!=='void')return false;   // Creative: only the void can hurt you
   if(MATCH.state!=='play'||MATCH.preT>0||(src&&src!==e&&inGrace()))return false;
   if(e.invuln>500)return false;
   let fresh=true;
@@ -161,9 +161,9 @@ function doAttack(e,target){
 // ---------- projectiles (arrows, splash potions) ----------
 function spawnProj(kind,pos,vel,owner,dmg,pot,net=true){projs.push({kind,pos,vel,owner,dmg,pot,age:0,stuck:false});if(net&&owner&&owned(owner))netSend(N.PROJ,{k:kind,p:pos,v:vel,o:owner.id,d:dmg,pot});}
 const bowCharge=sec=>{const t=sec;return Math.min(1,(t*t+2*t)/3);};
-function fireBow(e,f){if(f<.1)return;const ai=hasItem(e,'arrow');if(ai<0)return;const bs=e.inv[e.sel],inf=enchLvl(bs&&bs.id,'infinity');if(!inf)consume(e,ai);const d=fwd(e),o=eye(e);const g=()=>(Math.random()+Math.random()+Math.random()-1.5)*.0075*1.2;
+function fireBow(e,f){if(f<.1)return;const ai=hasItem(e,'arrow');if(ai<0&&e.gm!=='creative')return;const bs=e.inv[e.sel],inf=enchLvl(bs&&bs.id,'infinity');if(!inf&&ai>=0)consume(e,ai);const d=fwd(e),o=eye(e);const g=()=>(Math.random()+Math.random()+Math.random()-1.5)*.0075*1.2;
   const v=[d[0]+g(),d[1]+g(),d[2]+g()];const L=Math.hypot(...v);const sp=f*3;
-  spawnProj('arrow',[o[0]-Math.cos(e.yaw)*.16,o[1]-.1,o[2]+Math.sin(e.yaw)*.16],[v[0]/L*sp,v[1]/L*sp,v[2]/L*sp],e,f>=1?1:0);{const pr=projs[projs.length-1],bi=bs&&ITEMS[bs.id];if(bi&&bi.ench)pr.en=bi.ench;if(inf)pr.noPick=true;
+  spawnProj('arrow',[o[0]-Math.cos(e.yaw)*.16,o[1]-.1,o[2]+Math.sin(e.yaw)*.16],[v[0]/L*sp,v[1]/L*sp,v[2]/L*sp],e,f>=1?1:0);{const pr=projs[projs.length-1],bi=bs&&ITEMS[bs.id];if(bi&&bi.ench)pr.en=bi.ench;if(inf||e.gm==='creative')pr.noPick=true;
     if(bi&&bi.multishot)for(const a of [-.14,.14]){const c=Math.cos(a),s=Math.sin(a);spawnProj('arrow',pr.pos.slice(),[pr.vel[0]*c-pr.vel[2]*s,pr.vel[1],pr.vel[0]*s+pr.vel[2]*c],e,pr.dmg);projs[projs.length-1].noPick=true;}}sfx('bow',{pos:e.pos});}
 function throwSplash(e,id){const p=e.pitch+20*Math.PI/180;const d=[-Math.sin(e.yaw)*Math.cos(p),Math.sin(p),-Math.cos(e.yaw)*Math.cos(p)],o=eye(e),sp=.5;spawnProj('splash',[o[0],o[1]-.1,o[2]],[d[0]*sp,d[1]*sp,d[2]*sp],e,0,id);sfx('bow',{pos:e.pos});}
 function splashImpact(p){

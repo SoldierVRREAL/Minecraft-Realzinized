@@ -60,7 +60,7 @@ function survContainerGone(x,y,z,was){const k=key(x,y,z);
   if(was===B.CHEST){const c=chests.get(k);if(c){if(isHost())for(const s of c.items)if(s)hostSpawnDrop([x+.5,y,z+.5],s.id,s.count);chests.delete(k);if(chestOpen===c)chestClose(false);}}
   if(was===B.FURNACE){const f=FURN.get(k);if(f){for(const s of [f.in,f.fuel,f.out])if(s)requestDrop([x+.5,y-.5,z+.5],s.id,s.count);FURN.delete(k);if(CR.open&&CR.fk===k)craftClose();}}}
 // ---------- durability and the new tools' abilities ----------
-function wearHeld(p,n){const s=p.inv[p.sel];if(!s||MATCH.mode!=='survival')return;const m=maxDur(s.id);if(!m)return;s.dmg=(s.dmg||0)+n;
+function wearHeld(p,n){const s=p.inv[p.sel];if(!s||MATCH.mode!=='survival'||p.gm==='creative')return;const m=maxDur(s.id);if(!m)return;s.dmg=(s.dmg||0)+n;
   if(s.dmg>=m){p.inv[p.sel]=null;sfx('glass',{vol:.6});chatMsg('Your '+ITEMS[s.id].name+' broke!','#ffaa55',false);spawnParticles(p.pos[0],p.pos[1]+1.2,p.pos[2],10,[.6,.6,.6],2);}}
 const cobaltSet=e=>MATCH.mode==='survival'&&e.armor&&e.armor.every(a=>a&&ITEMS[a]&&ITEMS[a].tier===COBALT_TIER);
 // a block was broken with tool id: the extra blocks the ability takes (they drop items too)

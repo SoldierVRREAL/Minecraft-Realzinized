@@ -13,7 +13,7 @@ function openChat(prefix){chatUI=true;const el=$('chatIn');el.value=prefix||'';$
   document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>el.focus(),0);}
 function closeChat(relock){chatUI=false;$('chatBar').classList.add('hidden');$('chatIn').blur();if(relock&&player&&MATCH.state!=='menu')lockPointer();}
 $('chatIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();closeChat(true);return;}
-  if(e.key==='Enter'){e.preventDefault();const m=$('chatIn').value.trim().slice(0,100);if(m){chat.push({t:10,txt:`<${myName}> ${m}`,col:'#ffffff'});if(chat.length>8)chat.shift();netSend(N.CHAT,{p:1,n:myName,m});}closeChat(true);}});
+  if(e.key==='Enter'){e.preventDefault();const m=$('chatIn').value.trim().slice(0,100);if(m&&m[0]==='/'){chat.push({t:10,txt:m,col:'#aaaaaa'});if(chat.length>8)chat.shift();runCommand(m);}else if(m){chat.push({t:10,txt:`<${myName}> ${m}`,col:'#ffffff'});if(chat.length>8)chat.shift();netSend(N.CHAT,{p:1,n:myName,m});}closeChat(true);}});
 // ---- crosshair (inverted like vanilla: drawn with a difference blend over the world) ----
 function tickCrosshair(){const el=$('xhair');const on=!!player&&!hideGui&&camMode===0&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&(player.alive||spectate.mode==='bat')&&
   ['menu','chestUI','pause','results','lobbyPanel','jOpt','loading','dressPanel'].every(id=>{const x=$(id);return !x||x.classList.contains('hidden');});

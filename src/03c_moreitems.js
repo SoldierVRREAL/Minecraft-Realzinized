@@ -34,7 +34,7 @@ gad('shears','Shears','#c8c8c8','Shear sheep for wool, glowshrooms for mushrooms
 gad('bucket','Bucket','#b8b8b8','Right click a cow to milk it',0,'bucket_empty');
 item('milk_bucket',{name:'Milk Bucket',type:'potion',color:'#f8f8f8',fx:[['milk',0,0]],tex:'item/bucket_milk',tip:['Drink to clear all effects']});
 gad('mob_radar','Mob Radar','#40c060','Hold it: shows creatures within 32 blocks',0);
-item('totem','Totem of Renewal',{type:'mat',stack:1,color:'#f0d060',tip:['Keep it in your inventory: saves you from death once']});
+item('totem',{name:'Totem of Renewal',type:'mat',stack:1,color:'#f0d060',tip:['Keep it in your inventory: saves you from death once']});
 item('frost_dagger',{name:'Frost Dagger',type:'weapon',tool:'sword',dmg:6,color:'#c8ecff',tip:['Hits slow the target']});
 item('magma_hammer',{name:'Magma Hammer',type:'weapon',tool:'axe',dmg:9,color:'#e04010',tip:['Hits shake the ground and burn everything next to the target']});
 item('crystal_bow',{name:'Crystal Bow',type:'bow',color:'#6ab4ff',multishot:true,tip:['Shoots three arrows at once (uses one)']});
@@ -42,10 +42,12 @@ item('spore_bomb',{name:'Spore Bomb',type:'splash',color:'#8a5ae0',fx:[['poison'
 item('frost_bomb',{name:'Frost Bomb',type:'splash',color:'#9ad8ff',fx:[['slowness',10,1]],tip:['Throw it: freezes creatures in place']});
 Object.assign(DURABILITY,{frost:400,magma:600});
 // ---- mining: new blocks ----
-Object.assign(MINE_T_X,{124:.05,139:1.5,140:.5,141:1,142:1,143:1,144:.6,145:1.25,146:5,147:3,148:2,149:3,150:1.5,151:1.5,152:1.5,153:.3,154:2,155:.8,156:.3,157:2.2,158:2,159:1.5,160:1.2,161:.8,162:2,163:.3,164:.3,165:.3,168:.8,169:.8,
-  170:1.5,171:1.5,172:1.5,173:1.5,174:1.5,175:1.5});
-for(let b=125;b<=138;b++)MINE_T_X[b]=.8;
-for(const b of [145,146,147,148,149,150,151,152,157,158,159,160,161,162,168,169,170,171,172,173,174,175])PICK_BLOCKS.add(b);
-for(const b of [139,141,142,143,154,155])AXE_BLOCKS.add(b);SHOVEL_BLOCKS.add(144);SHOVEL_BLOCKS.add(140);
-Object.assign(PICK_LEVEL,{146:1,147:1});
+{const b=k=>B[k];const T={TNT:.05,BOOKSHELF:1.5,HAY:.5,PUMPKIN:1,JACK:1,MELON:1,CLAY:.6,TERRACOTTA:1.25,IRON_BLOCK:5,LAPIS_BLOCK:3,NETHER_BRICK:2,END_STONE:3,PRISMARINE:1.5,PRISM_BRICKS:1.5,DARK_PRISM:1.5,
+  SEA_LANTERN:.3,JUKEBOX:2,NOTEBLOCK:.8,LAMP:.3,CRYSTAL_BRICKS:2.2,BASALT_BRICKS:2,ASH_BRICKS:1.5,ICE_BRICKS:1.2,SNOW_BRICKS:.8,MAGMA_BRICKS:2,SAKURA_LANTERN:.3,GLOW_LAMP:.3,MYTHRIL_LANTERN:.3,
+  QUARTZ_PILLAR:.8,QUARTZ_CHISELED:.8,GRANITE:1.5,P_GRANITE:1.5,DIORITE:1.5,P_DIORITE:1.5,ANDESITE:1.5,P_ANDESITE:1.5};
+  for(const k in T)MINE_T_X[b(k)]=T[k];for(const [k] of MB_WOOLS)MINE_T_X[b('WOOL_'+k.toUpperCase())]=.8;
+  for(const k of ['TERRACOTTA','IRON_BLOCK','LAPIS_BLOCK','NETHER_BRICK','END_STONE','PRISMARINE','PRISM_BRICKS','DARK_PRISM','CRYSTAL_BRICKS','BASALT_BRICKS','ASH_BRICKS','ICE_BRICKS','SNOW_BRICKS','MAGMA_BRICKS',
+    'QUARTZ_PILLAR','QUARTZ_CHISELED','GRANITE','P_GRANITE','DIORITE','P_DIORITE','ANDESITE','P_ANDESITE'])PICK_BLOCKS.add(b(k));
+  for(const k of ['BOOKSHELF','PUMPKIN','JACK','MELON','JUKEBOX','NOTEBLOCK'])AXE_BLOCKS.add(b(k));SHOVEL_BLOCKS.add(b('CLAY'));SHOVEL_BLOCKS.add(b('HAY'));
+  PICK_LEVEL[b('IRON_BLOCK')]=1;PICK_LEVEL[b('LAPIS_BLOCK')]=1;}
 Object.assign(MINE_DROP,{143:'melon_slice',144:'b144',153:'b153'});

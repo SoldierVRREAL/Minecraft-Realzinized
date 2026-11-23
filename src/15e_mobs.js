@@ -112,7 +112,7 @@ function mobDespawn(dt){const players=ents.filter(e=>e.kind==='player'&&e.alive)
 
 // ---------------- AI (host) ----------------
 const angTo=(a,b)=>{let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d;};
-function nearestPlayer(e,r){let best=null,bd=r;for(const q of ents){if(q.kind!=='player'||!q.alive||q.spectator||q.bat)continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;best=q;}}return best;}
+function nearestPlayer(e,r){let best=null,bd=r;for(const q of ents){if(q.kind!=='player'||!q.alive||q.spectator||q.bat||q.gm==='creative')continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;best=q;}}return best;}
 function canSee(e,t){const o=[e.pos[0],e.pos[1]+e.eh*.85,e.pos[2]],tp=[t.pos[0],t.pos[1]+(t.eh||EH)*.85,t.pos[2]];const d=[tp[0]-o[0],tp[1]-o[1],tp[2]-o[2]];const L=Math.hypot(...d);if(L<.1)return true;return !raycastBlock(o,d.map(v=>v/L),L);}
 function updateMob(e,dt){const T=MOB_T[e.mob];
   if(!chunkReadyAt(e.pos[0],e.pos[2])){e.rpos=e.pos;return;}
@@ -131,9 +131,9 @@ function updateMob(e,dt){const T=MOB_T[e.mob];
   if(A.t<=0){A.t=.4+Math.random()*.3;
     if(e.owner){const o=entById(e.owner);e.target=null;if(o&&o.alive){const la=o.lastAttacker;if(la&&la.alive&&la!==e&&o.lastAttackT<10&&dist(la.pos,o.pos)<16&&!(la.kind==='mob'&&la.owner===e.owner))e.target=la;
         else{let bd=10;for(const m of mobs)if(m.alive&&m!==e&&MOB_T[m.mob].kind==='hostile'){const d=dist(m.pos,o.pos);if(d<bd){bd=d;e.target=m;}}}}}
-    else if(T.kind==='hostile'){let t=e.target&&e.target.alive&&!e.target.bat&&dist(e.target.pos,e.pos)<24?e.target:null;if(!t){t=nearestPlayer(e,16);if(t&&!canSee(e,t)&&dist(t.pos,e.pos)>6)t=null;}
+    else if(T.kind==='hostile'){let t=e.target&&e.target.alive&&!e.target.bat&&e.target.gm!=='creative'&&dist(e.target.pos,e.pos)<24?e.target:null;if(!t){t=nearestPlayer(e,16);if(t&&!canSee(e,t)&&dist(t.pos,e.pos)>6)t=null;}
       if(t&&T.dayNeutral&&effLight(Math.floor(e.pos[0]),Math.floor(e.pos[1]+.5),Math.floor(e.pos[2]))>9&&!(e.angry>0))t=null;e.target=t;}
-    else if(T.kind==='neutral'){e.target=e.angry>0&&e.target&&e.target.alive&&!e.target.bat?e.target:null;}
+    else if(T.kind==='neutral'){e.target=e.angry>0&&e.target&&e.target.alive&&!e.target.bat&&e.target.gm!=='creative'?e.target:null;}
     else e.target=null;}
   const t=e.target;let wx=0,wz=0,spd=T.spd;e.jump=false;let face=null;
   if(e.owner&&!t){const o=entById(e.owner);if(o&&o.alive){const d=dist(o.pos,e.pos);if(d>24&&chunkReadyAt(o.pos[0],o.pos[2])){e.pos=[o.pos[0]+(Math.random()-.5)*2,o.pos[1],o.pos[2]+(Math.random()-.5)*2];e.mot=[0,0,0];e.prev=null;}
@@ -175,6 +175,7 @@ function mobShoot(e,t){const o=[e.pos[0],e.pos[1]+1.5,e.pos[2]];const tp=[t.pos[
   mobSndRaw(e,['mob/skeleton/shoot','random/bow']);}
 function mobHurt(e,src,cause){const T=MOB_T[e.mob];if(!src||src===e)return;
   if(T.kind==='passive'){e.panic=6;e.fleeFrom=src;}
+  else if(src.gm==='creative'){}
   else if(!(src.kind==='mob'&&src.owner&&src.owner===e.owner)){if(e.owner&&src.id===e.owner)return;e.target=src;e.angry=30;
     if(e.mob==='ice_wolf'&&!e.owner)for(const m of mobs)if(m!==e&&m.mob==='ice_wolf'&&!m.owner&&dist(m.pos,e.pos)<14){m.angry=30;m.target=src;}}}
 function mobDie(e,src,cause){if(!e.alive)return;const T=MOB_T[e.mob];e.alive=false;e.health=0;e.deathT=0;e.fire=e.fire||0;
