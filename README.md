@@ -69,6 +69,32 @@ Render Distance can be changed separately (2-13 chunks). If the game runs slowly
 
 The first player in is the host: their world (saved on their computer as "Online World") is the one everyone plays in, and joiners download it when they connect. If the host leaves, the next player carries on as host. Block changes, players, dropped items and the time of day are shared. A game holds up to 16 players (Photon's free plan allows 20 players online at once per App ID). Multiplayer through Photon also works when the game is hosted on GitHub Pages: no server of your own is needed.
 
+**Mobs**
+Animals and monsters now live in the Survival world. They use the resource pack's own entity textures (the new ones are the vanilla skins recoloured) and the real 1.8 model shapes and walking animations.
+
+| Mob | Where | What it does | Drops |
+| --- | --- | --- | --- |
+| Pig, Cow, Sheep, Chicken | Plains and Forests | Wander, run when hit. Shear sheep (wool regrows), milk cows with a bucket, dye sheep any colour. Chickens lay eggs | Pork, beef, leather, mutton, wool, chicken, feathers |
+| Deer | Sakura, Crystal, Redwood, Frozen | Shy: bolts when you get close unless you sneak | Venison, leather |
+| Glowshroom | Glowing Mushroom Fields | A glowing mushroom cow. Shear it for Glow Shrooms | Glow Spores |
+| Ice Wolf | Frozen Forest | Neutral: the pack attacks if you hit one. Tame one with bones: it follows you, fights for you, wears a red collar and is saved with the world | Frost Fangs |
+| Zombie, Skeleton, Spider, Creeper | Anywhere dark: caves and at night | Zombies and skeletons burn in daylight, skeletons shoot arrows and keep their distance, spiders climb walls (only hostile in the dark), creepers hiss and blow up blocks | Rotten flesh, bones, arrows, string, spider eyes, gunpowder |
+| Crystal Spider | Crystal Forest caves and nights | A glowing spider whose bite slows you | Crystal Silk, Crystal Shards |
+| Magma Creature | Ashen Wasteland, day or night | Hops at you and sets you on fire. Immune to fire and lava | Magma Cream |
+
+Animals killed while burning drop cooked meat. **Options > Survival Difficulty** sets Peaceful (no monsters), Easy, Normal or Hard (monster damage). In multiplayer the host runs every mob and everyone sees the same ones.
+
+**100+ new things**
+- **52 blocks**: TNT (light it with Flint and Steel; explosions chain), wool in all 16 colours, Bookshelf, Hay Bale, Pumpkin and Jack o'Lantern (pumpkins and melons grow wild in Plains and Forests), Melon, Clay (lake and ocean floors) and Terracotta, Blocks of Iron and Lapis, Nether Bricks, End Stone, Prismarine, Prismarine Bricks, Dark Prismarine, Sea Lantern, Jukebox, Note Block, Redstone Lamp, Crystal / Basalt / Ash / Ice / Snow / Magma Bricks, Sakura Lantern, Glowshroom Lamp, Mythril Lantern, Quartz Pillar, Chiseled Quartz, and Granite, Diorite and Andesite (now found underground) plus their polished forms.
+- **20 mob drops**: raw beef, porkchop, chicken, mutton and venison, cooked mutton and venison, leather, feathers, rotten flesh, bones, bone meal (grows flowers and grass), string, gunpowder, spider eyes, magma cream, eggs (throw them: sometimes a chick hatches), frost fangs, crystal silk, glow spores.
+- **14 dyes** made from flowers, gems, coal, petals and crystals, which colour wool and sheep.
+- **9 foods**: Golden Carrot, Fried Egg, Frost Berries (Frozen leaves), Ember Pepper (Ashen dead bushes, fire resistance), Crystal Apple (absorption and speed), Spore Bread, Magma Jerky, Venison Stew, Milk (clears effects).
+- **Tools and weapons**: Flint and Steel (flint comes from gravel), Shears, Bucket, Crystal Bow (three arrows a shot), Frost Dagger (slows), Magma Hammer (shockwave that burns everything near the target), Spore Bomb and Frost Bomb (throwable), Mob Radar (shows creatures within 32 blocks), Totem of Renewal (saves you from one death), and craftable leather armour. Bows can be made with string, arrows with flint and feathers.
+- Every new recipe is on the console crafting screen's tabs, and raw meat, eggs, clay, rotten flesh, grass and gravel can go in the furnace.
+
+**Locator bar (multiplayer)**
+Like Java 1.21.6: in a Survival game with other players, the bar above the hotbar shows a coloured dot for each player in the direction they are from where you are looking. Dots shrink with distance, show an arrow when someone is well above or below you, and pin to the ends with an arrow when they are behind you. Look straight at a dot to see that player's name and distance.
+
 **Mini Games**: Battle, Battle Royale, Play Online (the original relay server) and Practice, unchanged.
 
 ### Controls
@@ -183,11 +209,18 @@ python3 build.py
 | `15b_craft.js` | Recipes, inventory screen, furnace, placed chests, tool abilities, durability, Survival name tags |
 | `15c_lcecraft.js` | Console-style crafting screen |
 | `15d_gadgets.js` | The unique tools |
+| `02c_moreblocks.js` | TNT, wool colours, lanterns, biome bricks, stone types and the other new blocks |
+| `03c_moreitems.js` | Mob drops, dyes, new foods, tools and weapons |
+| `06c_derive2.js` | Textures for the new blocks and items, mob skins from the pack |
+| `15bz_morerecipes.js` | Recipes and smelting for the new things |
+| `15cz_tabs.js` | The new recipes on the crafting screen tabs |
+| `15e_mobs.js` | Mobs: models, AI, spawning, multiplayer sync, explosions and TNT, mob radar |
+| `15f_locator.js` | Multiplayer locator bar |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
 
-Mobs (deer, crystal spiders, ice wolves, magma creatures, mushroom mobs), structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End overhaul with the Void King.
+Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End overhaul with the Void King.
 
 ## Credits
 
