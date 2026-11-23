@@ -156,10 +156,11 @@ function makeChestModel(){const P={};const A=(name,fn)=>{const o=[];fn(o);P[name
 const MODELS={wide:makePlayerModel(false),slim:makePlayerModel(true),armor:makeArmorModel(),bat:makeBatModel(),chest:makeChestModel()};
 
 // ---- extruded item meshes (like held items in Minecraft) built from 32x32 icons, stored in an item atlas ----
-const ITEM_CELL=32,ITEM_COLS=16,ITEM_ROWS=32;let itemAtlas=mkCanvas(ITEM_CELL*ITEM_COLS,ITEM_CELL*ITEM_ROWS),itemTex=null,itemMesh={},itemSlot={};
+const ITEM_CELL=32,ITEM_COLS=16,ITEM_ROWS=64;let itemAtlas=mkCanvas(ITEM_CELL*ITEM_COLS,ITEM_CELL*ITEM_ROWS),itemTex=null,itemMesh={},itemSlot={};
 function rebuildItemAtlas(){
   const g=itemAtlas.getContext('2d');g.clearRect(0,0,itemAtlas.width,itemAtlas.height);g.imageSmoothingEnabled=false;let i=0;itemSlot={};
-  for(const k in ITEMS){const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;g.drawImage(ICON_RAW[k]||ICONS[k],cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
+  for(const k in ITEMS){if(ITEMS[k].base&&ITEMS[ITEMS[k].base])continue;const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;g.drawImage(ICON_RAW[k]||ICONS[k],cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
+  for(const k in ITEMS)if(!itemSlot[k]&&itemSlot[ITEMS[k].base])itemSlot[k]=itemSlot[ITEMS[k].base];
   if(itemTex)gl.deleteTexture(itemTex);itemTex=mkTex(itemAtlas);for(const k in itemMesh)gl.deleteBuffer(itemMesh[k].buf);itemMesh={};
 }
 // block items render as little 3D blocks (their real shape), everything else as extruded sprites

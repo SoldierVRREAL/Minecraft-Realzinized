@@ -48,6 +48,7 @@ const enchScore=id=>{const it=id&&ITEMS[id];return it&&it.ench?Object.values(it.
 // tooltip lines: enchantments, then potion effects (prefix ~ = good effect, ! = harmful, so the tooltip can colour them)
 const FX_TIP={heal:'Instant Health',harm:'Instant Damage'},FX_BAD={harm:1,poison:1,slowness:1,weakness:1};
 const itemTipLines=id=>{const it=ITEMS[id];if(!it)return [];const out=Object.entries(it.ench||{}).map(([k,l])=>ENCH_NAMES[k]+(k==='flame'||k==='infinity'?'':' '+ROMAN[l]));
+  if(it.tip)for(const t of it.tip)out.push('~'+t);
   if((it.type==='potion'||it.type==='splash')&&it.fx)for(const [n,d,a] of it.fx)out.push((FX_BAD[n]?'!':'~')+(FX_TIP[n]||EFFECT_NAMES[n]||n)+(a?' II':'')+(d>0?' ('+Math.floor(d/60)+':'+String(d%60).padStart(2,'0')+')':''));
   return out;};
 const MINE_T={1:.6,2:.5,3:2.2,4:1.4,5:.25,6:1.4,7:.5,9:2.6,10:2.6,11:.4,12:.9,13:.6,14:2.6,17:.6,18:2,19:1.2,20:2.4,21:2.4,22:2.4};
@@ -65,6 +66,7 @@ function procIcon(id){
     g.drawImage(atlasCanvas,(t1%ACOLS)*TILE,Math.floor(t1/ACOLS)*TILE,TILE,TILE/4,5,6,22,4);R(16,9,11,18,'rgba(0,0,0,.25)');}
   else if(it.tool==='sword'){line(26,5,12,19,6,shadeHex(it.color,.6));line(26,5,12,19,3,it.color);line(25,6,15,16,1,shadeHex(it.color,1.3));line(7,15,16,24,4,'#3b2a14');line(11,20,6,25,4,'#6b4a22');R(3,26,4,4,'#3b2a14');}
   else if(it.tool==='axe'){line(8,26,22,8,3,'#6b4a22');g.fillStyle=shadeHex(it.color,.6);g.beginPath();g.moveTo(17,5);g.lineTo(27,9);g.lineTo(25,17);g.lineTo(19,13);g.fill();g.fillStyle=it.color;g.beginPath();g.moveTo(18,7);g.lineTo(25,10);g.lineTo(24,15);g.lineTo(20,12);g.fill();}
+  else if(it.tool==='shovel'){line(7,25,20,12,3,'#6b4a22');g.fillStyle=shadeHex(it.color,.6);g.beginPath();g.moveTo(18,8);g.lineTo(25,4);g.lineTo(28,7);g.lineTo(24,14);g.lineTo(20,14);g.fill();g.fillStyle=it.color;g.beginPath();g.moveTo(19,9);g.lineTo(25,6);g.lineTo(26,8);g.lineTo(23,12);g.lineTo(21,12);g.fill();}
   else if(it.tool==='pickaxe'){line(8,26,22,10,3,'#6b4a22');g.strokeStyle=shadeHex(it.color,.6);g.lineWidth=5;g.beginPath();g.arc(16,18,13,-2.2,-.3);g.stroke();g.strokeStyle=it.color;g.lineWidth=2.5;g.beginPath();g.arc(16,18,13,-2.15,-.35);g.stroke();}
   else if(id==='bow'){g.strokeStyle='#6b4520';g.lineWidth=4;g.beginPath();g.arc(4,28,24,-Math.PI/2+.12,-.12);g.stroke();const a1=-Math.PI/2+.12,a2=-.12;line(4+24*Math.cos(a1),28+24*Math.sin(a1),4+24*Math.cos(a2),28+24*Math.sin(a2),1,'#eee');}
   else if(id==='arrow'){line(7,25,24,8,2,'#8a6a3a');g.fillStyle='#bbb';g.beginPath();g.moveTo(28,4);g.lineTo(20,8);g.lineTo(24,12);g.fill();line(4,24,8,28,3,'#f2f2f2');line(6,22,10,26,3,'#f2f2f2');}
@@ -85,10 +87,12 @@ function procIcon(id){
     else if(it.slot===1){R(4,6,24,22,c2);g.clearRect(12,6,8,5);R(5,7,6,6,c1);R(21,7,6,6,c1);R(9,11,14,16,c1);}
     else if(it.slot===2){R(7,5,18,7,c2);R(7,12,7,16,c2);R(18,12,7,16,c2);R(8,6,16,5,c1);R(8,12,5,15,c1);R(19,12,5,15,c1);}
     else{R(4,14,8,12,c2);R(4,22,11,6,c2);R(19,14,8,12,c2);R(19,22,11,6,c2);R(5,15,6,10,c1);R(20,15,6,10,c1);}}
+  else if(it.type==='gadget'){line(7,26,20,13,3,'#5a4022');line(7,26,20,13,1,'#9a7440');g.fillStyle=shadeHex(it.color,.55);g.beginPath();g.arc(22,10,7,0,7);g.fill();g.fillStyle=it.color;g.beginPath();g.arc(22,10,5,0,7);g.fill();R(20,7,2,2,'rgba(255,255,255,.8)');}
   else if(it.type==='mat'){const c1=it.color,c2=shadeHex(it.color,.55),c3=shadeHex(it.color,1.45);
     if(id==='stick'){line(9,25,23,7,4,'#5a4022');line(9,25,23,7,2,'#9a7440');}
     else if(it.gem||id==='diamond'){g.fillStyle=c2;g.beginPath();g.moveTo(16,3);g.lineTo(28,13);g.lineTo(16,29);g.lineTo(4,13);g.fill();g.fillStyle=c1;g.beginPath();g.moveTo(16,6);g.lineTo(25,13);g.lineTo(16,25);g.lineTo(7,13);g.fill();
       g.fillStyle=c3;g.beginPath();g.moveTo(16,6);g.lineTo(21,11);g.lineTo(11,11);g.fill();R(10,12,3,3,'rgba(255,255,255,.75)');}
+    else if(it.ingot){g.fillStyle=c2;g.beginPath();g.moveTo(4,20);g.lineTo(12,12);g.lineTo(28,12);g.lineTo(28,18);g.lineTo(20,26);g.lineTo(4,26);g.fill();g.fillStyle=c1;g.beginPath();g.moveTo(6,20);g.lineTo(13,14);g.lineTo(26,14);g.lineTo(19,20);g.fill();R(6,20,13,4,shadeHex(it.color,.8));R(9,16,8,1,c3);}
     else if(id==='coal'){g.fillStyle='#111';g.beginPath();g.moveTo(7,10);g.lineTo(18,5);g.lineTo(27,12);g.lineTo(24,25);g.lineTo(11,27);g.lineTo(5,19);g.fill();R(12,10,4,3,'#3a3a3a');R(19,16,3,3,'#2c2c2c');}
     else{g.fillStyle=c2;g.beginPath();g.moveTo(6,12);g.lineTo(14,5);g.lineTo(25,8);g.lineTo(27,20);g.lineTo(18,27);g.lineTo(7,24);g.fill();g.fillStyle=c1;g.beginPath();g.moveTo(9,13);g.lineTo(15,8);g.lineTo(23,10);g.lineTo(24,19);g.lineTo(17,24);g.lineTo(9,22);g.fill();R(12,11,4,3,c3);R(18,17,3,3,c3);}}
   return c;

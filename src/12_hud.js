@@ -40,6 +40,7 @@ function drawHUD(){
     if(MATCH.state==='lobby'){if(dist(camPos,e.pos)<64)nameTagMC(e,e.ready?'#77ff77':'#ffffff');}
     else if(MATCH.mode==='battle'&&MATCH.showdown)nameTagMC(e,PLAYER_COLORS[e.color%16]);
     else if(MATCH.mode==='battle'&&dist(camPos,e.pos)<6&&!e.effects.invis&&los(camPos,eye(e)))nameTag(e);}
+  if(MATCH.mode==='survival'&&MATCH.state==='play'){survNameTags();drawGadgetHUD();}
   if(MATCH.state==='lobby')drawLobbyHud();
   else if(showDebug){}
   else if(MATCH.mode==='br')drawBRHud();
@@ -106,7 +107,8 @@ function drawHotbar(){
   else{const u=S/20;hc.fillStyle='rgba(0,0,0,.55)';hc.fillRect(hx-u,hy-u,S*9+2*u,S+2*u);
     for(let i=0;i<9;i++){const x=hx+i*S;hc.fillStyle='rgba(139,139,139,.42)';hc.fillRect(x+u,hy+u,S-2*u,S-2*u);hc.fillStyle='rgba(55,55,55,.75)';hc.fillRect(x+u,hy+u,S-2*u,u);hc.fillRect(x+u,hy+u,u,S-2*u);
       hc.fillStyle='rgba(200,200,200,.45)';hc.fillRect(x+u,hy+S-2*u,S-2*u,u);hc.fillRect(x+S-2*u,hy+u,u,S-2*u);}}
-  for(let i=0;i<9;i++){const x=hx+i*S;const s=p.inv[i];if(s){hc.drawImage(ICONS[s.id],x+S*.14,hy+S*.14,S*.72,S*.72);if(s.count>1)txt(String(s.count),x+S-4,hy+S-5,13,'#fff','right');}}
+  for(let i=0;i<9;i++){const x=hx+i*S;const s=p.inv[i];if(s){hc.drawImage(ICONS[s.id],x+S*.14,hy+S*.14,S*.72,S*.72);if(s.count>1)txt(String(s.count),x+S-4,hy+S-5,13,'#fff','right');
+    if(s.dmg&&typeof maxDur==='function'&&maxDur(s.id)){const f=1-s.dmg/maxDur(s.id);hc.fillStyle='#000';hc.fillRect(x+S*.16,hy+S*.8,S*.68,S*.08);hc.fillStyle=`hsl(${Math.round(f*120)},90%,50%)`;hc.fillRect(x+S*.16,hy+S*.8,S*.68*f,S*.05);}}}
   const sx=hx+p.sel*S;if(PACK.gui.hotbar_sel)hc.drawImage(PACK.gui.hotbar_sel,sx-S*.08,hy-S*.1,S*1.16,S*1.2);else{const u=S/20;hc.strokeStyle='#000';hc.lineWidth=u;hc.strokeRect(sx-1.5*u,hy-1.5*u,S+3*u,S+3*u);hc.strokeStyle='#e6e6e6';hc.lineWidth=2*u;hc.strokeRect(sx,hy,S,S);hc.strokeStyle='#8a8a8a';hc.lineWidth=u;hc.strokeRect(sx+1.5*u,hy+1.5*u,S-3*u,S-3*u);const it=p.inv[p.sel];if(it){hc.drawImage(ICONS[it.id],sx+S*.14,hy+S*.14,S*.72,S*.72);if(it.count>1)txt(String(it.count),sx+S-4,hy+S-5,13,'#fff','right');}}
   const s=G.s,step=8*s;const left=hx,right=hx+S*9;
   // player pills (one per player in the round; dim when out)

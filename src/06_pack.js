@@ -78,6 +78,7 @@ async function loadPackBuffer(buf,label){
   // block textures (newer "block/", older "blocks/")
   const tiles={};
   for(let t=0;t<TILE_PACK.length;t++){const n=TILE_PACK[t];if(n[0]==='~')continue;const img=await get('textures/block/'+n+'.png')||await get('textures/blocks/'+n+'.png')||(TILE_ALT[n]?await get('textures/blocks/'+TILE_ALT[n]+'.png'):null);if(img){tiles[t]=img;found++;}}
+  found+=await packDeriveTiles(get,tiles);
   const chest=await get('textures/entity/chest/normal.png');if(chest)PACK.chestTex=imgToCanvas(chest,64,64,0,0,chest.width,chest.height);
   const grassOv=await get('textures/block/grass_block_side_overlay.png')||await get('textures/blocks/grass_side_overlay.png');
   if(Object.keys(tiles).length||chest){
@@ -102,6 +103,7 @@ async function loadPackBuffer(buf,label){
     if(it.type==='potion'||it.type==='splash'){const ov=await get('textures/item/potion_overlay.png')||await get('textures/items/potion_overlay.png');if(ov){const o=tintCanvas(imgToCanvas(ov,32,32),it.color);const g2=mkCanvas(32,32).getContext('2d');g2.drawImage(o,0,0);g2.drawImage(c,0,0);icons[k]=g2.canvas;continue;}}
     if(it.mat==='leather'){tintCanvas(c,'#a06540');const ov=await get('textures/'+it.tex+'_overlay.png')||await get('textures/items/'+it.tex.replace(/^item\//,'')+'_overlay.png');if(ov)c.getContext('2d').drawImage(imgToCanvas(ov,32,32),0,0);}
     icons[k]=c;}
+  found+=await packDeriveItems(get,icons);
   PACK.icons=icons;
   // HUD sprites (1.20.2+ sprites, or legacy icons.png / widgets.png)
   const gs=async n=>await get('textures/gui/sprites/'+n+'.png');
@@ -125,6 +127,7 @@ async function loadPackBuffer(buf,label){
   for(const [,,,mat] of ARMOR_TIERS){const l1=await get(`textures/entity/equipment/humanoid/${mat}.png`)||await get(`textures/models/armor/${mat}_layer_1.png`);
     const l2=await get(`textures/entity/equipment/humanoid_leggings/${mat}.png`)||await get(`textures/models/armor/${mat}_layer_2.png`);
     if(l1||l2){PACK.armor[mat]={l1:l1?imgToCanvas(l1,64,32,0,0,l1.width,l1.height):null,l2:l2?imgToCanvas(l2,64,32,0,0,l2.width,l2.height):null};found++;}}
+  found+=await packDeriveArmor(get);
   for(const [k,pth] of [['sun','textures/environment/sun.png'],['moon','textures/environment/moon_phases.png'],['shadow','textures/misc/shadow.png'],['particles','textures/particle/particles.png']]){const im=await get(pth);if(im){PACK[k]=imgToCanvas(im,im.width,im.height,0,0,im.width,im.height);found++;}}
   const bat=await get('textures/entity/bat.png');if(bat){PACK.bat=imgToCanvas(bat,64,64,0,0,bat.width,bat.height);found++;}
   const clouds=await get('textures/environment/clouds.png');if(clouds){PACK.clouds=imgToCanvas(clouds,256,256,0,0,clouds.width,clouds.height);found++;}

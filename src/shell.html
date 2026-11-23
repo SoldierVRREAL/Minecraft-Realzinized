@@ -69,6 +69,27 @@ input[type=checkbox]{width:20px;height:20px;accent-color:#555}
 #roomList{max-height:30vh;overflow:auto;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.25)}.rnote{padding:8px 10px;font-size:18px;opacity:.8}
 .room{display:flex;gap:10px;align-items:center;width:100%;padding:6px 10px;font:inherit;font-size:20px;color:#fff;text-shadow:2px 2px 0 #000;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.12);cursor:pointer;text-align:left}
 .room:hover,.room:focus{background:rgba(120,180,255,.25);outline:none}.room .rn{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.room .rs{opacity:.8;white-space:nowrap}.room .rp{width:60px;text-align:right}
+.crow{display:flex;align-items:center;gap:calc(var(--S)*6px);padding:calc(var(--S)*2px) calc(var(--S)*4px)}.carrow{width:calc(var(--S)*22px);height:calc(var(--S)*15px);image-rendering:pixelated}
+.fcol{display:flex;flex-direction:column;align-items:center;gap:calc(var(--S)*2px)}.fflame{width:calc(var(--S)*14px);height:calc(var(--S)*14px);image-rendering:pixelated}
+.lgrid .slot.big,.crow>.slot.big{width:calc(var(--S)*26px);height:calc(var(--S)*26px)}.crow>.slot{width:calc(var(--S)*18px);height:calc(var(--S)*18px);background:#8b8b8b;box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #373737,inset calc(var(--S)*-1px) calc(var(--S)*-1px) 0 #fff;position:relative;cursor:pointer}
+.fcol>.slot{width:calc(var(--S)*18px);height:calc(var(--S)*18px);background:#8b8b8b;box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #373737,inset calc(var(--S)*-1px) calc(var(--S)*-1px) 0 #fff;position:relative;cursor:pointer}
+.crow>.slot canvas,.fcol>.slot canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}.crow>.slot.big canvas{inset:calc(var(--S)*4px);width:auto;height:auto}
+#craftUI .slot:hover{background:#a9a9a9}#cursorItem{position:fixed;z-index:20;pointer-events:none;width:calc(var(--S)*18px);height:calc(var(--S)*18px)}#cursorItem canvas{width:100%;height:100%;image-rendering:pixelated}
+.lcwrap{display:flex;flex-direction:column;align-items:stretch;margin-top:calc(var(--S)*6px)}.lctabs{display:flex;gap:calc(var(--S)*2px);padding:0 calc(var(--S)*4px);margin-bottom:calc(var(--S)*-2px);position:relative;z-index:1}
+.lctab{flex:1;height:calc(var(--S)*22px);background:#8b8b8b;border-radius:calc(var(--S)*3px) calc(var(--S)*3px) 0 0;box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #c6c6c6,inset calc(var(--S)*-1px) 0 0 #555;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lctab.on{background:#c6c6c6;height:calc(var(--S)*24px);margin-top:calc(var(--S)*-2px);box-shadow:inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #fff,inset calc(var(--S)*-2px) 0 0 #555}.lctab canvas{width:calc(var(--S)*16px);height:calc(var(--S)*16px);image-rendering:pixelated}
+.lcrowbox{display:flex;justify-content:center}.lcrow{display:flex;flex-wrap:wrap;justify-content:center;max-width:calc(var(--S)*240px);padding:calc(var(--S)*6px) 0}
+.lcrow .slot,#lcGrid .slot,.lcsmall .slot{width:calc(var(--S)*18px);height:calc(var(--S)*18px);background:#8b8b8b;box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #373737,inset calc(var(--S)*-1px) calc(var(--S)*-1px) 0 #fff;position:relative;cursor:pointer}
+.lcrow .slot.sel{background:#b8c8b0;outline:calc(var(--S)*1px) solid #fff;box-shadow:inset 0 0 0 calc(var(--S)*1px) #3a5a3a}.lcrow .slot.dim canvas,.lgrid .slot.dim canvas{opacity:.45}
+.slot canvas{image-rendering:pixelated}.lcrow .slot canvas,#lcGrid .slot canvas,.lcsmall .slot canvas{position:absolute;inset:0;width:100%;height:100%}
+.lcup,.lcdn{position:absolute;left:50%;width:0;height:0;margin-left:calc(var(--S)*-3px);border-left:calc(var(--S)*3px) solid transparent;border-right:calc(var(--S)*3px) solid transparent}
+.lcup{top:calc(var(--S)*-5px);border-bottom:calc(var(--S)*4px) solid #f0d040}.lcdn{bottom:calc(var(--S)*-5px);border-top:calc(var(--S)*4px) solid #f0d040}
+.slot.miss{background:#c83c3c!important}.slot .warn{position:absolute;left:calc(var(--S)*1px);top:calc(var(--S)*1px);z-index:2;background:#f0d040;color:#000;font:bold calc(var(--S)*6px)/calc(var(--S)*7px) monospace;width:calc(var(--S)*6px);height:calc(var(--S)*7px);text-align:center;border:1px solid #000}
+#lcOut{width:calc(var(--S)*26px);height:calc(var(--S)*26px);background:#8b8b8b;box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #373737,inset calc(var(--S)*-1px) calc(var(--S)*-1px) 0 #fff;position:relative;cursor:pointer}#lcOut canvas{position:absolute;inset:calc(var(--S)*4px);width:calc(100% - var(--S)*8px);height:calc(100% - var(--S)*8px)}
+.lcleft{min-width:calc(var(--S)*110px)}.lccraft{justify-content:center;padding-top:calc(var(--S)*4px)}.lcdesc{display:flex;flex-direction:column;gap:calc(var(--S)*1px);padding:calc(var(--S)*4px);max-width:calc(var(--S)*120px)}.lcdesc canvas{max-width:100%}
+.lcsmall{grid-template-columns:repeat(9,calc(var(--S)*12px))!important}.lcsmall .slot{width:calc(var(--S)*12px)!important;height:calc(var(--S)*12px)!important}.lcsmall .slot.sel{outline:calc(var(--S)*1px) solid #fff}
+.guardmsg{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:50;background:#7a1010;color:#fff;border:2px solid #000;padding:8px 14px;font-size:20px;text-shadow:2px 2px 0 #000;max-width:90vw;text-align:center}
+.wsave{align-items:center;min-width:0}.wrow .wdel{padding:0 8px;font-size:16px;flex:none}.wthumb{width:96px;height:54px;flex:none;object-fit:cover;background:#203040;border:2px solid rgba(0,0,0,.6);image-rendering:auto}.winfo{display:flex;flex-direction:column;min-width:0;flex:1}.winfo .rs{font-size:16px}.wrow .wexp{background:#2a4a6d}.wexp:hover{background:#3a6a9a}
 .wlist{max-height:34vh;overflow:auto;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.25)}.wrow{display:flex;align-items:stretch}.wrow .room{flex:1}
 .wdel{font:18px 'VT323',monospace;background:#6d2a2a;color:#fff;border:0;border-left:2px solid rgba(0,0,0,.4);padding:0 12px;cursor:pointer}.wdel:hover{background:#a33}
 #phStatus{font-size:18px;margin-top:8px;color:#204080;min-height:18px}
@@ -260,7 +281,7 @@ body.touch #clickResume{display:none!important}
 <button class="hidden" id="takeAll"></button><button class="hidden" id="closeChest"></button></div>
 
 <div id="pause" class="screen hidden"><div class="lhead" id="pauseTitle" data-t="Game menu" style="margin-bottom:calc(var(--S)*14px)">Game menu</div><div class="menuList" style="margin-top:0">
-  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
+  <button class="lbtn" id="resumeBtn">Back to Game</button><button class="lbtn hidden" id="saveBtn">Save Game</button><button class="lbtn" id="pauseOpts">Options...</button><button class="lbtn" id="leaveBtn">Leave Game</button></div></div>
 <div id="jOpt" class="screen hidden jscreen"><div id="jTitle"></div><div id="jGrid"></div><div id="jFoot"></div></div>
 <div id="xhair" class="hidden"><i></i><b></b></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
@@ -280,14 +301,24 @@ body.touch #clickResume{display:none!important}
   <div id="loadTitle" style="font-size:32px;color:#fff;text-shadow:2px 2px 0 #333">Loading level</div>
   <div style="margin:10px auto 0;width:min(430px,72vw);height:6px;background:#4a4a4a;border:1px solid #1a1a1a"><div id="loadBar" style="height:100%;width:0;background:#dcdcdc;transition:width .06s"></div></div>
   <div id="loadTip" style="margin:9vh auto 0;padding:10px 18px;max-width:560px;font-size:21px;color:#fff;background:rgba(32,32,32,.74);border:2px solid #c4c4c4;text-shadow:2px 2px 0 #000"></div></div></div>
+<div id="craftUI" class="screen hidden" style="background:rgba(0,0,0,.3)"><div class="lpanel" id="craftBox">
+  <div class="lhead" id="craftHead"></div><div class="lrow" id="craftTop"></div>
+  <div class="lsub"><div class="lab left" data-t="Inventory">Inventory</div><div id="cInv" class="lgrid"></div><div id="cHot" class="lgrid" style="margin-top:calc(var(--S)*4px)"></div></div>
+</div><div class="lprompts" id="craftPrompts"></div></div>
+<div id="cursorItem"></div>
+<div id="lceCraft" class="screen hidden" style="background:rgba(0,0,0,.35)"><div class="lcwrap"><div class="lctabs" id="lcTabs"></div>
+  <div class="lpanel lcpanel"><div class="lhead" id="lcTitle"></div><div class="lsub lcrowbox"><div class="lcrow" id="lcRow"></div></div>
+    <div class="lrow"><div class="lsub lcleft"><div class="lab" id="lcName"></div><div class="crow lccraft"><div class="lgrid" id="lcGrid"></div><canvas class="carrow" id="lcArrow" width="22" height="15"></canvas><div class="slot big" id="lcOut"></div></div><div id="lcDesc" class="lcdesc hidden"></div></div>
+      <div class="lsub lcright"><div class="lab" data-t="Inventory">Inventory</div><div class="lgrid lcsmall" id="lcInv"></div><div class="lgrid lcsmall" id="lcHot" style="margin-top:calc(var(--S)*3px)"></div></div></div></div></div>
+  <div class="lprompts" id="lcPrompts"></div></div>
 <div id="worldPanel" class="screen hidden"><div class="panel" style="width:min(600px,94vw)">
-  <h3>Play Game: Survival</h3>
+  <h3>Play Game: Saved Games</h3>
   <div id="worldList" class="wlist"></div>
   <h3 style="margin-top:12px">Create New World</h3>
   <div class="form"><label for="w_name">World name</label><input id="w_name" type="text" maxlength="32" value="New World" autocomplete="off">
     <label for="w_seed">Seed (leave blank for random)</label><input id="w_seed" type="text" maxlength="40" placeholder="random" autocomplete="off">
     <label for="w_gfx">Graphics</label><select id="w_gfx"><option value="potato">Potato (old or slow computers)</option><option value="low">Low</option><option value="high">High</option><option value="peak">PEAK shaders (fast computers)</option></select></div>
-  <div class="row"><button class="btn small" id="wCreate">Create New World</button><button class="btn small" id="wBack">Back</button></div>
+  <div class="row"><button class="btn small" id="wCreate">Create New World</button><button class="btn small" id="wImport">Import Save</button><button class="btn small" id="wBack">Back</button></div><input id="wImportFile" type="file" accept=".mcrworld,application/json" class="hidden">
   <div class="note">Worlds are saved in this browser every 30 seconds and when you leave.</div>
 </div></div>
 <div id="mpPanel" class="screen hidden"><div class="panel" style="width:min(600px,94vw)">

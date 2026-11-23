@@ -78,6 +78,7 @@ function hurt(e,amt,src,cause,kb,raw,ignoreInvuln){
   let fresh=true;
   if(e.invuln>0&&!ignoreInvuln){if(amt<=(e.lastDmg||0))return false;const d=amt-(e.lastDmg||0);e.lastDmg=amt;amt=d;fresh=false;} // EntityLivingBase.attackEntityFrom
   else{e.lastDmg=amt;e.invuln=.5;e.hurtT=.5;}
+  if(cobaltSet(e)){if(cause==='fall')amt*=.5;kb=null;}
   if(!raw&&e.using==='block'&&src)amt=(1+amt)*.5;                       // sword blocking
   if(!raw){amt*=1-Math.min(20,armorPts(e))*.04;const ep=enchProt(e);if(ep)amt*=1-Math.min(20,ep)*.04;}                            // armour: 4% per point
   if(e.absorb>0){const a2=Math.min(e.absorb,amt);e.absorb-=a2;amt-=a2;}
@@ -143,7 +144,8 @@ function doAttack(e,target){
   if(e.atkCD>0)return;e.atkCD=e.isLocal?0:.12;e.swing=1;
   const t=target!==undefined?target:meleeTarget(e,3);if(!t)return;exhaust(e,.3);
   let dmg=weaponDmg(e);const crit=(e.fallDist||0)>0&&!e.onGround&&!onLadder(e)&&!e.inWater;if(crit){dmg*=1.5;spawnParticles(t.pos[0],t.pos[1]+1.2,t.pos[2],14,[1,1,1],4,'crit');}
-  const held=e.inv[e.sel],hid=held&&held.id;const extra=(e.sprint?1:0)+enchLvl(hid,'knockback'),fa=enchLvl(hid,'fire_aspect');if(e.sprint){e.sprint=false;if(e.mot){e.mot[0]*=.6;e.mot[2]*=.6;}}
+  const held=e.inv[e.sel],hid=held&&held.id;const extra=(e.sprint?1:0)+enchLvl(hid,'knockback'),fa=Math.max(enchLvl(hid,'fire_aspect'),MATCH.mode==='survival'&&toolTier(hid)==='ruby'?1:0);
+  if(MATCH.mode==='survival'&&e.isLocal){if(toolTier(hid)==='amethyst')e.health=Math.min(maxHP(e),e.health+dmg*.2);wearHeld(e,ITEMS[hid]&&(ITEMS[hid].tool==='sword'||ITEMS[hid].tool==='axe')?1:2);}if(e.sprint){e.sprint=false;if(e.mot){e.mot[0]*=.6;e.mot[2]*=.6;}}
   if(e.effects.invis)delete e.effects.invis;
   damage(t,dmg,e,'melee',[t.pos[0]-e.pos[0],t.pos[2]-e.pos[2],extra,-Math.sin(e.yaw),-Math.cos(e.yaw)],false,fa?[['ignite',4*fa,0]]:undefined);
 }

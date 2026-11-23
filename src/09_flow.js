@@ -139,12 +139,12 @@ function chestOp(op,slot,item){if(!chestOpen)return;const c=chestOpen,k=key(c.x,
   sfx('pick');renderChest();}
 
 // ---------- blocks (Battle Royale building) ----------
-function applyBlock(x,y,z,b){const was=getB(x,y,z);if(was&&!b)blockParticles(x,y,z,was,40);if(INF){infSetBlock(x,y,z,b);return;}setB(x,y,z,b);relightColumn(x,z);rebuildAt(x,z);if(isHost())MATCH.edits.push([x,y,z,b]);}
+function applyBlock(x,y,z,b){const was=getB(x,y,z);if(was&&!b)blockParticles(x,y,z,was,40);if(INF){if(was!==b)survContainerGone(x,y,z,was);if(b===B.CHEST)survChestAdd(x,y,z);infSetBlock(x,y,z,b);return;}setB(x,y,z,b);relightColumn(x,z);rebuildAt(x,z);if(isHost())MATCH.edits.push([x,y,z,b]);}
 function setBlockNet(x,y,z,b){applyBlock(x,y,z,b);netSend(N.BLOCK,[x,y,z,b]);}
 let mining=null;
-function breakBlock(x,y,z,who){const b=getB(x,y,z);if(!b||b===B.CHEST||b===B.BARRIER||b===B.BEACON||b===B.BEDROCK)return;setBlockNet(x,y,z,0);sfx('dig',{pos:[x,y,z],mat:blockMat(b)});
-  if(MATCH.mode==='survival'){const h=who&&who.inv[who.sel];const d=mineDrops(b,h?h.id:null);if(d)requestDrop([x+.5,y-.6,z+.5],d,1,[(Math.random()-.5)*1.5,2.5,(Math.random()-.5)*1.5]);
-    if(BD[b].leaves&&Math.random()<.06)requestDrop([x+.5,y-.6,z+.5],b===B.LEAVES?'apple':'stick',1);if(b===B.ICE&&getB(x,y-1,z))setBlockNet(x,y,z,B.WATER);return;}
+function breakBlock(x,y,z,who){const b=getB(x,y,z);if(!b||(b===B.CHEST&&MATCH.mode!=='survival')||b===B.BARRIER||b===B.BEACON||b===B.BEDROCK)return;setBlockNet(x,y,z,0);sfx('dig',{pos:[x,y,z],mat:blockMat(b)});
+  if(MATCH.mode==='survival'){const h=who&&who.inv[who.sel],hid=h?h.id:null;survDrop(x,y,z,b,hid);if(b===B.ICE&&getB(x,y-1,z))setBlockNet(x,y,z,B.WATER);
+    if(hid&&who){const it=ITEMS[hid];if(it&&it.type==='weapon'){wearHeld(who,it.tool==='sword'?2:1);if(who.inv[who.sel])abilityBreak(x,y,z,b,hid,who);}}return;}
   const d=MINE_DROP[b];if(d){const left=addItem(who,d,1);if(left)requestDrop([x+.5,y-.5,z+.5],d,left);}if(b===B.LEAVES&&Math.random()<.05)requestDrop([x+.5,y-.5,z+.5],'apple',1);}
 function placeBlock(x,y,z,id){if(INF?(y<1||y>=WY-1||!chunkReadyAt(x,z)):(x<1||z<1||y<1||x>=WX-1||z>=WZ-1||y>=WY))return false;const cur=getB(x,y,z);if(cur&&!BD[cur].liquid&&!BD[cur].cross)return false;
   for(const e of ents){if(!e.alive)continue;if(e.pos[0]+HW>x&&e.pos[0]-HW<x+1&&e.pos[2]+HW>z&&e.pos[2]-HW<z+1&&e.pos[1]+EH>y&&e.pos[1]<y+1)return false;}setBlockNet(x,y,z,id);sfx('step',{pos:[x,y,z],mat:blockMat(id),vol:6});return true;}

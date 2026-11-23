@@ -1,6 +1,6 @@
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
-const OVERLAYS=['worldPanel','mpPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
+const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','onlinePanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
 // raw mouse input (unadjustedMovement) skips OS acceleration, but on macOS it inflates movement while a mouse button is held,
@@ -85,13 +85,14 @@ function updatePlayer(dt){
   if(lmb&&!p.using){const tgt=meleeTarget(p,3.2);
     if(tgt||!canBuild()){mining=null;if(lmbEdge)doAttack(p,tgt||null);}
     else{const h=raycastBlock(eye(p),fwd(p),4.5);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
-      if(h&&h.b!==B.CHEST&&T){if(!mining||mining.x!==h.x||mining.y!==h.y||mining.z!==h.z)mining={x:h.x,y:h.y,z:h.z,b:h.b,t:0};mining.T=T;mining.t+=dt;if(p.swing<=0)p.swing=1;
+      if(h&&(h.b!==B.CHEST||MATCH.mode==='survival')&&T){if(!mining||mining.x!==h.x||mining.y!==h.y||mining.z!==h.z)mining={x:h.x,y:h.y,z:h.z,b:h.b,t:0};mining.T=T;mining.t+=dt;if(p.swing<=0)p.swing=1;
         if(((mining.t*5)|0)!==(((mining.t-dt)*5)|0))sfx('mine',{pos:[h.x,h.y,h.z],mat:blockMat(h.b)});if(mining.t>=T){breakBlock(h.x,h.y,h.z,p);mining=null;}}else mining=null;}}
   else mining=null;lmbEdge=false;
   const s=p.inv[p.sel],it=s&&ITEMS[s.id];
   if(rmbEdge){rmbEdge=false;
     if(!tryOpenChest()){
-      if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
+      if(it&&it.type==='gadget'&&MATCH.mode==='survival'){if(s.id==='spyglass'){p.using='spy';p.useT=0;}else useGadget(p,s);}
+      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
       else if(it&&it.type==='armor'){const cur=p.armor[it.slot];p.armor[it.slot]=s.id;p.inv[p.sel]=cur?{id:cur,count:1}:null;sfx('pick');}
       else if(it&&it.type==='food'&&(p.food<20||it.always)){p.using='eat';p.useT=0;}
       else if(it&&it.type==='potion'){p.using='drink';p.useT=0;}
@@ -108,11 +109,12 @@ function updatePlayer(dt){
 // ---------- chest UI (27 slots + 9 hotbar, like the console screen) ----------
 let chestOpen=null;
 function lookChest(){if(!player||!player.alive)return null;const h=raycastBlock(eye(player),fwd(player),4.5);if(h&&h.b===B.CHEST)return chests.get(key(h.x,h.y,h.z));return null;}
-function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;const c=lookChest();if(!c)return false;chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();
+function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;
+  if(MATCH.mode==='survival'&&!player.sneak){const h=raycastBlock(eye(player),fwd(player),4.5);if(h&&h.b===B.CRAFTING)return lcOpen(false);if(h&&h.b===B.FURNACE)return craftOpen('furnace',key(h.x,h.y,h.z));}const c=lookChest();if(!c)return false;chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();
   show('chestUI');renderChest();return true;}
-function chestClose(relock){if(!chestOpen)return;if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
+function chestClose(relock){if(!chestOpen)return;if(chestOpen.craft)craftClose();if(chestOpen.lce)lcClose();if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
 const INV_SCREEN={inv:true,items:[]};let invHover=null;
-function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
+function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;if(MATCH.mode==='survival')return craftOpen('inv');chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
 function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?ITEMS[id].name:''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
 function slotCanvas(id,count){const S=GS,px=18*S,c=mkCanvas(px,px),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(ICONS[id],S,S,16*S,16*S);
   if(count>1){const t=pxCanvas(String(count),S,'#ffffff');g.drawImage(t,px-t.width,px-t.height+S);}return c;}
@@ -246,7 +248,7 @@ $('menuBtn').addEventListener('click',()=>toMenu());
 function backToLobby(){hide('results');if(online){if(isHost()){netSend(N.TOLOBBY,{});enterLobby();}else if(MATCH.state!=='lobby')enterLobby();}else{MATCH.offlineLobby=true;enterLobby();}}
 $('lobbyBtn').addEventListener('click',backToLobby);
 $('nextBtn').addEventListener('click',()=>{hide('results');if(!online){showLoading('Loading level',()=>{player=null;ents=[];hostStartMatch();});}});
-function toMenu(){survLeave();if(net){net.leave();net=null;}online=false;MATCH.offlineLobby=false;MATCH.state='menu';player=null;ents=[];document.exitPointerLock&&document.exitPointerLock();hideOverlays();show('menu');setMSel(0);generateMap('skyhold',1,false);buildMesh();refreshSkinPicker();}
+function toMenu(){survLeave();$('saveBtn').classList.add('hidden');if(net){net.leave();net=null;}online=false;MATCH.offlineLobby=false;MATCH.state='menu';player=null;ents=[];document.exitPointerLock&&document.exitPointerLock();hideOverlays();show('menu');setMSel(0);generateMap('skyhold',1,false);buildMesh();refreshSkinPicker();}
 function openLobbyPanel(){document.exitPointerLock&&document.exitPointerLock();show('lobbyPanel');const host=isHost();
   $('lobbyInfo').innerHTML=`<div class="note">Room: <b>${($('n_room').value||'').replace(/</g,'&lt;')}</b> · ${net?net.kind:''}${net&&net.tr&&net.tr.url?' via '+net.tr.url.replace(/^wss?:\/\//,'').replace(/\/mqtt$/,'').replace(/</g,'&lt;'):''}${net&&net.ping!=null?' · ping '+Math.round(net.ping)+' ms':''} · ${host?'You are the host':'Host decides the options'}<br>Mode: ${SET.mode==='br'?'Battle Royale':'Battle'} · Round ${SET.roundLen?SET.roundLen/60+' min':'unlimited'} · Grace ${SET.grace||'off'} · Hunger ${({0.5:'slow',1:'normal',2:'fast'})[SET.hunger]} · Bots ${SET.bots}<br>Players: ${ents.filter(e=>e.kind==='player').map(e=>(e.ready?'✓ ':'')+e.name.replace(/</g,'&lt;')+(e===player?(net&&net.ping!=null?' ('+Math.round(net.ping)+' ms)':''):(e.ping!=null?' ('+e.ping+' ms)':''))).join(', ')}</div>`;
   $('lobbyStart').classList.toggle('hidden',!host);$('lobbyOpts').classList.toggle('hidden',!host);}

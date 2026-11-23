@@ -105,7 +105,7 @@ function render(){
   const fogF=INF?ENV.fogF:MATCH.state==='menu'?150:info.fogDist*[.45,.7,1,1.35][OPT.rd];curFog=INF?{c:ENV.fog,n:ENV.fogN,f:ENV.fogF}:{c:info.fog,n:fogF*.55,f:fogF};
   gl.clearColor(...info.sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   // EntityRenderer: smoothed FOV modifier (sprint/speed, bow zoom), view bobbing, hurt camera roll
-  let tf=1;if(player&&player.alive){tf=(1+(player.sprint?1.3:1)*speedMul(player))/2;if(player.using==='bow'){let f=Math.min(1,player.useT);f=f*f;tf*=1-f*.15;}if(player.inWater)tf*=.85;}
+  let tf=1;if(player&&player.alive){tf=(1+(player.sprint?1.3:1)*speedMul(player))/2;if(player.using==='bow'){let f=Math.min(1,player.useT);f=f*f;tf*=1-f*.15;}if(player.using==='spy')tf*=.22;if(player.inWater)tf*=.85;}
   fovMod+=((OPT.dynfov===false?1:tf)-fovMod)*Math.min(1,dtFrame*10);const fov=OPT.fov*fovMod*Math.PI/180;const P=M4.persp(fov,W/H,.05,400);
   if(MATCH.state==='menu'&&panoTex){drawPanorama(P,camYaw,camPitch*.3);drawHUD();return;}
   let pre=M4.id();
@@ -155,7 +155,7 @@ function render(){
   useBox(VP,camPos);gl.uniform1f(PB.u.lit,0);
   if(!INF&&mapInfo.skyLight&&!mapInfo.dark){gl.uniform1f(PB.u.lit,0);if(OPT.clouds)drawClouds();useBox(VP,camPos);gl.uniform1f(PB.u.lit,0);}
   if(!INF&&mapInfo.stars)drawStars();
-  if(INF){drawAmbient();useBox(VP,camPos);gl.uniform1f(PB.u.lit,0);gl.enable(gl.BLEND);gl.depthMask(false);}
+  if(INF){drawAmbient();drawGadgetFX();useBox(VP,camPos);gl.uniform1f(PB.u.lit,0);gl.enable(gl.BLEND);gl.depthMask(false);}
   if(mapInfo.center&&!mapInfo.noBeam&&MATCH.state!=='lobby'){const [bx,by,bz]=mapInfo.center;const a=.35+.08*Math.sin(perfT*3);box(chain(M4.tr(bx+.5,by+60,bz+.5),M4.ry(perfT*.6),M4.sc(.5,120,.5)),[.75,1,1],a);box(chain(M4.tr(bx+.5,by+60,bz+.5),M4.ry(-perfT*.4),M4.sc(.8,120,.8)),[.6,.95,1],a*.35);}
   if(MATCH.mode==='br'&&br&&br.border&&br.border.cx<1e6&&MATCH.state!=='lobby'){const h=brSize()/2,cx=br.border.cx,cz=br.border.cz,a=.2+.06*Math.sin(perfT*2.5);const col=br.border.to<brSize()-.01?[1,.35,.25]:[.25,.6,1];
     box(chain(M4.tr(cx,28,cz-h),M4.sc(h*2,80,.05)),col,a);box(chain(M4.tr(cx,28,cz+h),M4.sc(h*2,80,.05)),col,a);box(chain(M4.tr(cx-h,28,cz),M4.sc(.05,80,h*2)),col,a);box(chain(M4.tr(cx+h,28,cz),M4.sc(.05,80,h*2)),col,a);}
@@ -165,6 +165,7 @@ function render(){
   // underwater / lava tint
   drawMiniPlayer();
   if(post)postEnd();
+  if(INF&&SURV.wantThumb&&!SURV.loading&&MATCH.state==='play'){SURV.wantThumb=false;captureThumb();}
   drawHUD();
 }
 // console "Animated Character": a small live model of you on the left of the screen (walks, sneaks, swings, blocks, draws the bow, wears your armour)

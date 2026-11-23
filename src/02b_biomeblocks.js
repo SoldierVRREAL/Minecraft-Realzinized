@@ -1,5 +1,5 @@
 // ================= Minecraft:realzanized blocks: the six new overworld biomes, new ores, survival basics =================
-Object.assign(B,{SAKURA_LOG:78,SAKURA_LEAVES:79,SAKURA_PLANKS:80,PETALS:81,SAKURA_GRASS:82,CRYSTAL:83,CRYSTAL_ORE:84,CRYSTAL_GRASS:85,
+Object.assign(B,{CRAFTING:117,FURNACE:118,RUBY_BLOCK:119,SAPPHIRE_BLOCK:120,COBALT_BLOCK:121,MYTHRIL_BLOCK:122,AMETHYST_BLOCK:123,SAKURA_LOG:78,SAKURA_LEAVES:79,SAKURA_PLANKS:80,PETALS:81,SAKURA_GRASS:82,CRYSTAL:83,CRYSTAL_ORE:84,CRYSTAL_GRASS:85,
   REDWOOD_LOG:86,REDWOOD_LEAVES:87,REDWOOD_PLANKS:88,PODZOL:89,ASH:90,BASALT:91,BURNT_LOG:92,MAGMA:93,GLOW_MOSS:94,GLOW_CAP:95,MUSH_STEM:96,
   GLOW_PLANT:97,GLOW_SHROOM:98,SNOW:99,SNOW_GRASS:100,PACKED_ICE:101,FROZEN_LOG:102,FROZEN_LEAVES:103,RUBY_ORE:104,SAPPHIRE_ORE:105,
   COBALT_ORE:106,MYTHRIL_ORE:107,AMETHYST_ORE:108,COAL_ORE:109,IRON_ORE:110,GOLD_ORE:111,DIAMOND_ORE:112,BEDROCK:113,DEAD_BUSH:114,FERN:115,CRYSTAL_CLUSTER:116});
@@ -17,12 +17,14 @@ def(94,83,84,2,{light:4});def(95,85,85,85,{light:13});def(96,86,86,86);def(97,87
 def(99,89,89,89);def(100,89,90,2);def(101,91,91,91);def(102,107,92,107);def(103,93,93,93,{opaque:false,leaves:true});
 for(let i=0;i<9;i++)def(104+i,94+i,94+i,94+i,i===3?{light:4}:{});
 def(113,103,103,103);def(114,104,104,104,{solid:false,opaque:false,cross:true});def(115,105,105,105,{solid:false,opaque:false,cross:true});def(116,106,106,106,{solid:false,opaque:false,cross:true,light:8});
+TILE_PACK.push('crafting_table_top','crafting_table_front','furnace_top','furnace_side','furnace_front','~ruby_block','~sapphire_block','~cobalt_block','~mythril_block','~amethyst_steel_block');
+def(117,109,110,7);def(118,111,112,111,{front:113});for(let i=0;i<5;i++)def(119+i,114+i,114+i,114+i,i===3?{light:6}:{});
 BD[B.LEAVES].leaves=true;BD[B.JLEAVES].leaves=true;
-Object.assign(BLOCK_NAMES,{78:'Sakura Log',79:'Sakura Leaves',80:'Sakura Planks',81:'Sakura Petals',82:'Sakura Grass',83:'Blue Crystal',84:'Crystal Ore',85:'Crystal Grass',
+Object.assign(BLOCK_NAMES,{8:'Chest',117:'Crafting Table',118:'Furnace',119:'Block of Ruby',120:'Block of Sapphire',121:'Block of Cobalt',122:'Block of Mythril',123:'Block of Amethyst Steel',78:'Sakura Log',79:'Sakura Leaves',80:'Sakura Planks',81:'Sakura Petals',82:'Sakura Grass',83:'Blue Crystal',84:'Crystal Ore',85:'Crystal Grass',
   86:'Redwood Log',87:'Redwood Leaves',88:'Redwood Planks',89:'Podzol',90:'Ash',91:'Basalt',92:'Burnt Log',93:'Magma Block',94:'Glow Moss',95:'Glowing Mushroom Cap',96:'Mushroom Stem',
   97:'Glowing Plant',98:'Glow Shroom',99:'Snow Block',100:'Snowy Grass',101:'Packed Ice',102:'Frozen Log',103:'Frozen Leaves',104:'Ruby Ore',105:'Sapphire Ore',106:'Cobalt Ore',
   107:'Mythril Ore',108:'Amethyst Steel Ore',109:'Coal Ore',110:'Iron Ore',111:'Gold Ore',112:'Diamond Ore',113:'Bedrock',114:'Dead Bush',115:'Fern',116:'Crystal Cluster',33:'Ice',15:'Water',16:'Lava'});
-Object.assign(BLOCK_COL,{78:'#4a2c2e',79:'#f5a8cf',80:'#e4aaa9',81:'#f5a8cf',82:'#7bb04a',83:'#3f8cf0',84:'#6f8faa',85:'#40b4c4',86:'#82381f',87:'#2f6828',88:'#ae5434',89:'#6a4622',
+Object.assign(BLOCK_COL,{117:'#9a7440',118:'#6a6a6a',119:'#e02030',120:'#3060ff',121:'#2a5aa0',122:'#b8f8e8',123:'#9a4ae0',78:'#4a2c2e',79:'#f5a8cf',80:'#e4aaa9',81:'#f5a8cf',82:'#7bb04a',83:'#3f8cf0',84:'#6f8faa',85:'#40b4c4',86:'#82381f',87:'#2f6828',88:'#ae5434',89:'#6a4622',
   90:'#74727a',91:'#3a3a42',92:'#2a221c',93:'#c8460c',94:'#5a3e9a',95:'#4a9af0',96:'#d6d0c2',97:'#70e0ff',98:'#9a70ff',99:'#f2f6fa',100:'#e6ecf2',101:'#8ab2ea',102:'#7a8a9c',103:'#c8e6f4',
   104:'#c02030',105:'#3050e8',106:'#2a5aa0',107:'#b8f8e8',108:'#9a4ae0',109:'#3a3a3a',110:'#c8a080',111:'#f0c830',112:'#5fe3d6',113:'#3a3a3a',114:'#8a6a3a',115:'#4a8a2a',116:'#6ab4ff',33:'#a8c8f8'});
 // ---- procedural 16x16 art for the new tiles ----
@@ -85,6 +87,13 @@ function procTileX(t,x,y){const h=hash2;const stone=pk(P.stone,cl(x,y,6,2.5));
   case 106:{const sh=[[4,15,3,6],[8,15,9,3],[12,15,13,7]];for(const [x0,y0,x1,y1] of sh){const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));for(let i=0;i<=n;i++){const px=Math.round(x0+(x1-x0)*i/n),py=Math.round(y0+(y1-y0)*i/n);if(Math.abs(px-x)<=(py>y0-3?1:0)&&py===y)return pk(P.cry,.3+i/n*.65);}}return [0,0,0,0];}
   case 107:return logTop(P.fbark,P.fleaf,x,y,263);
   case 108:return logTop(P.burnt,P.ash,x,y,264);
+  case 109:{if(x==0||y==0||x==15||y==15)return pk(P.plank,.1);const g=(x==5||x==10||y==5||y==10);if(g)return pk(P.bark,.2);if(x<5&&y<5)return [150,150,150];return pk(P.plank,.4+h(x,y,270)*.5);}
+  case 110:{if(y<3)return pk(P.plank,y==2?.1:.6+h(x,y,271)*.3);if(y==3)return pk(P.bark,.1);const tool=(x>=3&&x<=5&&y>=5&&y<=12)||(x>=10&&x<=12&&y>=5&&y<=12&&(y<8||x==11));if(tool)return y<8&&x>=10?[150,150,150]:pk(P.bark,.3);return pk(P.plank,.35+h(x,y>>2,272)*.5);}
+  case 111:{const c=cobbleAt(x,y,273);return c.edge?[60,60,60]:pk(P.stone,.3+h(c.id,1,274)*.4);}
+  case 112:{if(y<2||y>13)return pk(P.stone,.6+h(x,y,275)*.3);const c=cobbleAt(x,y,276);return c.edge?[58,58,58]:pk(P.stone,.25+h(c.id,1,277)*.45);}
+  case 113:{if(y<2||y>13)return pk(P.stone,.6+h(x,y,278)*.3);if(x>=3&&x<=12&&y>=6&&y<=12){if(y==6||x==3||x==12)return [40,40,40];return [24,22,22];}const c=cobbleAt(x,y,279);return c.edge?[58,58,58]:pk(P.stone,.3+h(c.id,1,280)*.4);}
+  case 114:case 115:case 116:case 117:case 118:{const pal=ORE_COL[[94,95,96,97,98][t-114]];const b=x==0||y==0||x==15||y==15,b2=x==1||y==1||x==14||y==14;
+    if(b)return pk(pal,x==0||y==0?.8:.05);if(b2)return pk(pal,.3);if((x+y)%6==0)return pk(pal,.85);return pk(pal,.4+h(x,y,281+t)*.35);}
   }
   return [255,0,255];}
 atlasCanvas=makeProcAtlas();
