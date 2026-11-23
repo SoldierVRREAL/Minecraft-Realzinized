@@ -1,6 +1,6 @@
 # Minecraft:realzanized
 
-![Minecraft:realzanized](logo_battle.png)
+![Minecraft:realzanized](logo.png)
 
 Minecraft:realzanized is a fan-made Minecraft you play in the browser: an endless survival world with six new biomes, new ores, a day and night cycle, shaders from a "Potato" mode for old computers up to **PEAK** shaders for fast ones, and multiplayer where everyone who types the same **Photon Realtime App ID** plays together. The Battle mini game (and Battle Royale) from the original project are still here under **Mini Games**. Single HTML file, WebGL, no install.
 
@@ -116,7 +116,7 @@ Players can load any Java Edition resource pack (`.zip`) or a client `.jar` they
 
 **Dressing Room:** the player preview beside the title menu opens the Dressing Room, where you can set your name and import your own skin (64x64 or legacy 64x32 PNG). Imported skins are saved in your browser and sent to other players in online games.
 
-**Title logo:** the title screen draws the Minecraft:realzanized logo; Mini Games shows `logo_battle.png`. Put a `logo.png` beside `index.html` (or pick one under Texture Packs → Title logo image) to use your own.
+**Title logo:** `logo.png` beside `index.html` is the Minecraft:realzanized title logo (loaded automatically when hosted; if the page is opened straight from disk a drawn version is used instead). Mini Games shows `logo_battle.png`. Replace `logo.png`, or pick an image under Texture Packs → Title logo image, to use your own.
 
 ## Editing the code
 
