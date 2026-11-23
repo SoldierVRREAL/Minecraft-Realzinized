@@ -1,0 +1,12 @@
+{
+  "name": "minecraft-realzanized",
+  "version": "1.0.0",
+  "description": "Minecraft:realzanized - fan-made browser survival game with an endless world, new biomes and ores, shaders from Potato to PEAK, Photon multiplayer and the Battle mini game.",
+  "private": true,
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
