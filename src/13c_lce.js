@@ -48,8 +48,8 @@ function menuPrompts(){const list=[['A','Select',()=>{const b=MBTN()[mSel];b&&b.
 function showMini(on){if(on!==miniOpen)showBattleLogo(on);miniOpen=on;document.querySelectorAll('#menuList .lbtn').forEach(b=>b.classList.toggle('hidden',b.classList.contains('mini')!==on));setMSel(0);menuPrompts();}
 function menuBack(){if(miniOpen){sfx('click');showMini(false);}}
 $('miniBtn').addEventListener('click',()=>{sfx('click');showMini(true);});
-const startMode=m=>{sfx('click');openBC(m,'mini');};   // Battle / Battle Royale open the create screen (15j_battlecreate.js)
-$('battleBtn').addEventListener('click',()=>startMode('battle'));$('brBtn').addEventListener('click',()=>startMode('br'));
+const startMode=m=>{sfx('click');bmOpen('create',m);};   // each mini game opens the Create / Join / Friends screen on that game   // Battle / Battle Royale open the create screen (15j_battlecreate.js)
+$('battleBtn').addEventListener('click',()=>startMode('battle'));$('brBtn').addEventListener('click',()=>startMode('br'));$('tumbleBtn').addEventListener('click',()=>startMode('tumble'));$('glideBtn').addEventListener('click',()=>startMode('glide'));
 // ---- Leaderboards (stats kept in this browser) ----
 function loadStats(){try{return JSON.parse(store('bb_stats')||'{}')||{};}catch(e){return {};}}
 function recordStats(w){if(!player||player.spectator)return;const st=loadStats();const m=MATCH.mode==='br'?'br':'battle';const r=st[m]||(st[m]={g:0,w:0,k:0,d:0,best:0});
@@ -124,7 +124,7 @@ function drawSkinModel(g,T,parts,k,ox,oy){const G=pvGeom(T.slim),tw=T.src.width,
     g.save();g.beginPath();const pts=[A,B,C,D].map(grow);g.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<4;i++)g.lineTo(pts[i][0],pts[i][1]);g.closePath();g.clip();
     g.setTransform(a,b,cc,d,e,f);const u0=Math.min(A[3],B[3]),v0=Math.min(A[4],D[4]);g.drawImage(T.l[li],u0,v0,Math.abs(du),Math.abs(dv),u0,v0,Math.abs(du),Math.abs(dv));g.restore();g.setTransform(1,0,0,1,0,0);}}
 function drawPreview(){
-  const vis=((!$('menu').classList.contains('hidden')&&!bcOpen())||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
+  const vis=((!$('menu').classList.contains('hidden')&&!bcAny())||!$('dressPanel').classList.contains('hidden'))&&innerWidth>=640;const wrap=$('pvWrap');wrap.classList.toggle('hidden',!vis);if(!vis)return;
   const c=$('pvCanvas');const dpr=Math.min(2,devicePixelRatio||1);const cw=Math.round(c.clientWidth*dpr),ch=Math.round(c.clientHeight*dpr);if(!cw||!ch)return;if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
   const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,ch);g.imageSmoothingEnabled=false;
   const T=shadedSkin(mySkin),G=pvGeom(T.slim),tw=T.src.width,th=T.src.height;const k=ch/2.05,ox=cw/2,oy=ch*.985;
@@ -141,7 +141,7 @@ document.addEventListener('keydown',e=>{const inInput=e.target&&e.target.tagName
   if(!$('dressPanel').classList.contains('hidden')){if(e.code==='Escape'||(e.code==='Enter'&&inInput)){closeDress();e.preventDefault();}else if(!inInput&&(e.code==='ArrowLeft'||e.code==='ArrowRight')){cycleSkin(e.code==='ArrowLeft'?-1:1);e.preventDefault();}else if(!inInput&&e.code==='KeyX')$('skinFile').click();return;}
   if(inInput)return;
   if(!$('lbPanel').classList.contains('hidden')&&(e.code==='Escape'||e.code==='Backspace'||e.code==='Enter')){closeLB();return;}
-  if(!$('menu').classList.contains('hidden')&&!bcOpen()&&$('srvDlg').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
+  if(!$('menu').classList.contains('hidden')&&!bcAny()&&$('srvDlg').classList.contains('hidden')){if(e.code==='Escape'||e.code==='Backspace')menuBack();else if(e.code==='KeyX')openDress();}});
 refreshLCE();
 
 // the Battle mini games keep their own logo; the title screen shows Minecraft:realzanized

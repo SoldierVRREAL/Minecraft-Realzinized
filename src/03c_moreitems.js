@@ -11,6 +11,7 @@ food('spider_eye','Spider Eye',2,3.2,'#a02a3a','spider_eye',{fx:[['poison',5,0]]
 mat('leather','Leather','#a0603a','leather');mat('feather','Feather','#f0f0f0','feather');mat('bone','Bone','#e8e4d8','bone');
 mat('bone_meal','Bone Meal','#f4f4f4','dye_powder_white',{tip:['Right click grass to grow flowers and tall grass']});
 mat('string','String','#f0f0f0','string');mat('gunpowder','Gunpowder','#5a5a5a','gunpowder');mat('magma_cream','Magma Cream','#e8a030','magma_cream');
+mat('snowball','Snowball','#f4f8ff','snowball',{stack:16,tip:['Thrown in Tumble: breaks the block it hits']});
 mat('egg','Egg','#e8dcc0','egg',{stack:16,tip:['Right click to throw: sometimes a chick hatches']});
 mat('frost_fang','Frost Fang','#c8ecff',null,{tip:['Dropped by Ice Wolves']});mat('crystal_silk','Crystal Silk','#7cc0ff',null,{tip:['Dropped by Crystal Spiders']});
 mat('glow_spores','Glow Spores','#50b0e8',null,{tip:['Dropped by Glowshrooms']});mat('flint','Flint','#4a4a4a','flint');

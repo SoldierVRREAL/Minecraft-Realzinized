@@ -154,7 +154,7 @@ $('practiceBtn').addEventListener('click',()=>{initAudio();sfx('click');readName
 const MBTN=()=>[...document.querySelectorAll('#menuList .lbtn')].filter(b=>!b.classList.contains('hidden'));let mSel=0;
 function setMSel(i){const b=MBTN();mSel=(i+b.length)%b.length;b.forEach((x,j)=>x.classList.toggle('sel',j===mSel));}
 document.querySelectorAll('#menuList .lbtn').forEach(b=>b.addEventListener('mouseenter',()=>{const i=MBTN().indexOf(b);if(i>=0&&mSel!==i){setMSel(i);sfx('click');}}));setMSel(0);
-document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden')||bcOpen()||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
+document.addEventListener('keydown',e=>{if($('menu').classList.contains('hidden')||bcAny()||!$('srvDlg').classList.contains('hidden'))return;if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='ArrowDown'||e.code==='KeyS'){setMSel(mSel+1);sfx('click');e.preventDefault();}else if(e.code==='ArrowUp'||e.code==='KeyW'){setMSel(mSel-1);sfx('click');e.preventDefault();}
   else if(e.code==='Enter'||e.code==='Space'){MBTN()[mSel].click();e.preventDefault();}});
 // stone-letter logo

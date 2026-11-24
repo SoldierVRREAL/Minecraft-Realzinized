@@ -279,6 +279,6 @@ function computeLight(){
     pass(4,i=>{const x=i%WX,z=((i/WX)|0)%WZ,y=(i/(WX*WZ))|0;return y>top[z*WX+x]?15:0;});}
   pass(0,i=>BD[world[i]]?BD[world[i]].light:0);
 }
-function relightColumn(x,z){if(INF){infRelightAround(x,0,z);return;}if(!mapInfo.skyLight)return;for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const xx=x+dx,zz=z+dz;if(xx<0||zz<0||xx>=WX||zz>=WZ)continue;let lit=true;
+function relightColumn(x,z){if(INF){infRelightAround(x,0,z);return;}if(!mapInfo.skyLight||mapInfo.allLit)return;for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const xx=x+dx,zz=z+dz;if(xx<0||zz<0||xx>=WX||zz>=WZ)continue;let lit=true;
   for(let y=WY-1;y>=0;y--){const i=idx(xx,y,zz);const b=world[i];if(b&&BD[b].opaque)lit=false;const cur=light[i]>>4;const v=lit?15:Math.max(0,Math.min(cur,dx||dz?cur:9));light[i]=(light[i]&15)|(v<<4);}}}
 const lightAt=(x,y,z)=>{if(y>=WY)return 15<<4;if(!inB(x,y,z))return mapInfo&&mapInfo.skyLight?15<<4:0;return light[idx(x,y,z)];};

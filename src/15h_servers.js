@@ -79,7 +79,7 @@ $('srvAdd').addEventListener('click',()=>{sfx('click');dlgEdit(-1);});
 $('srvEdit').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgEdit(SRV.sel.i);}});
 $('srvDel').addEventListener('click',()=>{if(SRV.sel&&SRV.sel.t==='saved'){sfx('click');dlgDelete(SRV.sel.i);}});
 $('srvRefresh').addEventListener('click',()=>{sfx('click');SRV.sig='';srvBrowseStart();});
-$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}if(SRV.kind==='battle'){srvBrowseStop();hide('mpPanel');openBC(SET.mode==='br'?'br':'battle','mp');return;}dlgHost('menu');});
+$('srvHost').addEventListener('click',()=>{sfx('click');if(!store('mcr_appid')){dlgPhoton(true);return;}if(SRV.kind==='battle'){srvBrowseStop();hide('mpPanel');openBC(MG_NAMES[SET.mode]?SET.mode:'battle','mp');return;}dlgHost('menu');});
 $('srvPhoton').addEventListener('click',()=>{sfx('click');dlgPhoton(false);});
 $('phBack').addEventListener('click',()=>{sfx('click');srvBrowseStop();if(net&&!online){net.leave();net=null;}dlgClose();hide('mpPanel');show('menu');if(SRV.kind==='battle')showMini(true);});
 $('discBack').addEventListener('click',()=>{hide('discPanel');openMP(SRV.kind);});
@@ -158,7 +158,7 @@ function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.
   const worlds=worldList();const live=where==='edit';
   dlgShow(`<h3>${where==='edit'?'Server Settings':where==='pause'?'Open to Server':'Host a Server'}</h3><div class="form">
     ${where==='battle'?`<label for="hs_game">Game</label><select id="hs_game"><option value="battle">Battle</option><option value="br">Battle Royale</option></select>`:''}
-    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option><option value="br">Battle Royale mini game</option></select>
+    ${where==='menu'?`<label for="hs_game">Game</label><select id="hs_game"><option value="survival">Survival world</option><option value="battle">Battle mini game</option><option value="br">Battle Royale mini game</option><option value="tumble">Tumble mini game</option><option value="glide">Glide mini game</option></select>
     <label for="hs_world" class="hs_sv">World</label><select id="hs_world" class="hs_sv">${worlds.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}${w.mode==='creative'?' (Creative)':''}</option>`).join('')}<option value="__new">Create a new world</option></select>`:''}
     <label for="hs_room">Server Address</label><input id="hs_room" type="text" maxlength="40" spellcheck="false" autocomplete="off" ${live?'disabled':''}>
     <label for="hs_reg">Region</label><select id="hs_reg" ${live?'disabled':''}>${PHOTON_REGIONS.map(r=>`<option value="${r[0]}">${esc(r[1])}</option>`).join('')}</select>
@@ -187,14 +187,14 @@ function dlgHost(where){const cur=where==='edit'?SRV.cfg:where==='pause'?Object.
 async function makeIcon(url){if(!url)return null;try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});const c=mkCanvas(40,40),g=c.getContext('2d');const s=Math.min(img.width,img.height);
     g.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,40,40);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
 function srvProps(){const c=SRV.cfg;const names=net?net.list().map(m=>m.name):[myName];const p={m:SRV.mode||'survival',motd:c.motd,pub:c.pub?1:0,v:GAME_VERSION,pl:names.slice(0,16).join('\n').slice(0,300),h:myName.slice(0,16),ic:SRV.icon||'',mx:c.max};
-  if(p.m==='battle'){p.bm=SET.mode==='br'?'br':'battle';p.cp=SET.comp?1:0;p.st=MATCH.state==='play'?'game':MATCH.state==='over'?'over':'lobby';p.mp=p.bm==='br'?'':String((MAPS.find(m=>m.id===(MATCH.state==='lobby'?nextMapId():MATCH.map))||{}).name||'');}
+  if(p.m==='battle'){p.bm=MG_NAMES[SET.mode]&&SET.mode!=='survival'?SET.mode:'battle';if(p.bm==='tumble')p.tt=SET.tTool;if(p.bm==='glide'){p.gm=SET.gMode;p.gc=SET.gCourse;}p.cp=SET.comp?1:0;p.rl=bcRlKey(p.bm);p.st=MATCH.state==='play'?'game':MATCH.state==='over'?'over':'lobby';p.mp=p.bm==='br'||p.bm==='tumble'?'':p.bm==='glide'?mgMapName('glide_'+SET.gCourse):String((MAPS.find(m=>m.id===(MATCH.state==='lobby'?nextMapId():MATCH.map))||{}).name||'');}
   return p;}
 // what a Battle server's row says about it: mode, map, lobby or mid-round
-function battleTag(p){return '  ['+(p.bm==='br'?'Battle Royale':'Battle')+(+p.cp?' · Competitive':'')+(p.mp?' · '+p.mp:'')+' · '+(p.st==='game'?'In game':p.st==='over'?'Round over':'In lobby')+']';}
+function battleTag(p){return '  ['+(MG_NAMES[p.bm]||'Battle')+(p.bm==='tumble'?' · '+((T_TOOLS.find(t=>t[0]===p.tt)||[0,'Snowballs'])[1]):'')+(p.bm==='glide'?' · '+(p.gm==='time'?'Time Attack':'Score Attack'):'')+(+p.cp?' · Competitive':'')+(p.mp?' · '+p.mp:'')+' · '+(p.st==='game'?'In game':p.st==='over'?'Round over':'In lobby')+']';}
 // a hosted Battle server keeps its listing current as rounds start and end
-setInterval(()=>{if(!SRV.hosting||SRV.mode!=='battle'||!net||!SRV.cfg)return;const p=srvProps();const sig=[p.bm,p.cp,p.st,p.mp,p.pl].join('|');if(sig!==SRV.bsig){SRV.bsig=sig;net.tr.setProps&&net.tr.setProps(p);}},1500);
+setInterval(()=>{if(!SRV.hosting||SRV.mode!=='battle'||!net||!SRV.cfg)return;const p=srvProps();const sig=[p.bm,p.cp,p.rl,p.tt,p.gm,p.gc,p.st,p.mp,p.pl].join('|');if(sig!==SRV.bsig){SRV.bsig=sig;net.tr.setProps&&net.tr.setProps(p);}},1500);
 async function srvStart(cfg,where,game,wid,onErr){const app=store('mcr_appid');if(!app){onErr('Set your Photon App ID first (Photon Settings).');return;}readName();readOptions();
-  const battle=game==='battle'||game==='br';if(battle){SET.mode=game;store('bb_set',JSON.stringify(SET));writeOptions();game='battle';}
+  const battle=game==='battle'||game==='br'||game==='tumble'||game==='glide';if(battle){SET.mode=game;store('bb_set',JSON.stringify(SET));writeOptions();game='battle';}
   let meta=null;if(game==='survival'){meta=where==='pause'?SURV.meta:wid&&wid!=='__new'?worldList().find(w=>w.id===wid):null;if(!meta&&where!=='pause')meta=newWorldMeta('Server World','','survival');SURV.lastWorld=meta&&meta.id;}
   SRV.icon=await makeIcon(meta&&meta.thumb)||'';SRV.mode=game;SRV.cfg=cfg;
   const n=new PhotonNet(app,cfg.region,game,myName,{create:{name:cfg.room,max:cfg.max,props:srvProps()}});

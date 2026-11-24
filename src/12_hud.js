@@ -44,6 +44,7 @@ function drawHUD(){
   if(MATCH.state==='lobby')drawLobbyHud();
   else if(showDebug){}
   else if(MATCH.mode==='br')drawBRHud();
+  else if(MG_MODES[MATCH.mode])mgHudTop();
   else drawBattleTop();
   // kill feed
   // kill messages and chat share the console chat area: left side, just above the HUD, newest at the bottom
@@ -57,6 +58,7 @@ function drawHUD(){
   if(msgs.length){const m=msgs[msgs.length-1];hc.globalAlpha=Math.min(1,m.t);txt(m.txt,W/2,H/2-80,44,'#ffd54a','center');if(m.sub)txt(m.sub,W/2,H/2-48,18,'#fff','center');hc.globalAlpha=1;}
   drawPrompts();drawBlockHint();
   if(MATCH.state==='play'&&MATCH.preT>0&&MATCH.mode!=='battle'){const n=Math.ceil(MATCH.preT);txt(`Time to start: ${n} second${n===1?'':'s'}`,W/2,30,18,'#fff','center');}
+  if(MG_MODES[MATCH.mode]&&MATCH.state!=='lobby'&&mgHud())return;   // Tumble and Glide draw their own HUD (15k_minigames.js)
   if(!player.alive){drawBatHud();return;}
   if(player.fire>0){const g=hc.createLinearGradient(0,H,0,H*.5);g.addColorStop(0,'rgba(255,120,0,.45)');g.addColorStop(1,'rgba(255,120,0,0)');hc.fillStyle=g;hc.fillRect(0,0,W,H);}
   if(fluidAt(camPos[0],camPos[1],camPos[2])==='water'){hc.fillStyle='rgba(30,60,200,.35)';hc.fillRect(0,0,W,H);}
@@ -153,7 +155,7 @@ function drawBattleTop(){
   }
 }
 function drawLobbyHud(){
-  const humans=ents.filter(e=>e.kind==='player').length;const name=MATCH.nextMap?(MATCH.nextMap==='br'?'Battle Royale':(MAPS.find(m=>m.id===MATCH.nextMap)||{}).name):'';
+  const humans=ents.filter(e=>e.kind==='player').length;const name=MATCH.nextMap?(MATCH.nextMap==='br'?'Battle Royale':mgMapName(MATCH.nextMap)||(MAPS.find(m=>m.id===MATCH.nextMap)||{}).name):'';
   if(!online&&!MATCH.offlineLobby){txt('Practice  -  Esc for menu',W/2,30,18,'#fff','center');return;}
   if(MATCH.lobbyCD>=0)txt(`Time to game change: ${Math.ceil(MATCH.lobbyCD)} seconds`,W/2,30,18,'#fff','center');else txt(humans<2&&!SET.bots?'Waiting for players...':'Waiting...',W/2,30,18,'#fff','center');
   // next map and the player list are on the Tab lobby panel

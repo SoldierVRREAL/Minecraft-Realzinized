@@ -11,7 +11,7 @@ let ents=[],player=null,projs=[],drops=[],particles=[],feed=[],msgs=[],chat=[];
 var mobs=[],mobTexDirty=true;   // mobs live in 15e_mobs.js
 const entById=id=>ents.find(e=>e.id===id)||(typeof mobs!=='undefined'?mobs.find(e=>e.id===id):undefined);
 const hitList=()=>typeof mobs!=='undefined'&&mobs.length?ents.concat(mobs):ents;
-const eyeH=e=>e.bat?0:e.sneak?1.54:EYE;
+const eyeH=e=>e.bat?0:e.gliding?.4:e.sneak?1.54:EYE;   // elytra flight: eyes at 0.4, like the 0.6-tall flying hitbox
 const eye=e=>[e.pos[0],e.pos[1]+eyeH(e),e.pos[2]];
 const fwd=e=>[-Math.sin(e.yaw)*Math.cos(e.pitch),Math.sin(e.pitch),-Math.cos(e.yaw)*Math.cos(e.pitch)];
 const owned=e=>e&&(e.isLocal||((e.kind==='bot'||e.kind==='mob')&&isHost()));
@@ -185,17 +185,18 @@ function updateProjs(dt){
       for(let i=0;i<n&&!a.dead;i++){
         for(let k=0;k<3;k++)a.pos[k]+=a.vel[k]/n;
         const b=getB(Math.floor(a.pos[0]),Math.floor(a.pos[1]),Math.floor(a.pos[2]));
-        if(b&&BD[b].solid){if(a.kind==='splash'){splashImpact(a);a.dead=true;}else{a.stuck=true;a.age=0;sfx('arrowhit',{pos:a.pos});}break;}
+        if(b&&BD[b].solid){if(a.kind==='snowball'){snowballBlock(a,Math.floor(a.pos[0]),Math.floor(a.pos[1]),Math.floor(a.pos[2]));a.dead=true;}else if(a.kind==='splash'){splashImpact(a);a.dead=true;}else{a.stuck=true;a.age=0;sfx('arrowhit',{pos:a.pos});}break;}
         for(const e of hitList()){if(!e.alive||(e===a.owner&&a.age<.25))continue;const bb=entBox(e,.15);
           if(a.pos[0]>bb[0][0]&&a.pos[0]<bb[1][0]&&a.pos[1]>bb[0][1]&&a.pos[1]<bb[1][1]&&a.pos[2]>bb[0][2]&&a.pos[2]<bb[1][2]){
             if(a.kind==='splash')splashImpact(a);
+            else if(a.kind==='snowball')snowballEnt(a,e);
             else if(owned(a.owner)){let dmg=Math.ceil(sp*2);if(a.dmg)dmg+=Math.floor(Math.random()*(dmg/2+2));const en=a.en||{};if(en.power)dmg+=en.power*.5+.5;
               const src=a.owner;damage(e,dmg,src,'shot',[a.vel[0],a.vel[2],en.punch||0,0,0],false,en.flame?[['ignite',5,0]]:undefined);sfx('arrowhit',{pos:a.pos});}
             a.dead=true;break;}}
       }
       if(a.dead||a.stuck)break;
       const inW=getB(Math.floor(a.pos[0]),Math.floor(a.pos[1]),Math.floor(a.pos[2]))===B.WATER;const drag=inW?(a.kind==='arrow'?.6:.8):.99;
-      for(let k=0;k<3;k++)a.vel[k]*=drag;a.vel[1]-=a.kind==='arrow'?.05:.05;
+      for(let k=0;k<3;k++)a.vel[k]*=drag;a.vel[1]-=a.kind==='snowball'?.03:.05;
     }}
   projs=projs.filter(a=>!a.dead&&a.age<60&&a.pos[1]>-20);
 }

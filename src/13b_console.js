@@ -14,7 +14,7 @@ function pollPad(dt){
   const menuOpen=!$('menu').classList.contains('hidden');
   const panel=['jOpt','optPanel','packPanel','lobbyPanel','results','pause','lbPanel','dressPanel'].find(id=>!$(id).classList.contains('hidden'));
   padRepeat-=dt;const nav=ly<-.5||B.up?-1:ly>.5||B.down?1:0;const navX=lx<-.5||B.left?-1:lx>.5||B.right?1:0;
-  if(menuOpen&&!panel&&bcOpen())bcPad(E,nav,navX,dt);
+  if(menuOpen&&!panel&&bcAny())bcPad(E,nav,navX,dt);
   else if(menuOpen&&!panel){if(nav&&padRepeat<=0){setMSel(mSel+nav);sfx('click');padRepeat=.22;}if(!nav)padRepeat=0;if(E('a')){MBTN()[mSel].click();}if(E('b'))menuBack();if(E('x'))openDress();}
   else if(panel){if(E('b')){const back={jOpt:'jDoneHidden',lbPanel:'lbClose',dressPanel:'dressClose',optPanel:'optClose',packPanel:'packClose',lobbyPanel:'lobbyClose',results:online?'lobbyBtn':'menuBtn',pause:'resumeBtn'}[panel];if(!(panel==='results'&&$('results').classList.contains('reslock')))$(back).click();}
     if(panel==='pause'&&E('a'))$('resumeBtn').click();if(panel==='results'&&E('a')&&!$('nextBtn').classList.contains('hidden'))$('nextBtn').click();if(panel==='lobbyPanel'&&E('a'))$('lobbyReady').click();}

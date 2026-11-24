@@ -91,7 +91,7 @@ function camera(){
   if(!player.alive&&spectate.mode==='follow'){const alive=aliveList().filter(e=>e!==player);if(alive.length){const t=alive[((spectate.idx%alive.length)+alive.length)%alive.length];spectate.target=t;
       const back=[Math.sin(t.yaw)*4,0,Math.cos(t.yaw)*4];let cp=[t.pos[0]+back[0],t.pos[1]+2.6,t.pos[2]+back[2]];const e=[t.pos[0],t.pos[1]+1.6,t.pos[2]];const d=[cp[0]-e[0],cp[1]-e[1],cp[2]-e[2]],L=Math.hypot(...d);
       const h=raycastBlock(e,[d[0]/L,d[1]/L,d[2]/L],L);if(h){const k=Math.max(.3,h.t-.3)/L;cp=[e[0]+d[0]*k,e[1]+d[1]*k,e[2]+d[2]*k];}camPos=cp;camYaw=t.yaw;camPitch=-.3;return;}spectate.mode='bat';}
-  spectate.target=null;const rp=(player.alive&&player.rpos)||player.pos;camPos=[rp[0],rp[1]+eyeH(player),rp[2]];camYaw=player.yaw;camPitch=player.pitch;
+  spectate.target=null;const rp=(player.alive&&player.rpos)||player.pos;camPos=[rp[0],rp[1]+eyeH(player),rp[2]];camYaw=player.yaw;camPitch=player.pitch;if(lookBehind()){camYaw+=Math.PI;camPitch=-camPitch*.5;}
   // F5: third person behind (4 blocks, pulled in by walls) or in front looking back, like EntityRenderer.orientCamera
   if(camMode&&player.alive){const e=camPos.slice(),cp=Math.cos(player.pitch);let d=[Math.sin(player.yaw)*cp,-Math.sin(player.pitch),Math.cos(player.yaw)*cp];if(camMode===2)d=d.map(v=>-v);
     let dd=4;const h=raycastBlock(e,d,4);if(h)dd=Math.max(.2,h.t-.2);camPos=[e[0]+d[0]*dd,e[1]+d[1]*dd,e[2]+d[2]*dd];if(camMode===2){camYaw=player.yaw+Math.PI;camPitch=-player.pitch;}}
@@ -141,7 +141,7 @@ function render(){
   drawShadows();useTex(VP,camPos);
   // dropped items and projectiles
   for(const d of drops){const hm=heldMesh(d.id);const sc=hm.block?.25:.5;const m=chain(M4.tr(d.pos[0],d.pos[1]+Math.sin(d.spin*1.5)*.1+.1+sc/2,d.pos[2]),M4.ry(d.spin),M4.sc(sc,sc,sc));setEntLight(d.pos);const dg=ITEMS[d.id]&&ITEMS[d.id].ench&&!hm.block;if(dg)glintOn(ITEM_GS);drawMesh(hm.mesh,m,hm.tex);if(dg)glintOff();}
-  for(const a of projs){if(a.kind==='splash'){setEntLight(a.pos);drawMesh(getItemMesh(a.pot),chain(M4.tr(...a.pos),M4.ry(perfT*8),M4.sc(.4,.4,.4)),itemTex);continue;}
+  for(const a of projs){if(a.kind==='snowball'){setEntLight(a.pos);drawMesh(getItemMesh('snowball'),chain(M4.tr(...a.pos),M4.ry(camYaw),M4.sc(.25,.25,.25)),itemTex);continue;}if(a.kind==='splash'){setEntLight(a.pos);drawMesh(getItemMesh(a.pot),chain(M4.tr(...a.pos),M4.ry(perfT*8),M4.sc(.4,.4,.4)),itemTex);continue;}
     const l=Math.hypot(...a.vel)||1;const yw=Math.atan2(-a.vel[0],-a.vel[2]),pt=Math.asin(clamp(a.vel[1]/l,-1,1));setEntLight(a.pos);
     drawMesh(getItemMesh('arrow'),chain(M4.tr(...a.pos),M4.ry(yw),M4.rx(pt),M4.ry(Math.PI/2),M4.rz(-Math.PI/4),M4.sc(.7,.7,.7)),itemTex);}
   // particles, highlights, beacon beam, borders (solid colour)
@@ -188,7 +188,8 @@ function limbTick(e){if(e._lt===perfT)return;e._lt=perfT;   // once per frame, e
   e.limbAmt=(e.limbAmt||0)+(tgt-(e.limbAmt||0))*(1-Math.pow(.6,dts));e.limbSwing=(e.limbSwing||0)+e.limbAmt*dts;}
 function drawHumanoid(e){
   const invis=e.effects.invis;const S=skinTex(fairSkin(e));const M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
-  const rp=e.rpos||e.pos;const by=e.bodyYaw==null?e.yaw:e.bodyYaw;const base=chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
+  const rp=e.rpos||e.pos;const by=e.gliding?e.yaw:e.bodyYaw==null?e.yaw:e.bodyYaw;const base=e.gliding?chain(M4.tr(rp[0],rp[1]+.3,rp[2]),M4.ry(by),M4.rx(-(Math.PI/2+e.pitch)),M4.tr(0,-.9,0),M4.sc(.9375,.9375,.9375))
+    :chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
   const headYaw=e.yaw-by,headPitch=-e.pitch;  // vanilla: positive pitch looks down
   const ls=(e.limbSwing||0)*.6662,la=e.limbAmt||0;const age=perfT*20+(e.color||0)*7;
   let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;const rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;

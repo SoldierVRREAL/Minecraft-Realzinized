@@ -199,7 +199,7 @@ function onNetEvent(code,d,from){
     if(!e){if(MATCH.state==='menu')return;const nm=d.n||((net&&net.members.get(+String(d.id).slice(1)))||{}).name||'Player';e=new Ent(d.id,nm,'player');e.skin=d.sk||'gen:'+nm;e.color=ents.length;ents.push(e);e.pos=d.p.slice();if(MATCH.state==='play'&&!d.al){e.alive=false;e.bat=true;e.spectator=!!d.sp;}}
     if(e.isLocal)return;const hp0=e.health;pushSnap(e,d.p,d.v,d.y,d.pi,d.ts,d.g);e.name=String(d.n||e.name).slice(0,16);if(d.sk)e.skin=d.sk;
     e.inv=new Array(9).fill(null);e.sel=0;if(d.h)e.inv[0]={id:d.h,count:1};if(d.a)e.armor=d.a;if(d.pg!=null)e.ping=d.pg;e.health=d.hp;e.food=d.f;if(d.sw)e.swing=Math.max(e.swing,d.sw);e.using=d.u||null;e.useT=d.ut||0;
-    e.fire=d.fi||0;if(d.hp<hp0-.4){const pred=e.hitPred&&performance.now()-e.hitPred<800;if(!pred)sfx('hurt',{pos:e.pos});if(!(e.hurtT>0))e.hurtT=.5;}e.effects=d.ef?Object.fromEntries(d.ef.map(n=>[n,{t:9,amp:0,tick:0}])):{};e.sprint=!!d.sr;e.sneak=!!d.sn;e.openChest=d.oc||null;e.ready=!!d.r;e.gm=d.cm?'creative':'survival';e.bat=!!d.b;
+    e.fire=d.fi||0;if(d.hp<hp0-.4){const pred=e.hitPred&&performance.now()-e.hitPred<800;if(!pred)sfx('hurt',{pos:e.pos});if(!(e.hurtT>0))e.hurtT=.5;}e.effects=d.ef?Object.fromEntries(d.ef.map(n=>[n,{t:9,amp:0,tick:0}])):{};e.sprint=!!d.sr;e.sneak=!!d.sn;e.openChest=d.oc||null;e.ready=!!d.r;e.gm=d.cm?'creative':'survival';e.gliding=!!d.gl;e.bat=!!d.b;
     if(MATCH.state==='lobby'||MATCH.mode==='survival'){e.alive=MATCH.state==='lobby'||!!d.al;e.bat=false;}
     break;}
   case N.HIT:{const t=entById(d.t);if(!t||!owned(t))return;const a=d.a?entById(d.a):null;if(a)a.heldHint=typeof d.w==='string'&&ITEMS[d.w]?d.w:null;const ok=hurt(t,d.d,a,d.c,d.kb,!!d.r);if(a)a.heldHint=null;if(d.fx&&(ok||d.d===0))for(const f of d.fx)giveEffect(t,...f);break;}
@@ -265,9 +265,9 @@ function sendMyState(dt){
   // the parts that rarely change ride along once a second, or straight away when they do
   const fk=myName+'|'+mySkin+'|'+p.armor.join(',');const full=stateFullT<=0||fk!==stateFullKey;if(full){stateFullT=1;stateFullKey=fk;}
   const d={ts:Math.round(performance.now()),g:p.onGround?1:0,id:p.id,p:p.pos.map(v=>Math.round(v*100)/100),v:p.vel.map(v=>Math.round(v*100)/100),y:+p.yaw.toFixed(3),pi:+p.pitch.toFixed(3),h:h?h.id:null,hp:Math.round(p.health*10)/10,f:p.food,
-    sw:p.swing>.5?p.swing:0,u:p.using,ut:p.useT,fi:p.fire>0?1:0,ef:Object.keys(p.effects).filter(k=>k==='invis'),sr:p.sprint?1:0,sn:p.sneak?1:0,r:p.ready?1:0,b:p.bat?1:0,al:p.alive?1:0,sp:p.spectator?1:0,cm:p.gm==='creative'?1:0,oc:chestOpen&&!chestOpen.inv?key(chestOpen.x,chestOpen.y,chestOpen.z):0};
+    sw:p.swing>.5?p.swing:0,u:p.using,ut:p.useT,fi:p.fire>0?1:0,ef:Object.keys(p.effects).filter(k=>k==='invis'),sr:p.sprint?1:0,sn:p.sneak?1:0,r:p.ready?1:0,b:p.bat?1:0,al:p.alive?1:0,sp:p.spectator?1:0,cm:p.gm==='creative'?1:0,gl:p.gliding?1:0,oc:chestOpen&&!chestOpen.inv?key(chestOpen.x,chestOpen.y,chestOpen.z):0};
   if(full){d.n=myName;d.sk=mySkin;d.a=p.armor;if(net.ping!=null)d.pg=Math.round(net.ping);}
-  for(const k of ['h','sw','u','ut','fi','sr','sn','r','b','sp','cm','oc'])if(!d[k])delete d[k];if(!d.ef.length)delete d.ef;   // empty / zero fields: the receiver treats missing as off
+  for(const k of ['h','sw','u','ut','fi','sr','sn','r','b','sp','cm','oc','gl'])if(!d[k])delete d[k];if(!d.ef.length)delete d.ef;   // empty / zero fields: the receiver treats missing as off
   netSend(N.STATE,d);
 }
 let botsT=0,botsFullT=0;

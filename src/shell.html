@@ -193,6 +193,25 @@ body.touch #clickResume{display:none!important}
   box-shadow:0 0 0 calc(var(--S)*1px) rgba(220,230,240,.85),0 0 0 calc(var(--S)*2px) rgba(0,0,0,.35)}
 #bcImg{display:block;width:100%;height:auto;box-shadow:0 0 0 calc(var(--S)*1px) #000,0 0 0 calc(var(--S)*2.5px) #e6c43a,0 0 0 calc(var(--S)*3.5px) #6a5310;margin:calc(var(--S)*3px)}
 #bcImg{width:calc(100% - var(--S)*6px)}
+#bmPanel{width:calc(var(--S)*250px);margin-top:calc(var(--S)*10px)}
+#bmTabs{display:flex;gap:calc(var(--S)*2px);padding:0 calc(var(--S)*3px);position:relative;z-index:1}
+.bmTab{flex:1;height:calc(var(--S)*14px);border:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#b8b8b8;border-radius:calc(var(--S)*3px) calc(var(--S)*3px) 0 0;margin-top:calc(var(--S)*3px);
+  box-shadow:0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #dcdcdc}
+.bmTab.on{background:#e4e4e4;height:calc(var(--S)*17px);margin-top:0;box-shadow:0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #fff;clip-path:inset(calc(var(--S)*-2px) calc(var(--S)*-2px) 0 calc(var(--S)*-2px))}
+.bmTab canvas,.bmRow canvas,#bmNote canvas,#bmSearchT canvas{image-rendering:pixelated;display:block}
+#bmBody{background:#e4e4e4;min-height:calc(var(--S)*150px);padding:calc(var(--S)*5px);border-radius:0 0 calc(var(--S)*4px) calc(var(--S)*4px);
+  box-shadow:0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) 0 0 #fff,inset calc(var(--S)*-2px) calc(var(--S)*-2px) 0 #8a8a8a}
+#bmList{display:flex;flex-direction:column;gap:calc(var(--S)*2px);padding:calc(var(--S)*3px);background:#c6c6c6;min-height:calc(var(--S)*130px);box-shadow:inset calc(var(--S)*1px) calc(var(--S)*1px) 0 #555,inset calc(var(--S)*-1px) calc(var(--S)*-1px) 0 #fff}
+.bmRow{display:flex;align-items:center;gap:calc(var(--S)*4px);min-height:calc(var(--S)*20px);padding:calc(var(--S)*2px) calc(var(--S)*3px);border:0;cursor:pointer;text-align:left;background:#8b8b8b;
+  box-shadow:inset 0 0 0 calc(var(--S)*1px) #000,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #a9a9a9}
+.bmRow.sel{background:#9da2d8;box-shadow:inset 0 0 0 calc(var(--S)*1px) #fff,inset calc(var(--S)*2px) calc(var(--S)*2px) 0 #c8ccf4}
+.bmTxt{display:flex;flex-direction:column;gap:calc(var(--S)*1px)}#bmNote{padding:calc(var(--S)*4px) calc(var(--S)*2px) 0}
+#bmSearch{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--S)*8px);pointer-events:none}
+.bmSpin{display:grid;grid-template-columns:repeat(2,calc(var(--S)*9px));gap:calc(var(--S)*2px)}
+.bmSpin i{width:calc(var(--S)*9px);height:calc(var(--S)*9px);background:#f4f4f4;opacity:.15;animation:bmspin 1.2s steps(1) infinite}
+.bmSpin i:nth-child(1){animation-delay:0s}.bmSpin i:nth-child(2){animation-delay:.3s}.bmSpin i:nth-child(4){animation-delay:.6s}.bmSpin i:nth-child(3){animation-delay:.9s}
+@keyframes bmspin{0%{opacity:1}25%{opacity:.7}50%{opacity:.35}75%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.bmSpin i{animation:none;opacity:.8}}
 .srow .sname{font-size:21px}.srow .stag{font-size:17px;color:#ffd060;white-space:nowrap}.srow .smotd{font-size:18px;color:#aaa;white-space:pre-line;overflow:hidden;max-height:2.2em}
 .srow .smotd.err{color:#ff5555}.srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}.srow .splay{font-size:18px;color:#aaa}.srow .sping{width:20px;height:16px;image-rendering:pixelated}.srow .smove{display:flex;flex-direction:column;gap:2px}.srow .smove button{font:14px monospace;padding:0 4px;background:#555;color:#fff;border:1px solid #000;cursor:pointer;visibility:hidden}.srow:hover .smove button{visibility:visible}
 .shead{padding:6px 8px 2px;color:#ffff55;font-size:18px;text-shadow:2px 2px 0 #000;border-top:1px solid rgba(255,255,255,.2)}.srvstatus{min-height:1.2em;margin-top:4px;font-size:18px;text-align:center}
@@ -215,11 +234,15 @@ body.touch #clickResume{display:none!important}
     <button class="lbtn main" id="packBtn">Texture Packs</button>
     <button class="lbtn mini hidden" id="battleBtn">Battle</button>
     <button class="lbtn mini hidden" id="brBtn">Battle Royale</button>
+    <button class="lbtn mini hidden" id="tumbleBtn">Tumble</button>
+    <button class="lbtn mini hidden" id="glideBtn">Glide</button>
     <button class="lbtn mini hidden" id="onlineBtn">Play Online</button>
     <button class="lbtn mini hidden" id="practiceBtn">Practice</button>
     <button class="lbtn mini hidden" id="lbBtn">Leaderboards</button>
   </div>
   <div id="bcPanel" class="hidden"><div id="bcLeft" class="lpanel"></div><div id="bcRight"><div id="bcDesc" aria-live="polite"></div><canvas id="bcImg" width="660" height="418" aria-hidden="true"></canvas></div></div>
+  <div id="bmPanel" class="hidden"><div id="bmTabs" role="tablist"></div><div id="bmBody"><div id="bmList"></div><div id="bmNote"></div></div></div>
+  <div id="bmSearch" class="hidden" role="status"><div class="bmSpin" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div id="bmSearchT"></div></div>
   <div id="prompts" class="lprompts"></div>
   <div id="verL" class="ver" data-t="Minecraft:realzanized Browser Edition">Minecraft:realzanized Browser Edition</div><div id="verR" class="ver" data-t="Copyright Logjang AB. Do not distribute!">Copyright Logjang AB. Do not distribute!</div>
 </div>
@@ -252,7 +275,7 @@ body.touch #clickResume{display:none!important}
   <div class="form"><label for="o_sens">Sensitivity</label><input id="o_sens" type="range" min="0" max="200" value="100"><label for="o_invy">Invert Look</label><input id="o_invy" type="checkbox"></div>
   <h3>Game Options</h3>
   <div class="form">
-    <label for="o_mode">Mode</label><select id="o_mode"><option value="battle">Battle</option><option value="br">Battle Royale (MCBR datapack)</option></select>
+    <label for="o_mode">Mode</label><select id="o_mode"><option value="battle">Battle</option><option value="br">Battle Royale (MCBR datapack)</option><option value="tumble">Tumble</option><option value="glide">Glide</option></select>
     <label for="o_round">Round Length</label><select id="o_round"><option value="180">3 minutes</option><option value="300">5 minutes</option><option value="600" selected>10 minutes</option><option value="900">15 minutes</option><option value="1200">20 minutes</option><option value="1800">30 minutes</option><option value="2700">45 minutes</option><option value="3600">60 minutes</option><option value="0">Unlimited</option></select>
     <label for="o_hunger">Hunger Rate</label><select id="o_hunger"><option value="0.5">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option></select>
     <label for="o_refill">Item Respawn</label><select id="o_refill"><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option><option value="0">No respawns</option></select>
