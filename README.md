@@ -121,9 +121,30 @@ Pick **Game Mode: Creative** when you create a world (or switch any time with th
 **Locator bar (multiplayer)**
 Like Java 1.21.6: in a Survival game with other players, the bar above the hotbar shows a coloured dot for each player in the direction they are from where you are looking. Dots shrink with distance, show an arrow when someone is well above or below you, and pin to the ends with an arrow when they are behind you. Look straight at a dot to see that player's name and distance.
 
-**Mini Games**: Battle, Battle Royale, Play Online (Battle Servers on Photon, see below) and Practice.
+**Mini Games**: Battle, Battle Royale, Tumble, Glide, Play Online (Battle Servers on Photon, see below) and Practice. Every game opens the Create / Join / Friends screen below. The Tumble arena and the Glide courses are this game's own designs.
 
-**Creating a Battle game**: Battle and Battle Royale open a create screen. On the left are tick boxes and buttons; on the right, a description of whatever is selected:
+**Tumble**: everyone starts on the top of three floating layers of patterned blocks over a lava lake.
+- **Tools** (a create option): **Snowballs** break the block they hit, push players back and set off the TNT hidden in the lower layers. **Shovels** break a block instantly, but only up close. **Both** gives everyone one of each (mouse wheel or LB/RB to switch).
+- Fall into the lava and you're out for the round. The last player standing wins it.
+- After two minutes the layers start crumbling away, faster and faster, so every round ends.
+- A game is 3, 5 or 7 rounds (**Rounds** option), each on freshly generated layers. The bars along the bottom show each round: green you won, red someone else did. The most round wins takes the game.
+- No damage or hunger, just the lava. Bots play Tumble offline.
+
+**Glide**: fly an elytra round a looping course. There are three courses, **Canyon Run**, **Sandstone Spires** and **Magma Rift**, and races are 1 to 3 laps.
+- Steer by looking. Dive for speed, pull up to climb, and hold R (Y on a controller) to look behind you. The flight follows vanilla elytra physics, including the smaller 0.6-block hitbox.
+- **Green rings** score a point each, once per lap. **Golden rings** are checkpoints (2 points); pass all four to finish a lap. **Updrafts** (yellow sparkles) at the end of each lap carry you back up to the top.
+- Crash into the walls three times, land, or stall, and you go back to your last checkpoint.
+- **Score Attack**: the most points wins. Finishing 1st, 2nd or 3rd adds 20, 15 or 10, and anyone else who finishes gets 5.
+- **Time Attack**: the fastest time wins, and your best time on each course and lap count is kept.
+- Once the first player finishes, everyone else has 30 seconds to reach the end.
+- HUD: standings on the left; time, speed and score on the right; a progress bar with everyone's position, the lap counter and your three hearts at the bottom.
+
+**Create / Join / Friends**: each mini game opens a screen with three tabs (switch with left/right, Q/E, Tab or LB/RB):
+- **Create**: pick Battle, Battle Royale, Tumble or Glide, then its create options. Tumble adds **Tools** and **Rounds**; Glide has **Course** and **Laps**, then **Create Score Attack** or **Create Time Attack**. Online Game, Public Game, Invite Only and Server Settings work as for Battle.
+- **Join**: pick a game and what you want (Battle: **Round Length**; Tumble: **Tools**; Glide: **Course**), then **Join Casual** / **Join Competitive** (Glide: **Join Score Attack** / **Join Time Attack**). It searches the public games in your Photon region and puts you in the best match, preferring games still in the lobby, then the busiest. If a round is already going you join as a spectator.
+- **Friends**: public Battle games that players you've played with before are in. Photon has no friends lists, so the game remembers the last 100 players you were online with.
+
+**Creating a Battle game**: picking a game on the Create tab opens the create options. On the left are tick boxes and buttons; on the right, a description of whatever is selected:
 - **Central Spawn**: everyone starts around the middle of the arena (Battle only).
 - **Online Game**: makes the game a Photon server others join by address. Untick it to play offline against bots.
 - **Public Game**: lists the server in Battle servers online now.
@@ -251,6 +272,7 @@ python3 build.py
 | `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block |
 | `15h_servers.js` | Servers: the Multiplayer and Battle Servers screens, hosting, joining, bans/whitelist/kicks, saved player data, Tab player list |
 | `15i_commands.js` | Chat commands, run on the server host with operator permissions |
+| `15k_minigames.js` | Tumble and Glide: arena and course generation, rules, rounds, elytra flight, bots, HUD and results |
 | `15j_battlecreate.js` | The Battle create screen (Casual / Competitive) and the Competitive rules; its picture is `battle_art.jpg` |
 | `16_guard.js` | Anti-cheat |
 
