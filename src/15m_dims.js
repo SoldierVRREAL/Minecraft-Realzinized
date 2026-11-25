@@ -272,7 +272,7 @@ function giveBucket(p,id){if(p.gm==='creative')return;const s=p.inv[p.sel];if(s.
 function placeBed(p,h){const X=h.px,Y=h.py,Z=h.pz;const fw=fwd(p);let f=0,bd=-9;for(let k=0;k<4;k++){const d=fw[0]*BED_DIR[k][0]+fw[2]*BED_DIR[k][1];if(d>bd){bd=d;f=k;}}   // the head points the way you look
   const dv=BED_DIR[f];const HX=X+dv[0],HZ=Z+dv[1];
   if(!replaceable(getB(X,Y,Z))||!replaceable(getB(HX,Y,HZ)))return;if(!(BD[getB(X,Y-1,Z)]||{}).solid||!(BD[getB(HX,Y-1,HZ)]||{}).solid)return;
-  const foot=VB.bed[f*2],head=VB.bed[f*2+1];setBlockNet(X,Y,Z,foot);setBlockNet(HX,Y,HZ,head);if(p.gm!=='creative')consume(p,p.sel);p.swing=1;sfx('dig',{pos:[X,Y,Z],mat:'cloth'});}
+  const foot=VB.bed[f*2],head=VB.bed[f*2+1];setBlockNet(X,Y,Z,foot);setBlockNet(HX,Y,HZ,head);if(DIM==='overworld'){SURV.bedSpawn=[HX+.5,Y+.6,HZ+.5];chatMsg('Respawn point set.','#ffffff',false);}if(p.gm!=='creative')consume(p,p.sel);p.swing=1;sfx('dig',{pos:[X,Y,Z],mat:'cloth'});}
 function useBed(p,h){if(DIM!=='overworld'){const c=[h.x+.5,h.y+.5,h.z+.5];setBlockNet(h.x,h.y,h.z,0);explode(c,5,p);for(let i=0;i<10;i++){const x=h.x+((Math.random()*5|0)-2),z=h.z+((Math.random()*5|0)-2);for(let y=h.y+2;y>=h.y-2;y--)if(!getB(x,y,z)&&(BD[getB(x,y-1,z)]||{}).solid){lightFire(x,y,z);break;}}return;}
   const W=BD[h.b];const dv=BED_DIR[W.facing];const hx=W.bed==='f'?h.x+dv[0]:h.x,hz=W.bed==='f'?h.z+dv[1]:h.z;
   SURV.bedSpawn=[hx+.5,h.y+.6,hz+.5];

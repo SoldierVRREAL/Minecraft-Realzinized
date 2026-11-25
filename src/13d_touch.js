@@ -129,7 +129,7 @@ const lookEnd=e=>{const L=looks.get(e.pointerId);if(!L)return;clearTimeout(L.tim
 $('tLook').addEventListener('pointerup',lookEnd);$('tLook').addEventListener('pointercancel',lookEnd);
 
 // ---------- show the controls only while actually playing ----------
-const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading'];
+const TOUCH_BLOCK=['deathPanel','newsPanel','menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading','lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','endCredits'];   // any screen on top hides the controls (so its buttons can be tapped)
 const ICON_FOR={tInv:['inv','list'],tDrop:['drop','list']};
 let touchLast='';
 function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');})&&!(typeof chatUI!=='undefined'&&chatUI);
