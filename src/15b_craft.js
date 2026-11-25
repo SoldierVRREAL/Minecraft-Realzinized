@@ -58,7 +58,7 @@ function tickFurnaces(dt){for(const [k,f] of FURN){const can=f.in&&SMELT[f.in.id
 function survChestAdd(x,y,z){const k=key(x,y,z);if(!chests.has(k))chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items:new Array(CHEST_SLOTS).fill(null)});}
 function survContainerGone(x,y,z,was){const k=key(x,y,z);
   if(was===B.CHEST){const c=chests.get(k);if(c){if(dropAuth())for(const s of c.items)if(s)hostSpawnDrop([x+.5,y,z+.5],s.id,s.count);chests.delete(k);if(chestOpen===c)chestClose(false);}}
-  if(was===B.FURNACE){const f=FURN.get(k);if(f){for(const s of [f.in,f.fuel,f.out])if(s)requestDrop([x+.5,y-.5,z+.5],s.id,s.count);FURN.delete(k);if(CR.open&&CR.fk===k)craftClose();}}}
+  if(rotBase(was)===B.FURNACE){const f=FURN.get(k);if(f){for(const s of [f.in,f.fuel,f.out])if(s)requestDrop([x+.5,y-.5,z+.5],s.id,s.count);FURN.delete(k);if(CR.open&&CR.fk===k)craftClose();}}}
 // ---------- durability and the new tools' abilities ----------
 function wearHeld(p,n){const s=p.inv[p.sel];if(!s||MATCH.mode!=='survival'||p.gm==='creative')return;const m=maxDur(s.id);if(!m)return;s.dmg=(s.dmg||0)+n;
   if(s.dmg>=m){p.inv[p.sel]=null;sfx('glass',{vol:.6});chatMsg('Your '+ITEMS[s.id].name+' broke!','#ffaa55',false);spawnParticles(p.pos[0],p.pos[1]+1.2,p.pos[2],10,[.6,.6,.6],2);}}
@@ -71,7 +71,7 @@ function abilityBreak(x,y,z,b,id,p){const tier=toolTier(id),it=ITEMS[id];if(!it)
       if(getB(nx,ny,nz)===b){extra.push([nx,ny,nz]);q.push([nx,ny,nz]);}}}}
   else if(tier==='amethyst'&&(it.tool==='pickaxe'||it.tool==='shovel')){const f=fwd(p);const ax=Math.abs(f[0]),ay=Math.abs(f[1]),az=Math.abs(f[2]);const m=ay>ax&&ay>az?1:ax>az?0:2;
     const ok=it.tool==='pickaxe'?PICK_BLOCKS:SHOVEL_BLOCKS;for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){if(!a&&!c)continue;const d=m===0?[0,a,c]:m===1?[a,0,c]:[a,c,0];const nx=x+d[0],ny=y+d[1],nz=z+d[2];const nb=getB(nx,ny,nz);
-      if(nb&&ok.has(nb)&&mineTime(nb,id)!=null&&nb!==B.CHEST&&nb!==B.FURNACE)extra.push([nx,ny,nz]);}}
+      if(nb&&ok.has(nb)&&mineTime(nb,id)!=null&&nb!==B.CHEST&&rotBase(nb)!==B.FURNACE)extra.push([nx,ny,nz]);}}
   for(const [ex,ey,ez] of extra){const nb=getB(ex,ey,ez);if(!nb)continue;setBlockNet(ex,ey,ez,0);survDrop(ex,ey,ez,nb,id);wearHeld(p,1);if(!p.inv[p.sel])break;}
   if(extra.length)sfx('dig',{pos:[x,y,z],mat:blockMat(b)});}
 function survDrop(x,y,z,b,id){extraDrops(x,y,z,b,id);let d=mineDrops(b,id);if(!d)return;if(toolTier(id)==='ruby'&&ITEMS[id].tool==='pickaxe'&&SMELT[d])d=SMELT[d];

@@ -73,11 +73,13 @@ async function loadPackBuffer(buf,label){
   const zip=await readZip(buf);
   // map "assets/minecraft/<rest>" -> zip path, preferring the shallowest copy (base pack over edition sub-folders)
   const map=new Map();for(const name of zip.files.keys()){const m=/(^|\/)minecraft\/(textures\/|sounds\/|models\/|blockstates\/|lang\/|optifine\/|sounds\.json$)/.exec(name);if(!m)continue;const i=m.index+(m[1]?1:0);const rest=name.slice(i+10);if(!map.has(rest)||map.get(rest).length>name.length)map.set(rest,name);}
-  const get=async rest=>{const p=map.get(rest);if(!p)return null;const bytes=await zip.get(p);if(!bytes)return null;try{return await blobImage(bytes);}catch(e){return null;}};
+  // each picture is decoded once (enchanted items and turned blocks reuse the same art)
+  const memo=new Map();const get=async rest=>{const p=map.get(rest);if(!p)return null;if(memo.has(p))return memo.get(p);const pr=(async()=>{const bytes=await zip.get(p);if(!bytes)return null;try{return await blobImage(bytes);}catch(e){return null;}})();memo.set(p,pr);return pr;};
   let found=0;
   // block textures (newer "block/", older "blocks/")
   const tiles={};
-  for(let t=0;t<TILE_PACK.length;t++){const n=TILE_PACK[t];if(n[0]==='~')continue;const img=await get('textures/block/'+n+'.png')||await get('textures/blocks/'+n+'.png')||(TILE_ALT[n]?await get('textures/blocks/'+TILE_ALT[n]+'.png'):null);if(img){tiles[t]=img;found++;}}
+  // all the pictures are decoded side by side (one after another would wait a frame each)
+  await Promise.all(TILE_PACK.map(async(n,t)=>{if(n[0]==='~')return;const img=await get('textures/block/'+n+'.png')||await get('textures/blocks/'+n+'.png')||(TILE_ALT[n]?await get('textures/blocks/'+TILE_ALT[n]+'.png'):null);if(img){tiles[t]=img;found++;}}));
   found+=await packDeriveTiles(get,tiles);
   const chest=await get('textures/entity/chest/normal.png');if(chest)PACK.chestTex=imgToCanvas(chest,64,64,0,0,chest.width,chest.height);
   const grassOv=await get('textures/block/grass_block_side_overlay.png')||await get('textures/blocks/grass_side_overlay.png');
@@ -94,10 +96,11 @@ async function loadPackBuffer(buf,label){
         for(const [x0,y0,w,h] of regs){const hh=Math.round(S*h/tot);g.save();g.translate(tx,ty+y+hh);g.scale(1,-1);g.drawImage(chest,x0*s,y0*s,w*s,h*s,0,0,S,hh);g.restore();y+=hh;}};
       part(9,[[0,14,14,5],[0,33,14,10]]);part(10,[[14,0,14,14]]);part(11,[[14,14,14,5],[14,33,14,10]]);
       const tx=(11%ACOLS)*S,ty=Math.floor(11/ACOLS)*S;g.drawImage(chest,1*s,1*s,2*s,4*s,tx+S*.43,ty+S*.18,S*.14,S*.28);found++;}
-    atlasCanvas=nc;TILE=maxRes;
+    atlasPost(g,maxRes);atlasCanvas=nc;TILE=maxRes;
   }
   // items
   const icons=PACK.icons||{};
+  await Promise.all(Object.keys(ITEMS).map(k=>ITEMS[k].tex?Promise.all(itemCandidates(k,ITEMS[k]).map(c=>get(c))):null));
   for(const k in ITEMS){const it=ITEMS[k];if(!it.tex)continue;let img=null;for(const c of itemCandidates(k,it)){img=await get(c);if(img)break;}if(!img)continue;
     const c=imgToCanvas(img,32,32,0,0,img.width,img.width);found++;
     if(it.type==='potion'||it.type==='splash'){const ov=await get('textures/item/potion_overlay.png')||await get('textures/items/potion_overlay.png');if(ov){const o=tintCanvas(imgToCanvas(ov,32,32),it.color);const g2=mkCanvas(32,32).getContext('2d');g2.drawImage(o,0,0);g2.drawImage(c,0,0);icons[k]=g2.canvas;continue;}}

@@ -61,7 +61,7 @@ function procIcon(id){
   const c=mkCanvas(32,32);const g=c.getContext('2d');const it=ITEMS[id];
   const line=(x1,y1,x2,y2,w,col)=>{g.strokeStyle=col;g.lineWidth=w;g.lineCap='square';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();};
   const R=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
-  if(it.type==='block'&&(BD[it.block].cross||[B.TORCH,B.VINE,B.LILY,B.LADDER,B.WEB].includes(it.block))){const t=BD[it.block].side;g.imageSmoothingEnabled=false;g.drawImage(atlasCanvas,(t%ACOLS)*TILE,Math.floor(t/ACOLS)*TILE,TILE,TILE,2,2,28,28);}
+  if(it.type==='block'&&(BD[it.block].cross||BD[it.block].flatIcon!=null||BD[it.block].itemFlat||[B.TORCH,B.VINE,B.LILY,B.LADDER,B.WEB].includes(it.block))){const t=BD[it.block].flatIcon!=null?BD[it.block].flatIcon:BD[it.block].side;g.imageSmoothingEnabled=false;g.drawImage(atlasCanvas,(t%ACOLS)*TILE,Math.floor(t/ACOLS)*TILE,TILE,TILE,2,2,28,28);}
   else if(it.type==='block'){const D=BD[it.block];const t1=D.top,t2=D.side;g.imageSmoothingEnabled=false;
     R(4,6,24,22,'#000');g.drawImage(atlasCanvas,(t2%ACOLS)*TILE,Math.floor(t2/ACOLS)*TILE,TILE,TILE,5,9,22,18);
     g.drawImage(atlasCanvas,(t1%ACOLS)*TILE,Math.floor(t1/ACOLS)*TILE,TILE,TILE/4,5,6,22,4);R(16,9,11,18,'rgba(0,0,0,.25)');}

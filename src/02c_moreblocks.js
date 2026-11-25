@@ -67,4 +67,4 @@ const NEWT={};   // tile -> how to draw it without a pack
     case 'lines':return x%4===0?sh(c,.85):sh(c,.97+n*.05);
     case 'polished':{const e=x===0||y===0||x===15||y===15;return e?sh(c,.78):sh(c,.95+n*.08);}
     default:return sh(c,.85+cl(x,y,t,2.5)*.25+n*.1);}};}
-atlasCanvas=makeProcAtlas();
+

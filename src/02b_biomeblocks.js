@@ -96,4 +96,4 @@ function procTileX(t,x,y){const h=hash2;const stone=pk(P.stone,cl(x,y,6,2.5));
     if(b)return pk(pal,x==0||y==0?.8:.05);if(b2)return pk(pal,.3);if((x+y)%6==0)return pk(pal,.85);return pk(pal,.4+h(x,y,281+t)*.35);}
   }
   return [255,0,255];}
-atlasCanvas=makeProcAtlas();
+

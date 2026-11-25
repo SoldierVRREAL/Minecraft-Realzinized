@@ -12,7 +12,7 @@ function chunkReadyAt(x,z){const cx=Math.floor(x)>>4,cz=Math.floor(z)>>4;return 
 function infInit(ringBlocks,seed,edits){
   if(INF)infShutdown();
   INF=true;WX=WZ=ringBlocks;WY=INF_WY;XM=ZM=ringBlocks-1;RN=ringBlocks>>4;RCM=RN-1;CX=0;CZ=0;
-  world=new Uint8Array(WX*WY*WZ);light=new Uint8Array(WX*WY*WZ);surfaceH=new Int16Array(WX*WZ).fill(-1);
+  world=new Uint16Array(WX*WY*WZ);light=new Uint8Array(WX*WY*WZ);surfaceH=new Int16Array(WX*WZ).fill(-1);
   ownX=new Int32Array(RN*RN).fill(0x7fffffff);ownZ=new Int32Array(RN*RN).fill(0x7fffffff);cst=new Uint8Array(RN*RN);cmaxY=new Uint8Array(RN*RN);cdirty=new Uint8Array(RN*RN);
   chests=new Map();reserved=[];inB=inBInf;WSEED=seed|0;worldEdits=edits||new Map();featCache.clear();infSlotsUsed=0;
   for(const c of chunks)if(c){gl.deleteBuffer(c.buf);if(c.wbuf)gl.deleteBuffer(c.wbuf);}chunks=new Array(RN*RN).fill(null);
@@ -208,8 +208,8 @@ function buildSpire(x,y,z,R,len){const ax=(R(5)-.5)*.7,az=(R(6)-.5)*.7;const r0=
   for(let k=0;k<3;k++){const a=R(30+k)*6.283,l=3+(R(40+k)*4|0);for(let i=0;i<l;i++)gput(Math.round(x+Math.cos(a)*(1+i*.6)),y+i,Math.round(z+Math.sin(a)*(1+i*.6)),B.CRYSTAL);}}
 
 // ---------- lighting (sky + block light, 4 bits each) recomputed for a box of columns ----------
-const OPQ=new Uint8Array(256),ATT=new Uint8Array(256),EMIT=new Uint8Array(256);
-function refreshLightTables(){for(let b=0;b<256;b++){const D=BD[b];OPQ[b]=D&&D.opaque?1:0;ATT[b]=D&&(D.leaves||D.liquid==='water'||b===B.ICE)?1:0;EMIT[b]=D?D.light|0:0;}}
+const NBLK=1024;const OPQ=new Uint8Array(NBLK),ATT=new Uint8Array(NBLK),EMIT=new Uint8Array(NBLK);
+function refreshLightTables(){for(let b=0;b<NBLK;b++){const D=BD[b];OPQ[b]=D&&D.opaque?1:0;ATT[b]=D&&(D.leaves||D.liquid==='water'||b===B.ICE)?1:0;EMIT[b]=D?D.light|0:0;}}
 let LQ=new Int32Array(1<<20),LOLD=new Uint8Array(1<<16),LTOP=new Int16Array(4096);
 // recompute light in columns x0..x1, z0..z1 (inclusive); light flowing in from the ring of columns just outside is kept.
 // returns the set of chunk slots whose light changed

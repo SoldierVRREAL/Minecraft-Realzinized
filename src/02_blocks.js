@@ -48,7 +48,7 @@ const TILE_PACK=['grass_block_top','grass_block_side','dirt','stone','oak_log','
   'gravel','mossy_cobblestone','water_still','lava_still','glowstone','bone_block_side','bone_block_top','sandstone','sandstone_top','stone_bricks','mossy_stone_bricks','chiseled_stone_bricks','gold_block','diamond_block','emerald_block','obsidian',
   'netherrack','sandstone_bottom','beacon','short_grass','poppy','dandelion','ice','slime_block','soul_sand','cobweb','ladder','smooth_stone_slab_side','smooth_stone',
   'spruce_log','spruce_log_top','spruce_planks','torch','iron_bars','quartz_block_side','quartz_block_top','jungle_leaves','coal_block','cracked_stone_bricks','chiseled_sandstone','cut_sandstone','redstone_block','jungle_log','white_wool','vine','lily_pad'];
-let TILE=16;const ACOLS=16;
+let TILE=16;const ACOLS=32;
 let atlasCanvas=null;
 // vanilla-style 16x16 tiles: small palettes + clustered noise, drawn from scratch
 const PAL=s=>s.split(' ').map(h=>{const n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255];});
@@ -140,6 +140,6 @@ function makeProcAtlas(){
   const c=mkCanvas(ACOLS*16,ACOLS*16);const g=c.getContext('2d');const img=g.createImageData(c.width,c.height);
   for(let t=0;t<TILE_PACK.length;t++){const tx=(t%ACOLS)*16,ty=Math.floor(t/ACOLS)*16;
     for(let y=0;y<16;y++)for(let x=0;x<16;x++){const p=procTile(t,x,y);const i=((ty+y)*c.width+tx+x)*4;img.data[i]=p[0];img.data[i+1]=p[1];img.data[i+2]=p[2];img.data[i+3]=p[3]===undefined?255:p[3];}}
-  g.putImageData(img,0,0);return c;
+  g.putImageData(img,0,0);if(typeof atlasPost==='function')atlasPost(g,16);return c;
 }
 // (the atlas is built at the end of 02b_biomeblocks.js once every tile is known)

@@ -67,7 +67,7 @@ addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||!locked||chatUI||c
 function creFlyEdge(p){const rise=p.jump&&!p._jPrev;p._jPrev=p.jump;if(!rise||!(touchActive||padActive))return;if(perfT-CRE.lastSpace<.3){p.flying=!p.flying;CRE.lastSpace=-1;}else CRE.lastSpace=perfT;}
 // ---- pick block: middle click puts the block you look at in your hand ----
 document.addEventListener('mousedown',e=>{if(e.button!==1||!locked||!player||!player.alive||MATCH.mode!=='survival')return;e.preventDefault();const p=player;
-  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5,true,true);if(!h)return;let b=h.b;if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
+  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5,true,true);if(!h)return;let b=rotBase(h.b);if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
   const id='b'+b;if(!ITEMS[id])return;const have=p.inv.findIndex((s,i)=>i<9&&s&&s.id===id);if(have>=0){p.sel=have;selShow=2;return;}if(!creative())return;
   let slot=p.inv[p.sel]?p.inv.findIndex((s,i)=>i<9&&!s):p.sel;if(slot<0)slot=p.sel;p.inv[slot]={id,count:stackMax(id)};p.sel=slot;selShow=2;sfx('click');});
 // ---- switching game mode ----

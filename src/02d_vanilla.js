@@ -83,4 +83,4 @@ const isSourceB=b=>b===B.WATER||b===B.LAVA;
     case 'bedside':return y<8?sh(c,.9+n*.15):y<12?[200,190,170]:[110,80,50];
     case 'bedtop':{const r=D.rot|0;const sx=r===1?y:r===2?15-x:r===3?15-y:x;return D.pillow&&sx>=8?[230,230,230]:sh(c,.9+n*.15);}}
     return prev(t,x,y);};}
-atlasCanvas=makeProcAtlas();
+

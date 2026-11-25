@@ -25,7 +25,7 @@ function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
   let t=0,px=x,py=y,pz=z;
   for(let i=0;i<300&&t<=maxD;i++){const b=getB(x,y,z);if(b&&BD[b].solid&&b!==B.BARRIER)return {x,y,z,b,t,px,py,pz};
     // plants, flowers, grass and fire can be aimed at too (for breaking them, or placing a block in their place)
-    if(plants&&b&&(BD[b].cross||BD[b].fire)&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
+    if(plants&&b&&(BD[b].cross||BD[b].fire||BD[b].pick)&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
     px=x;py=y;pz=z;if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=tdx;}else if(ty<tz){y+=sy;t=ty;ty+=tdy;}else{z+=sz;t=tz;tz+=tdz;}}
   return null;
 }

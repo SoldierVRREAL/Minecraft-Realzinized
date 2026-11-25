@@ -1,10 +1,10 @@
 // ================= world storage, lighting, map generators =================
 let WX=84,WY=48,WZ=84,CX=42,CZ=42;
-let world=new Uint8Array(WX*WY*WZ),light=new Uint8Array(WX*WY*WZ),surfaceH=new Int16Array(WX*WZ);
+let world=new Uint16Array(WX*WY*WZ),light=new Uint8Array(WX*WY*WZ),surfaceH=new Int16Array(WX*WZ);
 let chests=new Map(),reserved=[],mapInfo=null;
 // INF (Survival): the arrays are a ring buffer that wraps every WX blocks (XM/ZM masks); see 04c_inf.js. Battle maps use XM=ZM=-1 (no wrap).
 let INF=false,XM=-1,ZM=-1;
-function setDims(w,h,d){if(INF)infShutdown();INF=false;XM=ZM=-1;inB=inBFix;WX=w;WY=h;WZ=d;CX=w>>1;CZ=d>>1;world=new Uint8Array(WX*WY*WZ);light=new Uint8Array(WX*WY*WZ);surfaceH=new Int16Array(WX*WZ).fill(-1);chests=new Map();reserved=[];}
+function setDims(w,h,d){if(INF)infShutdown();INF=false;XM=ZM=-1;inB=inBFix;WX=w;WY=h;WZ=d;CX=w>>1;CZ=d>>1;world=new Uint16Array(WX*WY*WZ);light=new Uint8Array(WX*WY*WZ);surfaceH=new Int16Array(WX*WZ).fill(-1);chests=new Map();reserved=[];}
 const idx=(x,y,z)=>(y*WZ+(z&ZM))*WX+(x&XM);
 const inBFix=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<WX&&y<WY&&z<WZ;
 let inB=inBFix;

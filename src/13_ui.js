@@ -94,7 +94,7 @@ function updatePlayer(dt){
   if(rmbEdge){rmbEdge=false;
     if(!tryOpenChest()&&!(MATCH.mode==='survival'&&(mobInteract(p,s)||useSpecial(p,s)))){
       if(it&&it.type==='gadget'&&MATCH.mode==='survival'){if(s.id==='spyglass'){p.using='spy';p.useT=0;}else useGadget(p,s);}
-      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
+      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);if(h&&placeBlock(h.px,h.py,h.pz,orientFor(it.block,p,h))){consume(p,p.sel);p.swing=1;}}
       else if(it&&it.type==='armor'){const cur=p.armor[it.slot];p.armor[it.slot]=s.id;p.inv[p.sel]=cur?{id:cur,count:1}:null;sfx('pick');}
       else if(it&&it.type==='food'&&(p.food<20||it.always)){p.using='eat';p.useT=0;}
       else if(it&&it.type==='potion'){p.using='drink';p.useT=0;}
@@ -103,7 +103,7 @@ function updatePlayer(dt){
       else if(it&&it.tool==='sword'){p.using='block';p.useT=0;}
     }}
   if(p.using==='eat'||p.using==='drink'){if(!rmb||!it||(p.using==='eat'&&it.type!=='food')||(p.using==='drink'&&it.type!=='potion'))p.using=null;
-    else{p.useT+=dt;if(p.useT>.35&&((p.useT*5)|0)!==(((p.useT-dt)*5)|0))sfx(p.using==='eat'?'eat':'drink');if(p.useT>=1.6){if(p.using==='eat')sfx('burp',{vol:.5});if(it.type==='food')eatFood(p,s.id);else for(const fx of it.fx)giveEffect(p,...fx);const was=s.id;consume(p,p.sel);if(was==='milk_bucket')addItem(p,'bucket',1);p.using=null;}}}
+    else{p.useT+=dt;if(p.useT>.35&&((p.useT*5)|0)!==(((p.useT-dt)*5)|0))sfx(p.using==='eat'?'eat':'drink');if(p.useT>=1.6){if(p.using==='eat')sfx('burp',{vol:.5});if(it.type==='food')eatFood(p,s.id);else for(const fx of it.fx)giveEffect(p,...fx);const was=s.id;consume(p,p.sel);if(was==='milk_bucket')addItem(p,'bucket',1);else if(ITEMS[was]&&ITEMS[was].bowl)giveOrDrop(p,'bowl',1);else if(ITEMS[was]&&ITEMS[was].type==='potion')giveOrDrop(p,'glass_bottle',1);p.using=null;}}}
   if(p.using==='block'&&(!rmb||!it||it.tool!=='sword'))p.using=null;
   if(p.using==='bow'){if(!it||it.type!=='bow')p.using=null;else{p.useT+=dt;if(!rmb){fireBow(p,bowCharge(p.useT));p.using=null;}}}
 }
@@ -112,7 +112,7 @@ function updatePlayer(dt){
 let chestOpen=null;
 function lookChest(){if(!player||!player.alive)return null;const h=raycastBlock(eye(player),fwd(player),4.5);if(h&&h.b===B.CHEST)return chests.get(key(h.x,h.y,h.z));return null;}
 function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;
-  if(MATCH.mode==='survival'&&!player.sneak){const h=raycastBlock(eye(player),fwd(player),4.5);if(h&&h.b===B.CRAFTING)return lcOpen(false);if(h&&h.b===B.FURNACE)return craftOpen('furnace',key(h.x,h.y,h.z));}const c=lookChest();if(!c)return false;chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();
+  if(MATCH.mode==='survival'&&!player.sneak){const h=raycastBlock(eye(player),fwd(player),4.5);if(h&&h.b===B.CRAFTING)return lcOpen(false);if(h&&rotBase(h.b)===B.FURNACE)return craftOpen('furnace',key(h.x,h.y,h.z));}const c=lookChest();if(!c)return false;chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();
   show('chestUI');renderChest();return true;}
 function chestClose(relock){if(!chestOpen)return;if(chestOpen.craft)craftClose();if(chestOpen.lce)lcClose();if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
 const INV_SCREEN={inv:true,items:[]};let invHover=null;

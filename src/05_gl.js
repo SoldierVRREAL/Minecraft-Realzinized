@@ -42,11 +42,16 @@ const CORN=[[0,0],[1,0],[1,1],[0,1]];
 const _l=[0,0,0],_F=[0,0,0],_a=[0,0,0],_c=[0,0,0],_e=[0,0,0],QV=[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],QAO=[0,0,0,0];
 const ORD0=[0,1,2,3],ORD1=[1,2,3,0];
 function emitQuad(o,flip,f){const ord=flip?ORD1:ORD0;for(let n=0;n<4;n++){const q=QV[ord[n]];pv(o,q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7],q[8]|f);}}
-const CULLS=new Uint8Array(256);function refreshCull(){for(let b=0;b<256;b++){const N=BD[b];CULLS[b]=N&&!N.cross&&!N.shape&&N.opaque&&N.render?1:0;}}
+const CULLS=new Uint8Array(NBLK);function refreshCull(){for(let b=0;b<NBLK;b++){const N=BD[b];CULLS[b]=N&&!N.cross&&!N.shape&&N.opaque&&N.render?1:0;}}
 // mesh blocks in x0..x0+15, z0..z0+15, y0..y1 into the scratch buffers (positions local to x0,z0).
 // The blocks and light around the chunk are copied into small padded arrays first so every neighbour lookup is plain index math.
-const PB_=new Uint8Array(18*18*196),PL_=new Uint8Array(18*18*196),PO_=new Uint8Array(18*18*196);
+const PB_=new Uint16Array(18*18*196),PL_=new Uint8Array(18*18*196),PO_=new Uint8Array(18*18*196);
 const AXO=[1,324,18];
+// glass panes join up with their neighbours (other panes, glass, solid blocks)
+function paneJoin(x,y,z){const b=getB(x,y,z);if(!b)return false;const D=BD[b];return !!(D.pane||b===B.GLASS||D.trans||(D.opaque&&!D.shape&&!D.cross));}
+function paneBoxes(x,y,z){const a=7/16,c=9/16,o=[];const px=paneJoin(x+1,y,z),nx=paneJoin(x-1,y,z),pz=paneJoin(x,y,z+1),nz=paneJoin(x,y,z-1);
+  if(!px&&!nx&&!pz&&!nz)return [[a,0,0,c,1,1],[0,0,a,1,1,c]];
+  if(px||nx)o.push([nx?0:a,0,a,px?1:c,1,c]);if(pz||nz)o.push([a,0,nz?0:a,c,1,pz?1:c]);if(!(px||nx))o.push([a,0,a,c,1,c]);return o;}
 function meshRegion(x0,z0,y0,y1){
   if(!OPQ[B.STONE]){refreshLightTables();}if(!CULLS[B.STONE])refreshCull();
   const o=VBO_,w=VBW_;o.n=0;w.n=0;const AS=ACOLS*TILE;const plane=WX*WZ;
@@ -62,14 +67,14 @@ function meshRegion(x0,z0,y0,y1){
       for(let q=0;q<2;q++){const ax=.15,az=q?.85:.15,bx=.85,bz=q?.15:.85;
         pv(o,lx+ax+j,y+1,lz+az,u0,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y+1,lz+bz,u1,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y,lz+bz,u1,v1,s1,b1,sh,32+em+2);pv(o,lx+ax+j,y,lz+az,u0,v1,s1,b1,sh,32+em+2);}continue;}
     if(D.shape){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
-      for(const bx of (D.fence?fenceBoxes(x,y,z,false):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
+      const tw=D.trans?w:o;for(const bx of (D.fence?fenceBoxes(x,y,z,false):D.pane?paneBoxes(x,y,z):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
         const plane2=s>0?hi[d]:lo[d];
         if((s>0&&plane2>=1)||(s<0&&plane2<=0)){const nb=PB_[k+s*AXO[d]];if(nb&&BD[nb].opaque&&!BD[nb].shape)continue;}
-        const tile=bx[6]!=null?bx[6]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
+        const tile=bx[6]!=null?bx[6]:D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
         for(let c=0;c<4;c++){const cu=CORN[c][0],cv2=CORN[c][1];_l[d]=plane2;_l[u]=cu?hi[u]:lo[u];_l[v]=cv2?hi[v]:lo[v];
           let tu,tv;if(d==1){tu=_l[0];tv=_l[2];}else if(d==0){tu=_l[2];tv=1-_l[1];}else{tu=_l[0];tv=1-_l[1];}
           const q=QV[c];q[0]=lx+_l[0];q[1]=y+_l[1];q[2]=lz+_l[2];q[3]=(tx+.02+tu*(TILE-.04))/AS;q[4]=(ty+.02+tv*(TILE-.04))/AS;q[5]=em?1:sl;q[6]=em?1:bl;q[7]=em?1:FSHADE[f];q[8]=f*16+em;}
-        emitQuad(o,false,0);}
+        emitQuad(tw,false,0);}
       continue;}
     const wave=D.leaves?1:0,liq=D.liquid,opq=D.opaque;
     for(let f=0;f<6;f++){
@@ -78,7 +83,7 @@ function meshRegion(x0,z0,y0,y1){
       if(liq){const NB=nb&&BD[nb];if(NB&&NB.liquid===liq){if(d===1||(NB.lh||1)>=(D.lh||1)-.001)continue;}else if(nb&&OPQ[nb])continue;if(liq==='water'&&nb&&BD[nb].solid&&OPQ[nb])continue;}
       else if(nb){if(CULLS[nb])continue;if(nb===b){const N=BD[nb];if(!N.cross&&!N.shape&&N.render)continue;}}
       if(opq&&PO_[Fi])continue;
-      const tile=d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
+      const tile=D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
       const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
       const u=(d+1)%3,v=(d+2)%3,AU=AXO[u],AV=AXO[v];
       const L=PL_[Fi];const sl=em?1:LB[(L>>4)&15],bl=em?1:Math.max(D.glow||0,Math.min(1,LB[L&15]*1.05));
@@ -90,7 +95,7 @@ function meshRegion(x0,z0,y0,y1){
         const yy=topW&&_l[1]===1?(D.lh||.875):_l[1];
         const q=QV[c];q[0]=lx+_l[0];q[1]=y+yy;q[2]=lz+_l[2];q[3]=(tx+.02+tu*(TILE-.04))/AS;q[4]=(ty+.02+tv*(TILE-.04))/AS;q[5]=sl;q[6]=bl;q[7]=em?1:FSHADE[f]*AOK[ao];
         q[8]=f*16+em+(liq==='water'&&topW&&f===2?3:wave);}
-      emitQuad(liq==='water'?w:o,QAO[0]+QAO[2]<QAO[1]+QAO[3],0);
+      emitQuad(liq==='water'||D.trans?w:o,QAO[0]+QAO[2]<QAO[1]+QAO[3],0);
     }
   }}
   return {o,w};}
@@ -166,7 +171,7 @@ function rebuildItemAtlas(){
 // block items render as little 3D blocks (their real shape), everything else as extruded sprites
 const blockItemMesh={};
 function heldMesh(id){const it=ITEMS[id];const b=it&&it.type==='block'?it.block:0;const D=b&&BD[b];
-  if(!D||D.cross||D.liquid||!D.render&&!D.tileEnt||b===B.CHEST)return {mesh:getItemMesh(id),tex:itemTex,block:false};
+  if(!D||D.cross||D.itemFlat||D.flatIcon!=null||D.liquid||!D.render&&!D.tileEnt||b===B.CHEST)return {mesh:getItemMesh(id),tex:itemTex,block:false};
   if(!blockItemMesh[b]){const o=[];const boxes=D.fence?[[6/16,0,6/16,10/16,1,10/16]]:D.shape||[[0,0,0,1,1,1]];
     const uvT=(t,u,v)=>[((t%ACOLS)+.002+u*.996)/ACOLS,(Math.floor(t/ACOLS)+.002+v*.996)/ACOLS];
     for(const bx of boxes){const [x0,y0,z0,x1,y1,z1]=bx;const tile=f=>bx[6]!=null?bx[6]:f===2?D.top:f===3?D.bottom:f===4?(D.front!=null?D.front:D.side):D.side;

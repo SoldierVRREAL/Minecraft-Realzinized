@@ -136,7 +136,7 @@ function updateMob(e,dt){const T=MOB_T[e.mob];
     else if(T.kind==='neutral'){e.target=e.angry>0&&e.target&&e.target.alive&&!e.target.bat&&e.target.gm!=='creative'?e.target:null;}
     else e.target=null;}
   const t=e.target;let wx=0,wz=0,spd=T.spd;e.jump=false;let face=null;
-  if(e.owner&&!t){const o=entById(e.owner);if(o&&o.alive){const d=dist(o.pos,e.pos);if(d>24&&chunkReadyAt(o.pos[0],o.pos[2])){e.pos=[o.pos[0]+(Math.random()-.5)*2,o.pos[1],o.pos[2]+(Math.random()-.5)*2];e.mot=[0,0,0];e.prev=null;}
+  if((e.owner||e.tempt)&&!t){const o=e.owner?entById(e.owner):e.tempt;if(o&&o.alive){const d=dist(o.pos,e.pos);if(!e.owner){if(d>2.2){wx=o.pos[0]-e.pos[0];wz=o.pos[2]-e.pos[2];spd=T.spd*1.4;}}else if(d>24&&chunkReadyAt(o.pos[0],o.pos[2])){e.pos=[o.pos[0]+(Math.random()-.5)*2,o.pos[1],o.pos[2]+(Math.random()-.5)*2];e.mot=[0,0,0];e.prev=null;}
       else if(d>4){wx=o.pos[0]-e.pos[0];wz=o.pos[2]-e.pos[2];spd=T.chase||1;}face=o;}}
   if(t){const dx=t.pos[0]-e.pos[0],dz=t.pos[2]-e.pos[2],dy=t.pos[1]-e.pos[1],hd=Math.hypot(dx,dz);face=t;spd=T.chase||T.spd;
     if(T.ranged){if(hd<6){wx=-dx;wz=-dz;}else if(hd>12){wx=dx;wz=dz;}else{wx=-dz*(e.strafe||1);wz=dx*(e.strafe||1);spd*=.5;if(Math.random()<dt*.4)e.strafe=-(e.strafe||1);}
@@ -147,7 +147,7 @@ function updateMob(e,dt){const T=MOB_T[e.mob];
     else{wx=dx;wz=dz;}
     // bite / punch
     const reach=e.hw+(t.hw||HW)+.7;if(!T.ranged&&hd<reach*.7){wx=wz=0;}if(T.dmg&&hd<reach&&dy>-1.2&&dy<e.eh+.4&&e.atkCD<=0){e.atkCD=1;e.swing=1;damage(t,Math.max(.5,T.dmg*diffMul()),e,'melee',[dx,dz,0,0,0],false,T.hitFx);}}
-  else if(!e.owner||!face){
+  else if((!e.owner&&!e.tempt)||!face){
     if(e.panic>0&&e.fleeFrom){wx=e.pos[0]-e.fleeFrom.pos[0];wz=e.pos[2]-e.fleeFrom.pos[2];spd=T.flee||1;}
     else{if(T.shy&&Math.random()<dt*2){const q=nearestPlayer(e,T.shy);if(q&&!q.sneak){e.panic=3;e.fleeFrom=q;}}
       if(!A.goal||A.wt<=0||hdist(A.goal,e.pos)<.8){A.wt=3+Math.random()*6;A.goal=Math.random()<.45?null:[e.pos[0]+(Math.random()-.5)*16,0,e.pos[2]+(Math.random()-.5)*16];}
@@ -191,7 +191,7 @@ function creeperBoom(e){e.alive=false;removeMob(e);netSend(N.MOBDIE,{id:e.id,s:1
 function explode(c,pw,src){const list=[],dropList=[];const R=pw*1.15;
   for(let dy=-Math.ceil(R);dy<=Math.ceil(R);dy++)for(let dz=-Math.ceil(R);dz<=Math.ceil(R);dz++)for(let dx=-Math.ceil(R);dx<=Math.ceil(R);dx++){const d=Math.hypot(dx,dy,dz);if(d>R*(.65+Math.random()*.35))continue;
     const x=Math.floor(c[0]+dx),y=Math.floor(c[1]+dy),z=Math.floor(c[2]+dz);if(y<1||!chunkReadyAt(x,z))continue;const b=getB(x,y,z);
-    if(!b||b===B.BEDROCK||b===B.OBSIDIAN||b===B.CHEST||b===B.FURNACE||b===B.BARRIER||BD[b].liquid)continue;
+    if(!b||b===B.BEDROCK||b===B.OBSIDIAN||b===B.CHEST||rotBase(b)===B.FURNACE||b===B.BARRIER||BD[b].liquid)continue;
     if(b===B.TNT){igniteTNT(x,y,z,.4+Math.random()*.8,src);continue;}
     list.push(x,y,z,0);if(Math.random()<.3&&dropList.length<24)dropList.push([x,y,z,b]);}
   applyBlockList(list,true);netSend(N.BOOM,{l:list,p:c,pw});boomFx(c,pw);
