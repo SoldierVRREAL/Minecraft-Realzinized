@@ -185,6 +185,23 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 
 **Update log:** the title screen shows the version (bottom left) and a **What's New** button with the changes in each version; it opens by itself the first time a new version loads.
 
+## Every block and item, and turning blocks
+
+**Turning blocks as you place them:** logs, hay, bone blocks, quartz pillars and basalt lie along the side you click. Furnaces, pumpkins, jack o'lanterns, dispensers and droppers face you. Stairs go upside down and slabs go to the top half when you click the top half of a side, or the underside of a block. A slab placed on a slab of the same kind makes a double slab, which drops both slabs back. Ladders and item frames hang on the wall you click. Rails, anvils and signs line up with the way you look. Repeaters and comparators point away from you. Each turned block is its own block id, mapped back to its item by `ROT_BASE` (`02f_rotate.js`).
+
+**Farming:** use a hoe on grass or dirt to make farmland (it is wet if there is water within 4 blocks). Plant wheat seeds, carrots, potatoes, melon seeds and pumpkin seeds. Crops grow on their own in the light, faster on wet farmland, and bone meal speeds them up. Grown stems put a melon or pumpkin next to them. Nether wart grows on soul sand. Tall grass drops seeds sometimes. Leaves drop saplings, which grow into their own kind of tree (or straight away with bone meal). Cows and sheep follow wheat, pigs follow carrots and potatoes, chickens follow seeds.
+
+**Blocks you use:** doors (oak, spruce, birch, jungle, acacia, dark oak and iron) and trapdoors open and close. Cakes are eaten a slice at a time. Levers click. Hold Sneak to place a block against any of these instead of using it.
+- **Enchantment Table:** hold a tool, weapon, bow or armour and right-click the table. This costs 1 to 3 levels and the same number of Lapis Lazuli.
+- **Anvil:** repair a damaged tool with its material (planks, cobblestone, ingots, diamonds...). Each one restores a quarter and costs a level. With an Enchanted Book in your inventory, the anvil enchants the tool instead.
+- **Brewing Stand:** hold an ingredient and have Water Bottles in your inventory. Glistering Melon makes Healing, Ghast Tear makes Regeneration, Sugar makes Swiftness, Blaze Powder makes Strength, Magma Cream makes Fire Resistance and a Golden Carrot makes Invisibility. A Spider Eye makes Splash Poison and a Fermented Spider Eye makes Splash Weakness. Gunpowder turns potions into splash potions.
+- **Cauldron:** fill it with a water bucket. Take the water back out with a bucket, or with a glass bottle to get a water bottle.
+- **Jukebox:** play a music disc. Each disc plays an original tune generated for this game from the disc's name; no recorded music is included. Right-click again to take the disc out.
+
+**Items:** fishing rods (cast into water, reel in when the float dips: fish, junk or treasure), spawn eggs for every creature, Bottles o' Enchanting (throw them for experience), fire charges, fireworks (launch them from the ground, or use one while gliding for a boost) and maps (an empty map becomes a map of the land around you while you hold it). Glass bottles fill at water. Bowls come back after you eat mushroom stew, and glass bottles come back after you drink a potion. Minecarts, boats, saddles, horse armour, leads, name tags, armour stands and written books can be crafted or found in chests, but they have no use yet.
+
+**New blocks:** stained glass and panes (panes join up with each other and with walls), stained terracotta, red sandstone, jungle planks, emerald, lapis and redstone ores (all found underground), sponges, mushroom blocks, pistons, dispensers, droppers, command blocks, hoppers, daylight sensors, flower pots, rails, redstone torches, dust, repeaters and comparators, and more stairs and slabs. There is no redstone power, so the redstone blocks are decoration only. Everything has its vanilla recipe, which also shows on the crafting screen.
+
 ## Beating the game: the Nether, the End and the Ender Dragon
 
 Survival now has a full journey from the first night to the credits.
@@ -331,11 +348,15 @@ python3 build.py
 | `15n_mobs2.js` | Nether and End creatures, spawners, fireballs, the Ender Dragon fight, End Crystals, boss bar |
 | `15o_atmos.js` | Experience, weather and lightning, ambient sounds, the ending, menu entries |
 | `15q_news.js` | Version number and the What's New update log |
+| `02e_allblocks.js` | The rest of the vanilla blocks: stained glass and terracotta, panes, crops, farmland, saplings, doors, trapdoors, cake, rails, redstone decorations, enchanting table, anvil, cauldron, brewing stand |
+| `02f_rotate.js` | Turned blocks: the extra ids for each facing and axis, the turned tiles, and the placement rules (`orientFor`) |
+| `03e_allitems.js` | The rest of the vanilla items: hoes, seeds and crops, fish and the fishing rod, books, bottles, brewing ingredients, records, minecarts, maps, fireworks; mining for the new blocks |
+| `15r_allitems.js` | What they do: farming and crop growth, trees from saplings, doors, the enchanting table, anvil, brewing stand, cauldron, jukebox tunes, fishing, spawn eggs, fireworks, maps, and all the new recipes |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
 
-Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages, villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan), saplings and farming, and the End cities.
+Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages, villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan), rideable minecarts, boats and horses, and the End cities.
 
 ## Credits
 
