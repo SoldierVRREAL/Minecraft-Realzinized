@@ -160,17 +160,27 @@ table.res{border-collapse:collapse;margin:8px auto;font-size:22px}table.res td{p
 .jb.off,.jb.off:hover{background-image:var(--btnOff);cursor:default}.jb.off canvas.n{display:block!important}.jb.off canvas.s{display:none!important}
 .jslider,.jslider:hover,.jslider:focus-visible{background-image:var(--btnOff)}.jslider .knob{position:absolute;top:0;width:calc(var(--S)*8px);height:100%;background:var(--btn) 0 0/100% 100%;image-rendering:pixelated}
 .jslider:hover .knob,.jslider:focus-visible .knob{background-image:var(--btnSel)}
-/* touch controls */
-#touchUI{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
-#tLook{position:absolute;inset:0 0 0 38%;pointer-events:auto;touch-action:none}
-#tStickZone{position:absolute;left:0;bottom:0;width:38%;height:62%;pointer-events:auto;touch-action:none}
-#tStickBase{position:fixed;left:16vh;top:calc(100% - 22vh);width:22vh;height:22vh;margin:-11vh 0 0 -11vh;border-radius:50%;background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center}
-#tStickBase.on{background:rgba(0,0,0,.3)}#tStickKnob{width:9vh;height:9vh;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(0,0,0,.4)}
-.tb{position:absolute;pointer-events:auto;touch-action:none;width:11vh;height:11vh;border-radius:2vh;border:2px solid rgba(0,0,0,.6);background:rgba(110,110,110,.55);color:#fff;font:bold 4.6vh 'VT323',monospace;text-shadow:2px 2px 0 #333;display:flex;align-items:center;justify-content:center;padding:0}
-.tb b{font-weight:normal;pointer-events:none}.tb.on{background:rgba(150,155,214,.8)}.tb.lit{background:rgba(120,200,120,.7)}.tb.big{width:15vh;height:15vh;border-radius:50%}
-#tJump{right:4vh;bottom:8vh}#tAttack{right:21vh;bottom:5vh}#tUse{right:21vh;bottom:18vh}#tSneak{right:4vh;bottom:26vh}#tSprint{right:17vh;bottom:31vh}
-#tInv{right:12vh;top:2vh;width:8vh;height:8vh}#tDrop{right:22vh;top:2vh;width:8vh;height:8vh}#tPause{right:2vh;top:2vh;width:8vh;height:8vh}
-#tReady{right:21vh;bottom:18vh}#tList{right:4vh;bottom:26vh}
+/* touch controls (pixel-art buttons in the style of the pocket edition; art is drawn in 13d_touch.js) */
+#touchUI{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none;--ts:1;--ta:.8}
+#tLook{position:absolute;inset:0 0 0 40%;pointer-events:auto;touch-action:none}
+#tStickZone{position:absolute;left:0;bottom:0;width:40%;height:70%;pointer-events:auto;touch-action:none}
+#tStickBase{position:fixed;left:calc(4vh + 15vh*var(--ts));top:calc(100% - 4vh - 15vh*var(--ts));width:calc(30vh*var(--ts));height:calc(30vh*var(--ts));transform:translate(-50%,-50%);
+  background:var(--tjoy) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:calc(var(--ta)*.8);display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+#tStickBase.on{opacity:var(--ta);transition:none}
+#tStickKnob{width:44%;height:44%;background:var(--tknob) 0 0/100% 100% no-repeat;image-rendering:pixelated}
+#tStickBase.on #tStickKnob{background-image:var(--tknobOn)}
+.tb{position:absolute;pointer-events:auto;touch-action:none;width:calc(12vh*var(--ts));height:calc(12vh*var(--ts));border:0;padding:0;background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:var(--ta);display:flex;align-items:center;justify-content:center}
+.tb i{display:block;width:62%;height:62%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
+.tb.on{background-image:var(--tbtnOn)}.tb.on i{margin-top:2%}.tb.lit{background-image:var(--tbtnLit)}.tb.lit.on{background-image:var(--tbtnOn)}
+.tb.sm{width:calc(8.5vh*var(--ts));height:calc(8.5vh*var(--ts))}
+/* right hand: sprint and attack beside a column of jump, sneak and use (like the reference layout) */
+#tUse{right:3vh;bottom:4vh}
+#tSneak{right:3vh;bottom:calc(4vh + 14vh*var(--ts))}
+#tJump{right:3vh;bottom:calc(4vh + 28vh*var(--ts))}
+#tAttack{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 7vh*var(--ts))}
+#tSprint{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 21vh*var(--ts))}
+#tReady{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 7vh*var(--ts))}#tList{right:3vh;bottom:calc(4vh + 14vh*var(--ts))}
+#tPause{right:2vh;top:2vh}#tInv{right:calc(3vh + 9.5vh*var(--ts));top:2vh}#tDrop{right:calc(4vh + 19vh*var(--ts));top:2vh}#tChat{left:2vh;top:2vh}
 body.touch #clickResume{display:none!important}
 #xhair{position:fixed;left:50%;top:50%;width:0;height:0;pointer-events:none;mix-blend-mode:difference;z-index:3}
 #xhair i,#xhair b{position:absolute;background:#fff;display:block}#xhair i{left:-9px;top:-1px;width:18px;height:2px}#xhair b{left:-1px;top:-9px;width:2px;height:18px}
@@ -319,9 +329,9 @@ body.touch #clickResume{display:none!important}
 <div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
 <div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
-  <button class="tb" id="tPause" aria-label="Pause"><b>II</b></button><button class="tb" id="tInv" aria-label="Inventory"><b>E</b></button><button class="tb" id="tDrop" aria-label="Drop item"><b>Q</b></button>
-  <button class="tb" id="tSneak" aria-label="Sneak"><b>&#8615;</b></button><button class="tb" id="tSprint" aria-label="Sprint"><b>&#187;</b></button><button class="tb" id="tUse" aria-label="Use"><b>&#9995;</b></button>
-  <button class="tb" id="tAttack" aria-label="Attack"><b>&#9876;</b></button><button class="tb big" id="tJump" aria-label="Jump"><b>&#9650;</b></button><button class="tb" id="tReady" aria-label="Ready"><b>R</b></button><button class="tb" id="tList" aria-label="Players"><b>&#9776;</b></button></div>
+  <button class="tb sm" id="tPause" aria-label="Pause"><i></i></button><button class="tb sm" id="tInv" aria-label="Inventory"><i></i></button><button class="tb sm" id="tDrop" aria-label="Drop item"><i></i></button><button class="tb sm" id="tChat" aria-label="Chat"><i></i></button>
+  <button class="tb" id="tSneak" aria-label="Sneak"><i></i></button><button class="tb" id="tSprint" aria-label="Sprint"><i></i></button><button class="tb" id="tUse" aria-label="Use"><i></i></button>
+  <button class="tb" id="tAttack" aria-label="Attack"><i></i></button><button class="tb" id="tJump" aria-label="Jump"><i></i></button><button class="tb" id="tReady" aria-label="Ready"><i></i></button><button class="tb" id="tList" aria-label="Players"><i></i></button></div>
 <div id="lobbyPanel" class="screen hidden"><div class="panel"><h3>Lobby</h3><div id="lobbyInfo"></div>
   <div class="row"><button class="btn small" id="lobbyReady">Ready (R)</button><button class="btn small" id="lobbyOpts">Game Options</button><button class="btn small" id="lobbyStart">Start now</button><button class="btn small" id="lobbyClose">Close (Tab)</button></div></div></div>
 <div id="results" class="screen hidden">
@@ -1953,8 +1963,13 @@ function colInfo(x,z){
   const oceanT=smooth01(.35,.43,cont);const oh=bioH(BIO.ocean,x,z);h=oh+(h-oh)*oceanT;
   CI.h=Math.floor(h);CI.b=oceanT<.35?BIO.ocean:b1;CI.lava=oceanT>.9?lava:-1;CI.cont=cont;CI.beach=oceanT<1&&CI.h>=SEA-2&&CI.h<=SEA+1&&CI.b!==BIO.frozen;CI.under=CI.h<SEA;
   if(CI.b===BIO.ocean&&CI.h>=SEA)CI.b=b1;
+  CI.sb=CI.b===b1?surfBiome(pts,pts.length,d1,b1,x,z,42):CI.b;
   return CI;}
 function biomeAt(x,z){return colInfo(Math.floor(x),Math.floor(z)).b;}
+// Near a border the ground of the two biomes mixes in patches (grass, sand, snow...), instead of meeting in a straight line.
+// pts: [distance, biome, ...]; R: blend width. Returns the biome whose surface this column gets.
+function surfBiome(pts,n,d1,b1,x,z,R){let tot=0;for(let k=0;k<n;k+=2){const w=Math.max(0,1-(pts[k]-d1)/R);pts[k]=w*w*w*w;tot+=pts[k];}if(tot<=1.0001)return b1;
+  const r=clamp((fbm(x/5,z/5,WSEED+61,2)-.5)*1.6+.5,0,1)*.85+hash2(x,z,WSEED+62)*.15;let acc=0;for(let k=0;k<n;k+=2){acc+=pts[k]/tot;if(r<acc)return pts[k+1];}return b1;}
 
 // ---------- chunk generation ----------
 const GH=new Int16Array(256),GB=new Uint8Array(256),GL=new Int16Array(256),GBE=new Uint8Array(256),GU=new Uint8Array(256);
@@ -1966,7 +1981,7 @@ function genChunk(cx,cz){
   const x0=cx*16,z0=cz*16;genCX=cx;genCZ=cz;const S=WSEED;
   for(let y=0;y<WY;y++){const row=y*WZ;for(let lz=0;lz<16;lz++){const o=(row+((z0+lz)&ZM))*WX+(x0&XM);world.fill(0,o,o+16);light.fill(0,o,o+16);}}
   // terrain columns
-  for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const c=colInfo(x,z);const k=lz*16+lx;GH[k]=c.h;GB[k]=c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;
+  for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const c=colInfo(x,z);const k=lz*16+lx;GH[k]=c.h;GB[k]=c.sb!=null?c.sb:c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;
     const D=BIOMES[c.b];const h=Math.min(WY-2,c.h);let top=D.top,fill=D.fill||B.DIRT;const n=hash2(x,z,S+31);
     if(c.under){top=c.b===BIO.ocean?(fbm(x/20,z/20,S+32,2)<.45?B.GRAVEL:B.SAND):(n<.5?B.DIRT:B.GRAVEL);fill=top===B.GRAVEL?B.GRAVEL:top===B.SAND?B.SAND:B.DIRT;if(fbm(x/9,z/9,S+37,2)>.7)top=B.CLAY;}
     else if(c.beach){top=B.SAND;fill=B.SAND;}
@@ -2257,6 +2272,7 @@ function colInfo2(x,z){const S=WSEED;
   if(CI.b===BIO.ocean&&CI.h>=SEA)CI.b=b1;
   if(river>.5&&CI.under&&CI.b!==BIO.ocean)CI.b=BIOMES[b1].cold?b1:BIO.river;
   CI.beach=land<1&&land>.2&&CI.h>=SEA-2&&CI.h<=SEA+1&&!BIOMES[b1].cold&&m<.3;
+  CI.sb=CI.b===b1?surfBiome(PTS2,n,d1,b1,x,z,60):CI.b;
   return CI;}
 // dispatch: the old generator for old worlds
 {const c1=colInfo;colInfo=function(x,z){return GENV>=2?colInfo2(x,z):c1(x,z);};}
@@ -2267,7 +2283,7 @@ function genChunk2(cx,cz){
   const x0=cx*16,z0=cz*16;genCX=cx;genCZ=cz;const S=WSEED;
   for(let y=0;y<WY;y++){const row=y*WZ;for(let lz=0;lz<16;lz++){const o=(row+((z0+lz)&ZM))*WX+(x0&XM);world.fill(0,o,o+16);light.fill(0,o,o+16);}}
   for(let pz=0;pz<18;pz++)for(let px=0;px<18;px++){const x=x0+px-1,z=z0+pz-1;const c=colInfo2(x,z);GH2[pz*18+px]=c.h;
-    if(px>0&&px<17&&pz>0&&pz<17){const k=(pz-1)*16+px-1;GH[k]=c.h;GB[k]=c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;GRV[k]=c.river>.3?1:0;GM[k]=c.m*255|0;}}
+    if(px>0&&px<17&&pz>0&&pz<17){const k=(pz-1)*16+px-1;GH[k]=c.h;GB[k]=c.sb;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;GRV[k]=c.river>.3?1:0;GM[k]=c.m*255|0;}}
   for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz,k=lz*16+lx,q=(lz+1)*18+lx+1;const hh=GH[k],b=GB[k],D=BIOMES[b];const h=Math.min(WY-2,hh);
     const slope=Math.max(Math.abs(GH2[q-1]-hh),Math.abs(GH2[q+1]-hh),Math.abs(GH2[q-18]-hh),Math.abs(GH2[q+18]-hh));
     let top=D.top,fill=D.fill||B.DIRT,deep=B.STONE;const n=hash2(x,z,S+31);
@@ -3099,12 +3115,14 @@ const owned=e=>e&&(e.isLocal||(e.kind==='bot'&&isHost())||(e.kind==='mob'&&(isHo
 const maxHP=e=>e.maxHp||20;
 
 function fluidAt(x,y,z){const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));return b?BD[b].liquid:false;}
-function raycastBlock(o,d,maxD,ignoreFluid=true){
+function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
   let x=Math.floor(o[0]),y=Math.floor(o[1]),z=Math.floor(o[2]);const sx=Math.sign(d[0]),sy=Math.sign(d[1]),sz=Math.sign(d[2]);
   const tdx=sx?Math.abs(1/d[0]):1e9,tdy=sy?Math.abs(1/d[1]):1e9,tdz=sz?Math.abs(1/d[2]):1e9;
   let tx=sx>0?(x+1-o[0])*tdx:sx<0?(o[0]-x)*tdx:1e9,ty=sy>0?(y+1-o[1])*tdy:sy<0?(o[1]-y)*tdy:1e9,tz=sz>0?(z+1-o[2])*tdz:sz<0?(o[2]-z)*tdz:1e9;
   let t=0,px=x,py=y,pz=z;
   for(let i=0;i<300&&t<=maxD;i++){const b=getB(x,y,z);if(b&&BD[b].solid&&b!==B.BARRIER)return {x,y,z,b,t,px,py,pz};
+    // plants, flowers, grass and fire can be aimed at too (for breaking them, or placing a block in their place)
+    if(plants&&b&&BD[b].cross&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
     px=x;py=y;pz=z;if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=tdx;}else if(ty<tz){y+=sy;t=ty;ty+=tdy;}else{z+=sz;t=tz;tz+=tdz;}}
   return null;
 }
@@ -3144,7 +3162,8 @@ function tickEffects(e,dt){
 function speedMul(e){let m=1;if(e.effects.speed)m*=1+.2*(e.effects.speed.amp+1);if(e.effects.slowness)m*=Math.max(.2,1-.15*(e.effects.slowness.amp+1));return m;}
 
 // ---------- hunger (1.8 exhaustion model, scaled by the Hunger Rate option) ----------
-function exhaust(e,v){e.exh+=v*(SET.hunger||1);}
+function exhaust(e,v){e.exh+=v*(MATCH.mode==='survival'?SURV_HUNGER:(SET.hunger||1));}
+const SURV_HUNGER=.45;   // survival food lasts a little over twice as long as the 1.8 rate
 function tickHunger(e,dt,moved){if(e.gm==='creative'){e.food=20;e.sat=Math.min(5,e.sat||5);e.exh=0;e.fire=0;e.air=300;return;}
   if(e.sprint&&e.onGround)exhaust(e,.1*moved);else if(e.onGround)exhaust(e,.01*moved);
   if(e.inWater)exhaust(e,.015*moved);
@@ -3387,7 +3406,7 @@ function mcTick(e){
   for(let i=0;i<3;i++)if(Math.abs(e.mot[i])<.005)e.mot[i]=0;
   if(e.flying){}else if(I.jump){if(e.inWater||e.inLava)e.mot[1]+=.04;else if(e.onGround&&e.jumpTicks===0){mcJump(e);e.jumpTicks=10;}}else e.jumpTicks=0;
   let moved=0;
-  e.eh=e.gliding?.6:undefined;   // vanilla: a player flying an elytra is 0.6 tall
+  if(e.kind!=='mob')e.eh=e.gliding?.6:undefined;   // vanilla: a player flying an elytra is 0.6 tall (creatures keep their own height)
   if(e.gliding){moved=glideTick(e);}
   else if(e.flying){   // Creative flight (EntityPlayer: fly speed 0.05, x2 sprinting; jump/sneak move 0.15 up/down; vertical speed x0.6 a tick)
     if(I.jump)e.mot[1]+=.15;if(e.flyDown)e.mot[1]-=.15;moveFlying(e,I.wx,I.wz,e.sprint?.1:.05);moved=moveEntity(e,e.mot[0],e.mot[1],e.mot[2]);e.mot[0]*=.91;e.mot[2]*=.91;e.mot[1]*=.6;e.fallDist=0;}
@@ -4230,7 +4249,7 @@ function render(){
   useBox(VP,camPos);
   drawParticles();useBox(VP,camPos);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(PB.u.lit,0);
-  if(canBuild()&&MATCH.state==='play'&&player&&player.alive&&locked&&!chestOpen){const h=raycastBlock(eye(player),fwd(player),4.5);
+  if(canBuild()&&MATCH.state==='play'&&player&&player.alive&&locked&&!chestOpen){const h=raycastBlock(eye(player),fwd(player),4.5,true,true);
     if(h){const pr=mining&&mining.x===h.x&&mining.y===h.y&&mining.z===h.z?mining.t/(mining.T||MINE_T[mining.b]):0;
       if(crackTex.length&&pr>0){useTex(VP,camPos);gl.uniform1f(PT.u.bright,1);drawMesh(crackCube,chain(M4.tr(h.x+.5,h.y+.5,h.z+.5),M4.sc(1.004,1.004,1.004)),crackTex[Math.min(9,Math.floor(pr*10))]);useBox(VP,camPos);gl.uniform1f(PB.u.lit,0);}
       drawSelection(h.x,h.y,h.z);}}
@@ -4711,7 +4730,7 @@ function wrapText(s,maxW,size){const meas=t=>{if(FONT)return bmpWidth(t,Math.max
 function drawBlockHint(){
   const able=OPT.tips!==false&&player&&player.alive&&!chestOpen&&(MATCH.state==='play'&&!(MATCH.preT>0)||MATCH.state==='lobby')&&(locked||padActive||touchActive);
   if(!able)hintLook=null;
-  else{const h=raycastBlock(eye(player),fwd(player),5);const b=h?h.b:0;
+  else{const h=raycastBlock(eye(player),fwd(player),5,true,true);const b=h?h.b:0;
     if(b&&BLOCK_TIPS[b]&&!HINT_SEEN.has(b)){if(hintLook===b)hintLookT+=dtFrame;else{hintLook=b;hintLookT=0;}if(hintLookT>.6){HINT_SEEN.add(b);hintCur={b,t:5};hintLook=null;}}else hintLook=null;}
   if(!hintCur)return;hintCur.t-=dtFrame;if(hintCur.t<=0){hintCur=null;return;}
   const tip=BLOCK_TIPS[hintCur.b],name=Array.isArray(tip)?tip[0]:(BLOCK_NAMES[hintCur.b]||''),desc=Array.isArray(tip)?tip[1]:tip;
@@ -4875,7 +4894,7 @@ function updatePlayer(dt){
   const f=[-Math.sin(p.yaw),-Math.cos(p.yaw)],r=[Math.cos(p.yaw),-Math.sin(p.yaw)];const wx=f[0]*fw+r[0]*st,wz=f[1]*fw+r[1]*st;
   p.sneak=canMove&&!!(keys.ShiftLeft||keys.ShiftRight||(padActive&&padIn.sneak)||(touchActive&&touchIn.sneak));
   const canSprint=fw>0&&!p.sneak&&!p.using&&p.food>6&&!p.effects.blind;
-  if(!canSprint||p.collidedH)p.sprint=false;else if((keys.ControlLeft||keys.ControlRight||sprintTap||(padActive&&padIn.sprint&&fw>.8)||(touchActive&&touchIn.sprint&&fw>.8))&&canSprint)p.sprint=true;
+  if(!canSprint||p.collidedH)p.sprint=false;else if((keys.ControlLeft||keys.ControlRight||sprintTap||(padActive&&padIn.sprint&&fw>.8)||(touchActive&&touchIn.sprintNow&&fw>.8))&&canSprint)p.sprint=true;
   if(!p.sprint)sprintTap=false;
   p.jump=canMove&&!!(keys.Space||(padActive&&padIn.jump)||(touchActive&&touchIn.jump));
   if(p.gm!=='creative'||!INF)p.flying=false;else creFlyEdge(p);if(p.flying){p.flyDown=p.sneak;p.sneak=false;if(p.onGround&&p.flyDown)p.flying=false;}
@@ -4887,7 +4906,7 @@ function updatePlayer(dt){
   if(lmb&&!p.using){const tgt=meleeTarget(p,3.2);
     if(tgt||!canBuild()){mining=null;if(lmbEdge)doAttack(p,tgt||null);}
     else if(p.gm==='creative'&&INF){mining=null;creativeMine(p,dt);}
-    else{const h=raycastBlock(eye(p),fwd(p),4.5);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
+    else{const h=raycastBlock(eye(p),fwd(p),4.5,true,true);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
       if(h&&(h.b!==B.CHEST||MATCH.mode==='survival')&&T){if(!mining||mining.x!==h.x||mining.y!==h.y||mining.z!==h.z)mining={x:h.x,y:h.y,z:h.z,b:h.b,t:0};mining.T=T;mining.t+=dt;if(p.swing<=0)p.swing=1;
         if(((mining.t*5)|0)!==(((mining.t-dt)*5)|0))sfx('mine',{pos:[h.x,h.y,h.z],mat:blockMat(h.b)});if(mining.t>=T){breakBlock(h.x,h.y,h.z,p);mining=null;}}else mining=null;}}
   else mining=null;lmbEdge=false;
@@ -4895,7 +4914,7 @@ function updatePlayer(dt){
   if(rmbEdge){rmbEdge=false;
     if(!tryOpenChest()&&!(MATCH.mode==='survival'&&(mobInteract(p,s)||useSpecial(p,s)))){
       if(it&&it.type==='gadget'&&MATCH.mode==='survival'){if(s.id==='spyglass'){p.using='spy';p.useT=0;}else useGadget(p,s);}
-      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
+      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
       else if(it&&it.type==='armor'){const cur=p.armor[it.slot];p.armor[it.slot]=s.id;p.inv[p.sel]=cur?{id:cur,count:1}:null;sfx('pick');}
       else if(it&&it.type==='food'&&(p.food<20||it.always)){p.using='eat';p.useT=0;}
       else if(it&&it.type==='potion'){p.using='drink';p.useT=0;}
@@ -5318,53 +5337,120 @@ function showBattleLogo(on){if(on){const im=new Image();im.onload=()=>{if(miniOp
     drawLogo();$('logo').style.imageRendering='';$('edition').classList.remove('hidden');$('splash').classList.remove('onlogo');})();}}
 
 // ================= mobile / touch controls =================
-// floating joystick on the left, drag anywhere on the right to look, tap the world to attack, hold the world to use,
-// plus buttons for jump, attack, use, sneak, sprint, inventory, drop and pause. Hotbar slots are tappable.
+// Pocket-edition style: a square stick on the left, pixel-art buttons on the right (sprint and attack beside a column of
+// jump, sneak and use), small buttons for pause, inventory, drop and chat. Drag anywhere on the right to look; a quick tap
+// on the world attacks, holding still on it uses the held item. Hotbar slots are tappable. All the art is drawn here.
 let touchActive=false;const touchIn={fw:0,st:0,jump:false,sneak:false,sprint:false};
+if(OPT.tSize==null)OPT.tSize=1;if(OPT.tAlpha==null)OPT.tAlpha=.8;if(OPT.tSens==null)OPT.tSens=1;
 function wantTouch(){if(OPT.mobile==='on')return true;if(OPT.mobile==='off')return false;return ('ontouchstart' in window||navigator.maxTouchPoints>0)&&matchMedia('(pointer: coarse)').matches;}
-function applyTouchSetting(){touchActive=wantTouch();document.body.classList.toggle('touch',touchActive);if(touchActive&&document.pointerLockElement)document.exitPointerLock();}
+function applyTouchSetting(){touchActive=wantTouch();document.body.classList.toggle('touch',touchActive);if(touchActive&&document.pointerLockElement)document.exitPointerLock();applyTouchLook();}
 const TUI=$('touchUI');
-function tBtn(id,fn,up){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();el.classList.add('on');try{el.setPointerCapture(e.pointerId);}catch(_){}fn(el);});
-  const rel=e=>{el.classList.remove('on');if(up)up(el);};el.addEventListener('pointerup',rel);el.addEventListener('pointercancel',rel);}
+function applyTouchLook(){TUI.style.setProperty('--ts',OPT.tSize);TUI.style.setProperty('--ta',OPT.tAlpha);}
+
+// ---------- pixel art ----------
+// paint a grid of characters with a palette and return a data URL (drawn 1 pixel per cell; CSS scales it up crisply)
+function pxURL(rows,pal){const h=rows.length,w=rows[0].length,c=mkCanvas(w,h),g=c.getContext('2d');
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=rows[y][x];if(pal[k]){g.fillStyle=pal[k];g.fillRect(x,y,1,1);}}return 'url('+c.toDataURL()+')';}
+// a bevelled button face: black outline with cut corners, light top-left edge, dark bottom edge
+function btnRows(n,pressed){const r=[];for(let y=0;y<n;y++){let s='';for(let x=0;x<n;x++){
+    const edge=x===0||y===0||x===n-1||y===n-1,corner=(x<2&&y<2&&x+y<2)||(x>n-3&&y<2&&(n-1-x)+y<2)||(x<2&&y>n-3&&x+(n-1-y)<2)||(x>n-3&&y>n-3&&(n-1-x)+(n-1-y)<2);
+    if(corner&&!(x===1&&y===1)&&!(x===n-2&&y===1)&&!(x===1&&y===n-2)&&!(x===n-2&&y===n-2)){s+='.';continue;}
+    if(edge||(x===1&&y===1)||(x===n-2&&y===1)||(x===1&&y===n-2)||(x===n-2&&y===n-2)){s+='k';continue;}
+    if(pressed){s+=(y===1||x===1)?'d':(y>=n-3)?'f':'f';continue;}
+    s+=(y>=n-3)?'d':(y===1||x===1)?'h':(x===n-2)?'s':'f';}r.push(s);}return r;}
+const TPAL={k:'#111',h:'#a4a4a4',f:'#6e6e6e',s:'#5a5a5a',d:'#3c3c3c'};
+const TPAL_ON={k:'#111',h:'#c8c8c8',f:'#8f8f8f',s:'#7c7c7c',d:'#5e5e5e'};
+const TPAL_LIT={k:'#111',h:'#b8d6a8',f:'#6f8f60',s:'#5f7d52',d:'#3c5232'};
+// the stick: a light frame with a paler inner ring around a darker well
+function joyRows(n){const r=[];for(let y=0;y<n;y++){let s='';for(let x=0;x<n;x++){const e=Math.min(x,y,n-1-x,n-1-y);const cx=Math.min(x,n-1-x),cy=Math.min(y,n-1-y);
+    if(cx+cy<2){s+='.';continue;}if(e===0||(cx+cy===2&&e<=1)){s+='k';continue;}
+    s+=e<=2?(y<n/2&&x<n/2?'a':'b'):e<=5?'w':e===6?'c':'g';}r.push(s);}return r;}
+const JPAL={k:'#111',a:'#e2e2e2',b:'#c9c9c9',w:'#f1f1f1',c:'#a9a9a9',g:'rgba(120,120,120,.55)'};
+// icons, black on the grey face (with a faint highlight under each pixel so they read on any background)
+const TICONS={
+  jump:['....##....','...####...','..######..','.########.','....##....','....##....','....##....','..........','.########.','.########.'],
+  sneak:['....##....','....##....','....##....','.########.','..######..','...####...','....##....','..........','.########.','.########.'],
+  sprint:['##...##...','.##...##..','..##...##.','...##...##','..##...##.','.##...##..','##...##...'],
+  attack:['........##','.......###','......###.','.....###..','.#..###...','..####....','...##.....','..####....','.##..#....','##........'],
+  use:['....##....','....##....','..........','..........','##..##..##','##..##..##','..........','..........','....##....','....##....'],
+  pause:['..........','.###..###.','.###..###.','.###..###.','.###..###.','.###..###.','.###..###.','.###..###.','.###..###.','..........'],
+  inv:['..........','..........','..........','..........','##..##..##','##..##..##','..........','..........','..........','..........'],
+  drop:['.######...','.#....#...','.#....#...','.######...','....##....','....##....','..######..','...####...','....##....','..........'],
+  chat:['..........','.########.','.#......#.','.#.####.#.','.#......#.','.#.###..#.','.#......#.','.####.###.','.....##...','.....#....'],
+  ready:['..........','.........#','........##','.......##.','#.....##..','##...##...','.##.##....','..###.....','...#......','..........'],
+  list:['..........','.########.','..........','..........','.########.','..........','..........','.########.','..........','..........']};
+function iconURL(rows){const h=rows.length,w=rows[0].length;const sh=rows.map((r,y)=>[...r].map((c,x)=>c==='#'?'#':(y>0&&rows[y-1][x]==='#'?'l':'.')).join(''));return pxURL(sh,{'#':'#151515',l:'rgba(255,255,255,.18)'});}
+{const R=TUI.style;R.setProperty('--tbtn',pxURL(btnRows(20,false),TPAL));R.setProperty('--tbtnOn',pxURL(btnRows(20,true),TPAL_ON));R.setProperty('--tbtnLit',pxURL(btnRows(20,false),TPAL_LIT));
+  R.setProperty('--tjoy',pxURL(joyRows(40),JPAL));R.setProperty('--tknob',pxURL(btnRows(18,false),TPAL));R.setProperty('--tknobOn',pxURL(btnRows(18,true),TPAL_ON));
+  for(const [id,ic] of [['tJump','jump'],['tSneak','sneak'],['tSprint','sprint'],['tAttack','attack'],['tUse','use'],['tPause','pause'],['tInv','inv'],['tDrop','drop'],['tChat','chat'],['tReady','ready'],['tList','list']])
+    $(id).querySelector('i').style.backgroundImage=iconURL(TICONS[ic]);}
+applyTouchLook();
+
+// ---------- buttons ----------
+function tBtn(id,fn,up){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();el.classList.add('on');try{el.setPointerCapture(e.pointerId);}catch(_){}
+    if(navigator.vibrate&&OPT.tBuzz!==false)try{navigator.vibrate(8);}catch(_){}fn(el,e);});
+  const rel=e=>{if(!el.classList.contains('on'))return;el.classList.remove('on');if(up)up(el,e);};el.addEventListener('pointerup',rel);el.addEventListener('pointercancel',rel);el.addEventListener('lostpointercapture',rel);
+  el.addEventListener('contextmenu',e=>e.preventDefault());}
 const fakeKey=code=>{document.dispatchEvent(new KeyboardEvent('keydown',{code,bubbles:true}));setTimeout(()=>document.dispatchEvent(new KeyboardEvent('keyup',{code,bubbles:true})),60);};
 tBtn('tJump',()=>{touchIn.jump=true;},()=>{touchIn.jump=false;});
 tBtn('tAttack',()=>{lmb=true;lmbEdge=true;},()=>{lmb=false;});
 tBtn('tUse',()=>{rmb=true;rmbEdge=true;},()=>{rmb=false;});
-tBtn('tSneak',el=>{touchIn.sneak=!touchIn.sneak;},el=>el.classList.toggle('lit',touchIn.sneak));
-tBtn('tSprint',el=>{touchIn.sprint=!touchIn.sprint;},el=>el.classList.toggle('lit',touchIn.sprint));
+// sneak and sprint: a tap toggles them on and off; holding works as a hold
+let sneakT=0,sprintT=0;
+tBtn('tSneak',()=>{sneakT=performance.now();touchIn.sneak=player&&player.flying?true:!touchIn.sneak;},el=>{if((player&&player.flying)||performance.now()-sneakT>350)touchIn.sneak=false;el.classList.toggle('lit',touchIn.sneak);});
+tBtn('tSprint',()=>{sprintT=performance.now();touchIn.sprint=!touchIn.sprint;},el=>{if(performance.now()-sprintT>350)touchIn.sprint=false;el.classList.toggle('lit',touchIn.sprint);});
 tBtn('tInv',()=>{if(!player)return;if(chestOpen){chestClose(false);return;}if(!player.alive){spectate.mode='follow';spectate.idx++;return;}if(MATCH.state==='play'){if(!tryOpenChest())openInv();}});
-tBtn('tDrop',()=>{if(player&&!player.alive){spectate.mode='bat';return;}fakeKey('KeyQ');});
+// drop: a tap drops one, holding drops the whole stack
+let dropHold=null;
+tBtn('tDrop',()=>{if(player&&!player.alive){spectate.mode='bat';return;}fakeKey('KeyQ');dropHold=setTimeout(()=>{const p=player;if(!p||!p.alive||MATCH.state==='lobby')return;const s=p.inv[p.sel];if(!s||s.count<=0)return;
+  const d=fwd(p);requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],s.id,s.count,[d[0]*6,d[1]*6+2,d[2]*6]);p.inv[p.sel]=null;if(navigator.vibrate)try{navigator.vibrate(20);}catch(_){}},500);},()=>clearTimeout(dropHold));
+tBtn('tChat',()=>{if(typeof openChat==='function'&&player&&!chatUI)openChat('');});
 tBtn('tReady',()=>fakeKey('KeyR'));tBtn('tList',()=>fakeKey('Tab'));
 tBtn('tPause',()=>{if(!online)paused=true;show('pause');});
-// joystick (left half): appears where the thumb lands
+
+// ---------- the stick: rests bottom-left, jumps to where the thumb lands in the left zone ----------
 let stickId=null,stickO=[0,0];const SB=$('tStickBase'),SK=$('tStickKnob');
-$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stickO=[e.clientX,e.clientY];try{e.target.setPointerCapture(e.pointerId);}catch(_){}
-  SB.style.left=(e.clientX)+'px';SB.style.top=(e.clientY)+'px';SB.classList.add('on');moveStick(e);});
-function moveStick(e){const R=SB.offsetWidth*.42||50;let dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];const m=Math.hypot(dx,dy);if(m>R){dx*=R/m;dy*=R/m;}
-  SK.style.transform=`translate(${dx}px,${dy}px)`;touchIn.st=dx/R;touchIn.fw=-dy/R;if(Math.abs(touchIn.st)<.12)touchIn.st=0;if(Math.abs(touchIn.fw)<.12)touchIn.fw=0;
-  if(touchIn.fw>.97&&Math.abs(touchIn.st)<.3)touchIn.sprint=true;}
+$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();if(stickId!=null)return;stickId=e.pointerId;stickO=[e.clientX,e.clientY];try{e.target.setPointerCapture(e.pointerId);}catch(_){}
+  SB.style.left=e.clientX+'px';SB.style.top=e.clientY+'px';SB.classList.add('on');moveStick(e);});
+function moveStick(e){const R=SB.offsetWidth*.3||50;let dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];
+  // a thumb that runs past the edge drags the stick along with it
+  const m=Math.hypot(dx,dy);if(m>R*1.6){const k=(m-R*1.6)/m;stickO[0]+=dx*k;stickO[1]+=dy*k;dx-=dx*k;dy-=dy*k;SB.style.left=stickO[0]+'px';SB.style.top=stickO[1]+'px';}
+  // the knob stays inside the square frame
+  const kx=clamp(dx,-R,R),ky=clamp(dy,-R,R);SK.style.transform=`translate(${kx}px,${ky}px)`;
+  let st=dx/R,fw=-dy/R;const L=Math.hypot(st,fw);if(L>1){st/=L;fw/=L;}if(L<.15){st=0;fw=0;}touchIn.st=st;touchIn.fw=fw;
+  // push all the way forward (past the frame) to sprint
+  if(-dy>R*1.25&&Math.abs(dx)<R*.6)touchIn.autoSprint=true;else if(fw<.7)touchIn.autoSprint=false;}
 $('tStickZone').addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e);});
-const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;SK.style.transform='';SB.classList.remove('on');if(!$('tSprint').classList.contains('lit'))touchIn.sprint=false;};
+const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;touchIn.autoSprint=false;SK.style.transform='';SB.classList.remove('on');SB.style.left='';SB.style.top='';};
 $('tStickZone').addEventListener('pointerup',stickEnd);$('tStickZone').addEventListener('pointercancel',stickEnd);
-// look (right side): drag to turn; a quick tap attacks, a long still press uses the held item
+Object.defineProperty(touchIn,'sprintNow',{get(){return touchIn.sprint||touchIn.autoSprint;}});
+
+// ---------- looking (right side): drag to turn; a quick tap attacks, a long still press uses the held item ----------
 const looks=new Map();
 $('tLook').addEventListener('pointerdown',e=>{e.preventDefault();try{e.target.setPointerCapture(e.pointerId);}catch(_){}
-  // tapping the hotbar selects a slot
-  const G=hudGeom(),S=G.S,hx=G.hx,hy=G.hy;   // same layout the HUD draws
+  const G=hudGeom(),S=G.S,hx=G.hx,hy=G.hy;   // tapping the hotbar selects a slot
   if(player&&e.clientY>=hy-4&&e.clientY<=hy+S+4&&e.clientX>=hx&&e.clientX<=hx+S*9){player.sel=clamp(Math.floor((e.clientX-hx)/S),0,8);player.using=null;selShow=2;return;}
-  const L={x:e.clientX,y:e.clientY,t:performance.now(),moved:0,held:false};L.timer=setTimeout(()=>{if(L.moved<10){L.held=true;rmb=true;rmbEdge=true;}},380);looks.set(e.pointerId,L);});
+  const L={x:e.clientX,y:e.clientY,t:performance.now(),moved:0,held:false};L.timer=setTimeout(()=>{if(L.moved<12){L.held=true;rmb=true;rmbEdge=true;if(navigator.vibrate)try{navigator.vibrate(12);}catch(_){}}},380);looks.set(e.pointerId,L);});
 $('tLook').addEventListener('pointermove',e=>{const L=looks.get(e.pointerId);if(!L||!player)return;const dx=e.clientX-L.x,dy=e.clientY-L.y;L.x=e.clientX;L.y=e.clientY;L.moved+=Math.abs(dx)+Math.abs(dy);
-  if(!player.alive&&spectate.mode==='follow')return;lookDelta(dx*1.5,dy*1.5);});
+  if(!player.alive&&spectate.mode==='follow')return;
+  // a little acceleration: slow drags aim finely, fast swipes turn quickly
+  const sp=Math.hypot(dx,dy),acc=1+Math.min(1.2,sp/40);lookDelta(dx*1.5*OPT.tSens*acc,dy*1.5*OPT.tSens*acc);});
 const lookEnd=e=>{const L=looks.get(e.pointerId);if(!L)return;clearTimeout(L.timer);looks.delete(e.pointerId);if(L.held){rmb=false;return;}
-  if(L.moved<10&&performance.now()-L.t<300){lmb=true;lmbEdge=true;setTimeout(()=>{lmb=false;},60);}};
+  if(L.moved<12&&performance.now()-L.t<300){lmb=true;lmbEdge=true;setTimeout(()=>{lmb=false;},60);}};
 $('tLook').addEventListener('pointerup',lookEnd);$('tLook').addEventListener('pointercancel',lookEnd);
-// show the controls only while actually playing
+
+// ---------- show the controls only while actually playing ----------
 const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading'];
-function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');});
+const ICON_FOR={tInv:['inv','list'],tDrop:['drop','list']};
+let touchLast='';
+function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');})&&!(typeof chatUI!=='undefined'&&chatUI);
   TUI.classList.toggle('hidden',!on);if(!on)return;
   const alive=player.alive,lobby=MATCH.state==='lobby';
-  for(const [id,v] of [['tAttack',true],['tUse',alive&&!lobby],['tSneak',alive],['tSprint',alive],['tInv',!lobby||!alive],['tDrop',alive&&!lobby||!alive],['tReady',lobby],['tList',lobby&&online]])$(id).classList.toggle('hidden',!v);
-  $('tInv').firstChild.textContent=alive?'E':'▶';$('tDrop').firstChild.textContent=alive?'Q':'F';}
+  for(const [id,v] of [['tAttack',!lobby],['tUse',alive&&!lobby],['tSneak',alive],['tSprint',alive&&!lobby],['tJump',true],['tInv',!lobby||!alive],['tDrop',alive&&!lobby||!alive],['tReady',lobby],['tList',lobby&&online],['tChat',!!online]])$(id).classList.toggle('hidden',!v);
+  // while flying the column turns into up/down; while dead the small buttons switch the spectator camera
+  const key=(player.flying?'f':'w')+(alive?'a':'d');if(key!==touchLast){touchLast=key;
+    $('tInv').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'inv':'sprint']);$('tDrop').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'drop':'use']);}
+  $('tSneak').classList.toggle('lit',touchIn.sneak&&!player.flying);$('tSprint').classList.toggle('lit',!!touchIn.sprintNow);}
 addEventListener('resize',applyTouchSetting);applyTouchSetting();
 
 // ================= Java-style Options screens (Options / Video Settings / Music & Sounds / Controls / Game Rules / Maps) =================
@@ -5420,6 +5506,10 @@ JPAGES.controls=()=>{const keys=[['Attack','Left Click'],['Use Item','Right Clic
   jSlider(()=>SENS<=0?'Sensitivity: *yawn*':SENS>=1?'Sensitivity: HYPERSPEED!!!':'Sensitivity: '+Math.round(SENS*200)+'%',()=>SENS,v=>{SENS=v;store('bb_sens',SENS);if($('o_sens'))$('o_sens').value=Math.round(SENS*200);},40),
   jBtn(()=>'Invert Mouse: '+onOff(INVY),()=>{INVY=!INVY;store('bb_invy',INVY?'1':'0');if($('o_invy'))$('o_invy').checked=INVY;}),
   jBtn(()=>'Raw Mouse Input: '+({on:'ON',off:'OFF'}[OPT.rawMouse]||'Auto ('+(IS_MAC?'OFF':'ON')+')'),()=>{OPT.rawMouse=OPT.rawMouse==='on'?'off':OPT.rawMouse==='off'?'auto':'on';saveOpt();if(document.pointerLockElement)document.exitPointerLock();}),
+  jSlider(()=>'Touch Look Speed: '+Math.round(OPT.tSens*100)+'%',()=>(OPT.tSens-.3)/1.7,v=>{OPT.tSens=Math.round((.3+v*1.7)*20)/20;saveOpt();},34),
+  jSlider(()=>'Touch Button Size: '+Math.round(OPT.tSize*100)+'%',()=>(OPT.tSize-.7)/.7,v=>{OPT.tSize=Math.round((.7+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
+  jSlider(()=>'Touch Button Opacity: '+Math.round(OPT.tAlpha*100)+'%',()=>(OPT.tAlpha-.3)/.7,v=>{OPT.tAlpha=Math.round((.3+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
+  jBtn(()=>'Touch Vibration: '+onOff(OPT.tBuzz!==false),()=>{OPT.tBuzz=OPT.tBuzz===false;saveOpt();}),
   jBtn(()=>'Mac Click Fix: '+({on:'ON',off:'OFF'}[OPT.clickFix]||'Auto ('+(IS_MAC?'ON':'OFF')+')'),()=>{OPT.clickFix=OPT.clickFix==='on'?'off':OPT.clickFix==='off'?'auto':'on';saveOpt();})].concat(keys.map(([a,k])=>jBtn(`${a}: ${k}`,null,'off')))};};
 JPAGES.rules=()=>({title:'Game Rules',items:[ruleBtn('o_mode','Mode'),ruleBtn('o_round','Round Length'),ruleBtn('o_hunger','Hunger Rate'),ruleBtn('o_refill','Item Respawn'),ruleBtn('o_grace','Grace Period'),
   ruleBtn('o_show','Showdown'),ruleBtn('o_take','Take Everything'),ruleBtn('o_central','Central Spawn'),ruleBtn('o_bots','Bots'),ruleBtn('o_diff','Bot Difficulty'),ruleBtn('o_brlen','Battle Royale Length'),ruleBtn('o_brx','BR Extra Loot'),ruleBtn('o_ench','Enchanted Loot')]});
@@ -6511,7 +6601,7 @@ function creClick(kind,i,right,shift){const p=player;
 addEventListener('keydown',e=>{if(!CR.open||CR.mode!=='creative'||!CR.hover||CR.hover[0]!=='c')return;if(!e.code.startsWith('Digit'))return;const n=+e.code.slice(5)-1;if(n<0||n>8)return;
   const id=CRE.list[CR.hover[1]];if(!id)return;player.inv[n]={id,count:stackMax(id)};sfx('click');e.stopImmediatePropagation();craftRender();},true);
 // ---- breaking: instant, one block every quarter second while held (swords don't break blocks, like Java) ----
-function creativeMine(p,dt){p.creT=(p.creT||0)-dt;if(lmbEdge)p.creT=0;if(p.creT>0)return;const h=raycastBlock(eye(p),fwd(p),5);if(!h)return;
+function creativeMine(p,dt){p.creT=(p.creT||0)-dt;if(lmbEdge)p.creT=0;if(p.creT>0)return;const h=raycastBlock(eye(p),fwd(p),5,true,true);if(!h)return;
   const held=p.inv[p.sel];if(held&&ITEMS[held.id]&&ITEMS[held.id].tool==='sword')return;breakBlock(h.x,h.y,h.z,p);p.swing=1;p.creT=.25;}
 // ---- flying: double-tap jump ----
 addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||!locked||chatUI||chestOpen)return;const p=player;if(!creative()||!p.alive)return;
@@ -6520,7 +6610,7 @@ addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||!locked||chatUI||c
 function creFlyEdge(p){const rise=p.jump&&!p._jPrev;p._jPrev=p.jump;if(!rise||!(touchActive||padActive))return;if(perfT-CRE.lastSpace<.3){p.flying=!p.flying;CRE.lastSpace=-1;}else CRE.lastSpace=perfT;}
 // ---- pick block: middle click puts the block you look at in your hand ----
 document.addEventListener('mousedown',e=>{if(e.button!==1||!locked||!player||!player.alive||MATCH.mode!=='survival')return;e.preventDefault();const p=player;
-  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5);if(!h)return;let b=h.b;if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
+  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5,true,true);if(!h)return;let b=h.b;if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
   const id='b'+b;if(!ITEMS[id])return;const have=p.inv.findIndex((s,i)=>i<9&&s&&s.id===id);if(have>=0){p.sel=have;selShow=2;return;}if(!creative())return;
   let slot=p.inv[p.sel]?p.inv.findIndex((s,i)=>i<9&&!s):p.sel;if(slot<0)slot=p.sel;p.inv[slot]={id,count:stackMax(id)};p.sel=slot;selShow=2;sfx('click');});
 // ---- switching game mode ----

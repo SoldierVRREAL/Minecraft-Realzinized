@@ -181,6 +181,8 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 | F3 | Debug screen |
 | Esc | Pause (Leave Game saves your world) |
 
+**Mobile controls** (pocket-edition style): a square stick bottom-left (it moves to where your thumb lands; push past the top of the frame to sprint), and pixel-art buttons on the right: jump, sneak and use in a column, with sprint and attack beside them. Tap sneak or sprint to toggle them, or hold them. While flying, jump and sneak go up and down. Small buttons at the top: drop (hold to drop the whole stack), inventory, pause, and chat when online. Drag the right side to look, tap the world to hit, hold still to use. Options > Controls has Touch Look Speed, Button Size, Button Opacity and Vibration.
+
 ## Beating the game: the Nether, the End and the Ender Dragon
 
 Survival now has a full journey from the first night to the credits.
