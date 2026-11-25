@@ -7,7 +7,7 @@ function icon9(pat,x,y,s,frac,pal,flip){
   const draw=(mode)=>pat.forEach((r,j)=>{for(let i=0;i<9;i++){const c=r[i];if(c==='.')continue;let col=c==='k'?'#000':mode==='empty'?pal.e:pal[c];if(!col)continue;hc.fillStyle=col;hc.fillRect(x+i*s,y+j*s,s,s);}});
   draw('empty');if(frac>0){hc.save();hc.beginPath();const w=9*s;if(flip)hc.rect(x+w*(1-frac),y,w*frac,9*s);else hc.rect(x,y,w*frac,9*s);hc.clip();draw('full');hc.restore();}
 }
-const HEART_PAL={e:'#2b2b2b',r:'#e2161b',d:'#a40e12',w:'#ffd0d0'},POISON_PAL={e:'#2b2b2b',r:'#8aa61e',d:'#5e7514',w:'#e0f0a0'},ABS_PAL={e:'#2b2b2b',r:'#e8c21c',d:'#b08a10',w:'#fff2a0'},
+const HEART_PAL={e:'#2b2b2b',r:'#9b2de2',d:'#6510a4',w:'#ecd0ff'},POISON_PAL={e:'#2b2b2b',r:'#8aa61e',d:'#5e7514',w:'#e0f0a0'},ABS_PAL={e:'#2b2b2b',r:'#e8c21c',d:'#b08a10',w:'#fff2a0'},
   FOOD_PAL={e:'#2b2b2b',m:'#b5592a',d:'#7a3416',b:'#e8e0c8'},ARMOR_PAL={e:'#2b2b2b',w:'#d8d8d8',a:'#8a8a8a'};
 function spr(name,x,y,w,h){const im=PACK.gui[name];if(!im)return false;hc.drawImage(im,x,y,w,h);return true;}
 const HFONT="'VT323','Courier New',monospace";

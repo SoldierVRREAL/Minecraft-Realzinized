@@ -250,7 +250,7 @@ function showResults(m){
     $('sbAward').replaceChildren(iconCanvas(aw[1]),document.createTextNode(aw[0]));
     $('sbFav').replaceChildren(iconCanvas(r.fw&&ICONS[r.fw]?r.fw:null),document.createTextNode(r.fw&&ITEMS[r.fw]?'Favorite weapon':'No favorite weapon'));
     if(r.fw&&ITEMS[r.fw])$('sbFav').title=ITEMS[r.fw].name;
-    $('sbDealt').replaceChildren(heartPic('#e8261c','#8a0f0a'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
+    $('sbDealt').replaceChildren(heartPic('#9b2de2','#5a0f8a'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
     $('sbTaken').replaceChildren(heartPic('#3e3e3e','#1e1e1e'),document.createTextNode(Math.round(r.r||0)+' received'));
     $('sbWinner').textContent=r.id===m.w?'Winner':ordinal(r.p||rows.length)+' place';};
   rows.forEach((r,i)=>{const e=entById(r.id);const d=document.createElement('div');d.className='sbRow'+(r.id===me?' me':'');
