@@ -11,7 +11,7 @@ const SND_NAMES={burn:['damage/hit','entity/player/hurt'],drown:['damage/hit','e
   pick:['random/pop','entity/item/pickup'],click:['random/click','ui/button/click'],glass:['random/glass','block/glass/break'],squeak:['mob/bat/idle','entity/bat/ambient'],batdeath:['mob/bat/death','entity/bat/death'],
   fall:['damage/fallsmall','entity/player/small_fall'],fallbig:['damage/fallbig','entity/player/big_fall'],splash:['liquid/splash','entity/player/splash'],swim:['liquid/swim','entity/player/swim'],
   fizz:['random/fizz','block/fire/extinguish'],fire:['fire/fire','block/fire/ambient'],win:['random/levelup','entity/player/levelup'],orb:['random/orb','entity/experience_orb/pickup'],slime:['mob/slime/big','block/slime_block/fall'],
-  breath:['random/breath','entity/player/breath'],drown:['damage/hit','entity/player/hurt_drown']};
+  breath:['random/breath','entity/player/breath'],crit:['entity/player/attack/crit'],drown:['damage/hit','entity/player/hurt_drown']};
 const SND_EVENTS={hit:['entity.player.hurt'],hurt:['entity.player.hurt'],death:['entity.player.death'],burn:['entity.generic.burn','entity.player.hurt_on_fire'],drown:['entity.player.hurt_drown'],
   bow:['entity.arrow.shoot'],arrowhit:['entity.arrow.hit'],chest:['block.chest.open'],chestclose:['block.chest.close'],eat:['entity.generic.eat'],burp:['entity.player.burp'],drink:['entity.generic.drink'],
   pick:['entity.item.pickup'],click:['ui.button.click'],glass:['entity.splash_potion.break','block.glass.break'],squeak:['entity.bat.ambient'],fall:['entity.player.small_fall'],fallbig:['entity.player.big_fall'],
@@ -54,6 +54,13 @@ function sfx(type,o={}){
   case 'eat':noiseHit(.08,1200,1.5,.25*vol);return;case 'burp':tone('sawtooth',140,90,.25,.08*vol);return;case 'drink':tone('sine',300,200,.1,.12*vol);return;
   case 'pick':tone('sine',900+Math.random()*400,1600,.07,.12*vol);return;case 'glass':noiseHit(.3,4000,2,.25*vol,'highpass');return;case 'fizz':noiseHit(.5,5000,.5,.15*vol,'highpass');return;
   case 'squeak':tone('square',2400,3200,.09,.04*vol);return;case 'click':tone('square',700,500,.04,.05*vol);return;
+  case 'crit':noiseHit(.14,2600,1.2,.32*vol,'bandpass',.7);tone('sine',420,260,.12,.12*vol);return;
+  case 'atkstrong':noiseHit(.12,900,1,.34*vol,'lowpass',.5);tone('sine',140,70,.12,.22*vol);return;
+  case 'atkweak':noiseHit(.08,1400,1.4,.14*vol,'bandpass',.5);return;
+  case 'atksweep':noiseHit(.26,2200,.6,.26*vol,'bandpass',.35);return;
+  case 'atkknock':noiseHit(.1,600,1,.3*vol,'lowpass',.6);tone('triangle',200,90,.14,.16*vol);return;
+  case 'shieldblock':noiseHit(.09,500,3,.42*vol,'bandpass',.9);tone('square',180,120,.07,.1*vol);return;
+  case 'shieldbreak':noiseHit(.35,1100,1.5,.45*vol,'bandpass',.5);tone('sawtooth',300,90,.3,.12*vol);return;
   case 'tick':tone('square',880,880,.06,.05);return;case 'go':tone('square',523,1046,.35,.08);return;
   case 'win':tone('triangle',523,1568,.9,.09);return;case 'orb':tone('sine',1200,1800,.1,.08*vol);return;case 'slime':noiseHit(.2,250,3,.3*vol,'lowpass');return;
   }
@@ -195,6 +202,8 @@ function drawHumanoid(e){
   let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;const rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
   const held=e.inv[e.sel];if(held)rX=rX*.5-Math.PI/10;
   if(e.using==='block'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}
+  if(e.using==='shield'){if(held&&ITEMS[held.id]&&ITEMS[held.id].type==='shield'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}else{lX=lX*.5-Math.PI*.3;lY=Math.PI/6;}}
+  const offId=e.isLocal||owned(e)?(e.off&&e.off.id):e.offId;if(offId&&!(e.using==='shield'))lX=lX*.5-Math.PI/10;
   if(e.using==='eat'||e.using==='drink'){rX=-1.2+Math.sin(e.useT*22)*.12;rY=-.3;}
   let bodyY=0;const sw=e.swing>0?1-e.swing:-1;
   if(sw>=0){bodyY=Math.sin(Math.sqrt(sw)*Math.PI*2)*.2;rY+=bodyY;lY+=bodyY;lX+=bodyY;let f=1-sw;f=f*f;f=f*f;f=1-f;const f1=Math.sin(f*Math.PI),f2=Math.sin(sw*Math.PI)*-(headPitch-.7)*.75;
@@ -228,6 +237,10 @@ function drawHumanoid(e){
       :it.type==='weapon'?chain(hand,...disp([0,1.25,-3.5],[0,90,-35],.85))
       :chain(hand,...disp([0,1,-3],[-90,0,0],.55));
     const hg=it.ench&&!hm.block;if(hg)glintOn(ITEM_GS);drawMesh(hm.mesh,chain(m,M4.sc(.5,.5,.5)),hm.tex);if(hg)glintOff();}
+  if(offId&&ITEMS[offId]){const hm=heldMesh(offId),it=ITEMS[offId],R=Math.PI/180;   // the off hand, mirrored
+    const hand=chain(parts.larm,M4.sc(-1,-1,1),M4.tr(1/16,7/16,1/16),M4.tr(0,e.sneak?.203125:0,0),M4.sc(2,2,2));const disp=(t,r,sc)=>[M4.tr(t[0]/16,t[1]/16,t[2]/16),M4.ry(r[1]*R),M4.rx(r[0]*R),M4.rz(r[2]*R),M4.sc(sc,sc,sc)];
+    const m=it.type==='shield'?chain(hand,...disp([1,2.5,-1.5],[0,-90,0],1.1)):hm.block?chain(hand,...disp([0,1.5,-2.75],[10,45,-170],.375)):chain(hand,...disp([0,1.25,-3.5],[0,-90,35],.85));
+    drawMesh(hm.mesh,chain(m,M4.sc(.5,.5,.5)),hm.tex);}
   gl.uniform1f(PT.u.hurt,0);
   if(e.fire>0){useBox(VP,camPos);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.uniform1f(PB.u.lit,0);for(let i=0;i<3;i++)box(chain(M4.tr(e.pos[0],e.pos[1]+.9+Math.sin(perfT*9+i)*.2,e.pos[2]),M4.ry(perfT*2+i*2),M4.sc(.7,1.6,.7)),[1,.5+.2*i,.1],.18);gl.disable(gl.BLEND);useTex(VP,camPos);}
 }
@@ -275,7 +288,8 @@ function drawHand(proj,pre){
   const p=player,R=Math.PI/180;const cur=p.inv[p.sel];const key=cur?cur.id+':'+cur.count:null;
   // updateEquippedItem: lower the old stack, swap below 0.1, raise the new one (0.4 per tick). Any change, even the count, dips the hand like 1.8.
   if(p.handKey===undefined){p.handKey=key;p.handId=cur?cur.id:null;p.equip=1;}
-  const tgt=key===p.handKey?1:0;p.equip+=clamp(tgt-p.equip,-dtFrame*8,dtFrame*8);if(p.equip<.1&&key!==p.handKey){p.handKey=key;p.handId=cur?cur.id:null;}
+  const tgt=key===p.handKey?(javaCombat()?Math.pow(atkStrength(p),3):1):0;p.equip+=clamp(tgt-p.equip,-dtFrame*8,dtFrame*8);
+  drawOffHand(proj,pre);if(p.equip<.1&&key!==p.handKey){p.handKey=key;p.handId=cur?cur.id:null;}
   const f=1-p.equip,sp=p.swing>0?1-p.swing:0,sq=Math.sqrt(sp);
   // rotateWithPlayerRotations: the arm lags behind fast turns (renderArmYaw/Pitch ease 0.5 per tick)
   const k=1-Math.pow(.5,dtFrame*20);if(p.armYaw==null){p.armYaw=p.yaw;p.armPitch=p.pitch;}let dy=p.yaw-p.armYaw;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;

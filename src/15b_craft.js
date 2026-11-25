@@ -57,7 +57,7 @@ function tickFurnaces(dt){for(const [k,f] of FURN){const can=f.in&&SMELT[f.in.id
 // ---------- chests you place ----------
 function survChestAdd(x,y,z){const k=key(x,y,z);if(!chests.has(k))chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items:new Array(CHEST_SLOTS).fill(null)});}
 function survContainerGone(x,y,z,was){const k=key(x,y,z);
-  if(was===B.CHEST){const c=chests.get(k);if(c){if(isHost())for(const s of c.items)if(s)hostSpawnDrop([x+.5,y,z+.5],s.id,s.count);chests.delete(k);if(chestOpen===c)chestClose(false);}}
+  if(was===B.CHEST){const c=chests.get(k);if(c){if(dropAuth())for(const s of c.items)if(s)hostSpawnDrop([x+.5,y,z+.5],s.id,s.count);chests.delete(k);if(chestOpen===c)chestClose(false);}}
   if(was===B.FURNACE){const f=FURN.get(k);if(f){for(const s of [f.in,f.fuel,f.out])if(s)requestDrop([x+.5,y-.5,z+.5],s.id,s.count);FURN.delete(k);if(CR.open&&CR.fk===k)craftClose();}}}
 // ---------- durability and the new tools' abilities ----------
 function wearHeld(p,n){const s=p.inv[p.sel];if(!s||MATCH.mode!=='survival'||p.gm==='creative')return;const m=maxDur(s.id);if(!m)return;s.dmg=(s.dmg||0)+n;

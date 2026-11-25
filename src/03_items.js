@@ -8,6 +8,7 @@ TOOL_TIERS.forEach(([k,N,p,c,lv])=>{
   item(k+'_pickaxe',{name:N+' Pickaxe',type:'weapon',tool:'pickaxe',dmg:3+lv,color:c,tex:'item/'+p+'_pickaxe'});
 });
 item('bow',{name:'Bow',type:'bow',color:'#7a5530',tex:'item/bow'});
+item('shield',{name:'Shield',type:'shield',color:'#8a5a2b',tip:['Java combat (Battle): put it in your off hand (F)','Right-click to block attacks from the front','An axe hit disables it for 5 seconds']});
 item('arrow',{name:'Arrow',type:'ammo',stack:64,color:'#cfcfcf',tex:'item/arrow'});
 const FOODS=[['apple','Apple',4,2.4,'#d8261c'],['bread','Bread',5,6,'#c99a4a'],['cooked_beef','Steak',8,12.8,'#8a4a2a'],['cooked_porkchop','Cooked Porkchop',8,12.8,'#c98a6a'],
   ['cooked_chicken','Cooked Chicken',6,7.2,'#c8904a'],['carrot','Carrot',3,3.6,'#f08a1a'],['baked_potato','Baked Potato',5,6,'#c8a050'],['cookie','Cookie',2,.4,'#b0702a'],
@@ -64,6 +65,7 @@ function procIcon(id){
   else if(it.type==='block'){const D=BD[it.block];const t1=D.top,t2=D.side;g.imageSmoothingEnabled=false;
     R(4,6,24,22,'#000');g.drawImage(atlasCanvas,(t2%ACOLS)*TILE,Math.floor(t2/ACOLS)*TILE,TILE,TILE,5,9,22,18);
     g.drawImage(atlasCanvas,(t1%ACOLS)*TILE,Math.floor(t1/ACOLS)*TILE,TILE,TILE/4,5,6,22,4);R(16,9,11,18,'rgba(0,0,0,.25)');}
+  else if(it.type==='shield'){R(7,3,18,26,'#3c3c3c');R(9,5,14,22,'#8a5a2b');for(let x=9;x<23;x+=4)R(x,5,1,22,'#6e4620');R(10,6,2,20,'#a57138');R(15,13,2,6,'#b9b9b9');R(13,15,6,2,'#b9b9b9');R(7,3,18,2,'#9a9a9a');R(7,27,18,2,'#2a2a2a');}
   else if(it.tool==='sword'){line(26,5,12,19,6,shadeHex(it.color,.6));line(26,5,12,19,3,it.color);line(25,6,15,16,1,shadeHex(it.color,1.3));line(7,15,16,24,4,'#3b2a14');line(11,20,6,25,4,'#6b4a22');R(3,26,4,4,'#3b2a14');}
   else if(it.tool==='axe'){line(8,26,22,8,3,'#6b4a22');g.fillStyle=shadeHex(it.color,.6);g.beginPath();g.moveTo(17,5);g.lineTo(27,9);g.lineTo(25,17);g.lineTo(19,13);g.fill();g.fillStyle=it.color;g.beginPath();g.moveTo(18,7);g.lineTo(25,10);g.lineTo(24,15);g.lineTo(20,12);g.fill();}
   else if(it.tool==='shovel'){line(7,25,20,12,3,'#6b4a22');g.fillStyle=shadeHex(it.color,.6);g.beginPath();g.moveTo(18,8);g.lineTo(25,4);g.lineTo(28,7);g.lineTo(24,14);g.lineTo(20,14);g.fill();g.fillStyle=it.color;g.beginPath();g.moveTo(19,9);g.lineTo(25,6);g.lineTo(26,8);g.lineTo(23,12);g.lineTo(21,12);g.fill();}
@@ -106,11 +108,11 @@ function rebuildIcons(){for(const k in ITEMS){const it=ITEMS[k],b=it.base||k;con
 
 // ---------- loot ----------
 const LOOT_EDGE=[['wood_sword',7],['stone_sword',5],['iron_sword',1.4],['golden_sword',2],['wood_axe',5],['stone_axe',4],['iron_axe',1.5],['stone_pickaxe',3],['iron_pickaxe',1.2],
- ['bow',3],['arrow',6,3,8],['apple',6,1,3],['bread',5,1,3],['cooked_beef',3,1,2],['cooked_porkchop',3,1,2],['cooked_chicken',3,1,2],['carrot',4,1,4],['baked_potato',4,1,3],['cookie',3,2,6],['melon_slice',4,2,5],['pumpkin_pie',2,1,1],['golden_apple',.5],
+ ['bow',3],['arrow',6,3,8],['shield',2.5],['apple',6,1,3],['bread',5,1,3],['cooked_beef',3,1,2],['cooked_porkchop',3,1,2],['cooked_chicken',3,1,2],['carrot',4,1,4],['baked_potato',4,1,3],['cookie',3,2,6],['melon_slice',4,2,5],['pumpkin_pie',2,1,1],['golden_apple',.5],
  ['leather_helmet',4],['leather_chestplate',3],['leather_leggings',3],['leather_boots',4],['golden_helmet',2],['golden_chestplate',1.5],['golden_leggings',1.5],['golden_boots',2],
  ['chainmail_helmet',1.6],['chainmail_chestplate',1.2],['chainmail_leggings',1.3],['chainmail_boots',1.6],['iron_helmet',.8],['iron_chestplate',.4],['iron_leggings',.5],['iron_boots',.8],
  ['potion_healing',1.5],['potion_regeneration',1],['potion_swiftness',1.2],['potion_fire_resistance',.8],['splash_poison',1],['splash_slowness',1],['splash_weakness',.8],['splash_harming',.6],['splash_healing',.8]];
-const LOOT_CENTER=[['stone_sword',5],['iron_sword',5],['diamond_sword',1.5],['iron_axe',4],['diamond_axe',1.5],['bow',5],['arrow',8,6,16],['golden_apple',2.5],['cooked_beef',5,2,4],['bread',4,2,4],
+const LOOT_CENTER=[['stone_sword',5],['iron_sword',5],['diamond_sword',1.5],['iron_axe',4],['diamond_axe',1.5],['bow',5],['arrow',8,6,16],['shield',3],['golden_apple',2.5],['cooked_beef',5,2,4],['bread',4,2,4],
  ['chainmail_chestplate',3],['chainmail_leggings',3],['iron_helmet',3],['iron_chestplate',2],['iron_leggings',2],['iron_boots',3],['diamond_helmet',.8],['diamond_chestplate',.5],['diamond_leggings',.6],['diamond_boots',.8],
  ['potion_healing',2],['potion_strength',1.5],['potion_regeneration',1.5],['potion_invisibility',.8],['splash_harming',1.5],['splash_poison',1.2]];
 // enchanted finds: rare at the edges, common enough in the centre chests to be worth the run (turn off with the Enchanted Loot rule)

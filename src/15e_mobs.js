@@ -179,7 +179,7 @@ function mobHurt(e,src,cause){const T=MOB_T[e.mob];if(!src||src===e)return;
   else if(!(src.kind==='mob'&&src.owner&&src.owner===e.owner)){if(e.owner&&src.id===e.owner)return;e.target=src;e.angry=30;
     if(e.mob==='ice_wolf'&&!e.owner)for(const m of mobs)if(m!==e&&m.mob==='ice_wolf'&&!m.owner&&dist(m.pos,e.pos)<14){m.angry=30;m.target=src;}}}
 function mobDie(e,src,cause){if(!e.alive)return;const T=MOB_T[e.mob];e.alive=false;e.health=0;e.deathT=0;e.fire=e.fire||0;
-  if(isHost()){const burnt=e.fire>0;for(const [id,a,b] of T.drops){const n=a+Math.floor(Math.random()*(b-a+1))*(e.baby?0:1);if(n>0)hostSpawnDrop([e.pos[0],e.pos[1]-.4,e.pos[2]],burnt&&COOKED[id]?COOKED[id]:id,n);}
+  if(dropAuth()){const burnt=e.fire>0;for(const [id,a,b] of T.drops){const n=a+Math.floor(Math.random()*(b-a+1))*(e.baby?0:1);if(n>0)hostSpawnDrop([e.pos[0],e.pos[1]-.4,e.pos[2]],burnt&&COOKED[id]?COOKED[id]:id,n);}
     for(const [id,ch] of T.rare||[])if(Math.random()<ch)hostSpawnDrop([e.pos[0],e.pos[1]-.4,e.pos[2]],id,1);
     if(e.mob==='sheep'&&!e.sheared&&!e.baby)hostSpawnDrop([e.pos[0],e.pos[1]-.4,e.pos[2]],WOOL_IDS[e.color]||'b71',1);
     if(src&&src.kind==='player')src.kills=(src.kills||0)+1;}
@@ -241,7 +241,7 @@ function mobNet(code,d,from,fromHost){
 
 // ---------------- using items on mobs ----------------
 function lookMob(p,range){const o=eye(p),d=fwd(p);const bh=raycastBlock(o,d,range);const maxT=bh?bh.t:range;let best=null,bt=maxT;for(const m of mobs){if(!m.alive)continue;const tt=rayBox(o,d,...entBox(m,.1));if(tt>=0&&tt<bt){bt=tt;best=m;}}return best;}
-function mobInteract(p,s){if(!INF||!p.alive)return false;const m=lookMob(p,3.5);if(!m)return false;const id=s&&s.id;const send=a=>{if(isHost())mobAct(m,a,p);else netSend(N.MOBUSE,{id:m.id,a,by:p.id},'host');};
+function mobInteract(p,s){if(!INF||!p.alive)return false;const m=lookMob(p,3.5);if(!m)return false;const id=s&&s.id;const send=a=>{if(isHost()||dimLocal())mobAct(m,a,p);else netSend(N.MOBUSE,{id:m.id,a,by:p.id},'host');};
   if(id==='shears'&&((m.mob==='sheep'&&!m.sheared&&!m.baby)||m.mob==='glowshroom')){send('shear');wearHeld(p,1);p.swing=1;sfx('pick',{vol:.8});return true;}
   if(id==='bucket'&&m.mob==='cow'&&!m.baby){p.inv[p.sel]={id:'milk_bucket',count:1};p.swing=1;sfx('drink');return true;}
   if(id==='bone'&&m.mob==='ice_wolf'&&!m.owner){consume(p,p.sel);send('tame');p.swing=1;return true;}
@@ -263,7 +263,7 @@ function useSpecial(p,s){if(!INF||!s)return false;const id=s.id;
   if(id==='flint_and_steel'){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&h.b===B.TNT){igniteTNT(h.x,h.y,h.z,4,p);wearHeld(p,1);p.swing=1;return true;}return false;}
   return false;}
 function eggImpact(pr){spawnParticles(pr.pos[0],pr.pos[1],pr.pos[2],8,[.95,.92,.85],2);sfx('pick',{pos:pr.pos,vol:.6});
-  if(!owned(pr.owner)||Math.random()>=.125)return;const p=[pr.pos[0],pr.pos[1],pr.pos[2]];if(isHost())spawnMob('chicken',p,{baby:true});else netSend(N.MOBUSE,{a:'egg',p},'host');}
+  if(!owned(pr.owner)||Math.random()>=.125)return;const p=[pr.pos[0],pr.pos[1],pr.pos[2]];if(isHost()||dimLocal())spawnMob('chicken',p,{baby:true});else netSend(N.MOBUSE,{a:'egg',p},'host');}
 function useTotem(e){const i=e.inv.findIndex(s=>s&&s.id==='totem');if(i<0)return false;e.inv[i]=null;e.health=6;e.fire=0;e.effects={};giveEffect(e,'regen',12,1);giveEffect(e,'absorption',8,1);e.absorb=Math.max(e.absorb||0,4);
   spawnParticles(e.pos[0],e.pos[1]+1,e.pos[2],50,[1,.85,.3],4);if(e===player){chatMsg('Your Totem of Renewal saved you!','#ffdd55',false);sfx('win');}return true;}
 function hammerQuake(e,t,dmg){for(const m of hitList()){if(m===e||m===t||!m.alive||m.bat||dist(m.pos,t.pos)>3)continue;damage(m,dmg*.5,e,'melee',[m.pos[0]-t.pos[0],m.pos[2]-t.pos[2],1,0,0],false,[['ignite',3,0]]);}
@@ -292,7 +292,7 @@ function mobSnd(e,kind){if(!actx||!camPos)return;const T=MOB_T[e.mob];const set=
 function mobsUpdate(dt){
   if(MATCH.mode!=='survival'||MATCH.state!=='play'){if(mobs.length)mobs=[];primed=[];return;}
   if(SURV.loading)return;
-  const host=isHost();
+  const host=isHost()||dimLocal();
   for(const e of mobs){e.invuln=Math.max(0,e.invuln-dt);e.hurtT=Math.max(0,e.hurtT-dt);e.atkCD-=dt;e.swing=Math.max(0,e.swing-dt*4);
     if(e.deathT!=null){e.deathT+=dt;if(e.deathT>.9){e.gone=true;spawnParticles(e.pos[0],e.pos[1]+e.eh*.5,e.pos[2],14,[.85,.85,.85],1.2,'poof');}continue;}
     if(host)updateMob(e,dt);else{interpRemote(e,dt);if(e.bodyYawNet!=null)e.bodyYaw+=angTo(e.bodyYaw,e.bodyYawNet)*Math.min(1,dt*12);e.headYaw=e.yaw;}
@@ -300,7 +300,7 @@ function mobsUpdate(dt){
     e.sayT-=dt;if(e.sayT<=0){e.sayT=8+Math.random()*16;if(e.alive)mobSnd(e,'say');}}
   if(mobs.some(m=>m.gone))mobs=mobs.filter(m=>!m.gone);
   tickPrimed(dt);
-  if(host){if(sDiff()===0&&mobs.some(m=>MOB_T[m.mob].kind==='hostile'))mobs=mobs.filter(m=>MOB_T[m.mob].kind!=='hostile');mobSpawnTick(dt);mobDespawn(dt);sendMobs(dt);}
+  if(host){if(isHost())sendMobs(dt);if(sDiff()===0&&mobs.some(m=>MOB_T[m.mob].kind==='hostile'))mobs=mobs.filter(m=>MOB_T[m.mob].kind!=='hostile');mobSpawnTick(dt);mobDespawn(dt);}
   if(GZ.shake>0)GZ.shake=Math.max(0,GZ.shake-dt);}
 
 // ---------------- drawing ----------------
@@ -325,8 +325,8 @@ function drawMob(e){const T=MOB_T[e.mob];const tk=mobTexKey(e);const TX=MOB_TEX[
   if(model==='pig'||model==='cow'||model==='deer'||model==='sheep'||model==='creeper'){R.l1=[C(ls)*1.4*la,0,0];R.l2=[C(ls+Math.PI)*1.4*la,0,0];R.l3=[C(ls+Math.PI)*1.4*la,0,0];R.l4=[C(ls)*1.4*la,0,0];R.head=[hX,hY,0];}
   if(model==='wolf'){R.l1=[C(ls)*1.4*la,0,0];R.l2=[C(ls+Math.PI)*1.4*la,0,0];R.l3=[C(ls+Math.PI)*1.4*la,0,0];R.l4=[C(ls)*1.4*la,0,0];R.head=[hX,hY,0];R.tail=[e.angry>0?1.5:e.owner?1.2:.65,C(ls)*1.4*la,0];}
   if(model==='chicken'){R.head=[hX,hY,0];R.rleg=[C(ls)*1.4*la,0,0];R.lleg=[C(ls+Math.PI)*1.4*la,0,0];const fl=e.onGround===false||(e.vel&&Math.abs(e.vel[1])>1)?Math.abs(Math.sin(perfT*20))*1.2:0;R.rwing=[0,0,fl];R.lwing=[0,0,-fl];}
-  if(model==='zombie'||model==='skeleton'){R.head=[hX,hY,0];const sw=e.swing>0?Math.sin((1-e.swing)*Math.PI):0;const armX=-HP2+Math.sin(perfT*1.3)*.05;
-    R.rarm=[armX-sw*.6,-.1+sw*.3,Math.cos(perfT*1.8)*.05+.05];R.larm=[armX-sw*.4,.1-sw*.3,-Math.cos(perfT*1.8)*.05-.05];if(model==='skeleton'&&!e.target&&!(e.swing>0)&&la>.05){R.rarm=[C(ls+Math.PI)*la,0,.05];R.larm=[C(ls)*la,0,-.05];}
+  if(model==='zombie'||model==='skeleton'||model==='enderman'){R.head=[hX,hY,0];const sw=e.swing>0?Math.sin((1-e.swing)*Math.PI):0;const armX=-HP2+Math.sin(perfT*1.3)*.05;
+    R.rarm=[armX-sw*.6,-.1+sw*.3,Math.cos(perfT*1.8)*.05+.05];R.larm=[armX-sw*.4,.1-sw*.3,-Math.cos(perfT*1.8)*.05-.05];if((model==='skeleton'||model==='enderman')&&!e.target&&!(e.swing>0)){R.rarm=[C(ls+Math.PI)*la,0,.05];R.larm=[C(ls)*la,0,-.05];}
     R.rleg=[C(ls)*1.4*la,0,0];R.lleg=[C(ls+Math.PI)*1.4*la,0,0];}
   if(model==='spider'){R.head=[hX,hY,0];const f6=Math.PI/4,f8=Math.PI/8,k=ls*2;
     const z=[-f6,f6,-f6*.74,f6*.74,-f6*.74,f6*.74,-f6,f6],y=[f8*2,-f8*2,f8,-f8,-f8,f8,-f8*2,f8*2];
@@ -341,7 +341,7 @@ function drawMob(e){const T=MOB_T[e.mob];const tk=mobTexKey(e);const TX=MOB_TEX[
   if(model==='sheep'&&!e.sheared&&MOB_TEX.sheep_fur){const F=mobMesh('sheep_fur',MOB_TEX.sheep_fur.h);const c=hexRGB(WOOL_TINT[e.color]||(e.color===-1?'#b02e26':'#ffffff'));gl.uniform4f(PT.u.tint,c[0],c[1],c[2],1);
     for(const n in F)drawMesh(F[n],mats[n],MOB_TEX.sheep_fur.tex);gl.uniform4f(PT.u.tint,1,1,1,1);}
   if(model==='wolf'&&e.owner&&MOB_TEX.wolf_collar&&PACK.mobs&&PACK.mobs.wolf_collar){gl.uniform4f(PT.u.tint,.85,.15,.15,1);for(const n of ['mane','body'])drawMesh(M[n],mats[n],MOB_TEX.wolf_collar.tex);gl.uniform4f(PT.u.tint,1,1,1,1);}
-  if(model==='spider'&&e.deathT==null){const ek=e.mob==='crystal_spider'?'crystal_spider_eyes':'spider_eyes';const ET=MOB_TEX[ek];if(ET&&PACK.mobs&&PACK.mobs[ek]){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);gl.uniform1f(PT.u.bright,1.2);
+  if((model==='spider'||model==='enderman')&&e.deathT==null){const ek=model==='enderman'?'enderman_eyes':e.mob==='crystal_spider'?'crystal_spider_eyes':'spider_eyes';const ET=MOB_TEX[ek];if(ET&&PACK.mobs&&PACK.mobs[ek]){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);gl.uniform1f(PT.u.bright,1.2);
     drawMesh(M.head,mats.head,ET.tex);gl.depthMask(true);gl.disable(gl.BLEND);}}
   gl.uniform1f(PT.u.hurt,0);
   if(e.fire>0&&e.deathT==null){useBox(VP,camPos);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.uniform1f(PB.u.lit,0);const w=e.hw*2.2,h=e.eh*.9;

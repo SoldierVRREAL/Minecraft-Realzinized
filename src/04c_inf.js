@@ -11,7 +11,7 @@ function chunkState(cx,cz){const s=SLOT(cx,cz);return ownX[s]===cx&&ownZ[s]===cz
 function chunkReadyAt(x,z){const cx=Math.floor(x)>>4,cz=Math.floor(z)>>4;return chunkState(cx,cz)>=3;}
 function infInit(ringBlocks,seed,edits){
   if(INF)infShutdown();
-  INF=true;WX=WZ=ringBlocks;WY=128;XM=ZM=ringBlocks-1;RN=ringBlocks>>4;RCM=RN-1;CX=0;CZ=0;
+  INF=true;WX=WZ=ringBlocks;WY=INF_WY;XM=ZM=ringBlocks-1;RN=ringBlocks>>4;RCM=RN-1;CX=0;CZ=0;
   world=new Uint8Array(WX*WY*WZ);light=new Uint8Array(WX*WY*WZ);surfaceH=new Int16Array(WX*WZ).fill(-1);
   ownX=new Int32Array(RN*RN).fill(0x7fffffff);ownZ=new Int32Array(RN*RN).fill(0x7fffffff);cst=new Uint8Array(RN*RN);cmaxY=new Uint8Array(RN*RN);cdirty=new Uint8Array(RN*RN);
   chests=new Map();reserved=[];inB=inBInf;WSEED=seed|0;worldEdits=edits||new Map();featCache.clear();infSlotsUsed=0;
@@ -104,34 +104,37 @@ function genChunk(cx,cz){
     if(p)world[idx(x,h+1,z)]=p;}
   // trees and other features from this chunk and its neighbours (they may hang over the edge)
   for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++)for(const f of chunkFeatures(cx+dx,cz+dz))buildFeature(f);
+  structApply('overworld',cx,cz);
   // the player's changes
   const ed=worldEdits.get(ckey(cx,cz));if(ed)for(const [li,b] of ed){const lx=li&15,lz=(li>>4)&15,y=li>>8;world[idx(x0+lx,y,z0+lz)]=b;}
   // height map and highest block
   let my=0;for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;let y=WY-1;while(y>0&&!world[idx(x,y,z)])y--;if(y>my)my=y;
     let t=y;while(t>0&&!(world[idx(x,t,z)]&&BD[world[idx(x,t,z)]].solid))t--;surfaceH[(z&ZM)*WX+(x&XM)]=t;}
   cmaxY[SLOT(cx,cz)]=Math.min(WY-1,my+1);
+  lootChunk(cx,cz);
 }
 // caves: long winding tunnels (worms started in nearby chunks) plus big open caverns from 3D noise; lava lakes at the bottom.
 // Crystal Forest caverns are lined with crystals, Frozen Forest caverns with ice.
-const CAVE=new Float32Array(5*5*33);
+const CAVE=new Float32Array(5*5*33);let carveSurf=true;
 function carveCaves(cx,cz){const x0=cx*16,z0=cz*16,S=WSEED;
-  const carve=(x,y,z)=>{if(y<1||y>=WY-1)return;const lx=x-x0,lz=z-z0;if(lx<0||lz<0||lx>15||lz>15)return;const k=lz*16+lx;if(y>GH[k]+1)return;if(GU[k]&&y>GH[k]-4)return;
+  const carve=(x,y,z)=>{if(y<1||y>=WY-1)return;const lx=x-x0,lz=z-z0;if(lx<0||lz<0||lx>15||lz>15)return;const k=lz*16+lx;if(y>GH[k]+(carveSurf?1:-3))return;if(GU[k]&&y>GH[k]-4)return;
     const i=idx(x,y,z),b=world[i];if(!b||b===B.BEDROCK||b===B.WATER||b===B.LAVA)return;if(y>=GH[k]-1&&(world[idx(x,y+1,z)]===B.WATER))return;world[i]=y<=10?B.LAVA:0;};
   // caverns: noise on a 4-block grid, interpolated
+  carveSurf=true;
   for(let gy=0;gy<33;gy++)for(let gz=0;gz<5;gz++)for(let gx=0;gx<5;gx++){const x=x0+gx*4,y=gy*4,z=z0+gz*4;CAVE[(gy*5+gz)*5+gx]=vnoise3(x/34,y/20,z/34,S+50)*.65+vnoise3(x/13,y/9,z/13,S+51)*.35;}
   const bc=GB[8*16+8],kind=BIOMES[bc].k;const thr=kind==='crystal'?.6:kind==='frozen'?.63:.665;
   for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const k=lz*16+lx,top=GH[k]-7;const gx=lx>>2,fx=(lx&3)/4,gz=lz>>2,fz=(lz&3)/4;
     for(let y=5;y<top&&y<WY-2;y++){const gy=y>>2,fy=(y&3)/4;const c=(i,j,l)=>CAVE[((gy+l)*5+gz+j)*5+gx+i];
       const v=((c(0,0,0)*(1-fx)+c(1,0,0)*fx)*(1-fz)+(c(0,1,0)*(1-fx)+c(1,1,0)*fx)*fz)*(1-fy)+((c(0,0,1)*(1-fx)+c(1,0,1)*fx)*(1-fz)+(c(0,1,1)*(1-fx)+c(1,1,1)*fx)*fz)*fy;
       if(v>thr+(y<14?.04:0))carve(x0+lx,y,z0+lz);}}
-  // worms
+  // worms (only the wide ones break through to the surface, so there are cave mouths but no ditches)
   for(let wz=cz-6;wz<=cz+6;wz++)for(let wx=cx-6;wx<=cx+6;wx++){const n=hash2(wx,wz,S+52)<.4?1:0+(hash2(wx,wz,S+53)<.12?1:0);
     for(let w=0;w<n;w++){let r0=hash3(wx,wz,w,S+54);let px=wx*16+hash3(wx,wz,w,S+55)*16,pz=wz*16+hash3(wx,wz,w,S+56)*16,py=12+hash3(wx,wz,w,S+57)*58;
       let yaw=hash3(wx,wz,w,S+58)*6.283,pit=(hash3(wx,wz,w,S+59)-.5)*.6;const len=60+(r0*90|0);const base=1.2+hash3(wx,wz,w,S+60)*1.8;
       if(Math.abs(px-(x0+8))>len+12||Math.abs(pz-(z0+8))>len+12)continue;
       for(let s=0;s<len;s++){const r=base*(.75+.5*Math.sin(s*.12+r0*9));px+=Math.cos(yaw)*Math.cos(pit);pz+=Math.sin(yaw)*Math.cos(pit);py+=Math.sin(pit);
         yaw+=(hash3(wx*7+s,wz,w,S+61)-.5)*.5;pit=pit*.85+(hash3(wx,wz*7+s,w,S+62)-.5)*.35;if(py<6)pit=Math.abs(pit);
-        if(px+r<x0||px-r>x0+16||pz+r<z0||pz-r>z0+16)continue;const ri=Math.ceil(r);
+        if(px+r<x0||px-r>x0+16||pz+r<z0||pz-r>z0+16)continue;const ri=Math.ceil(r);carveSurf=GENV<2||r>2.3;
         for(let dy=-ri;dy<=ri;dy++)for(let dz=-ri;dz<=ri;dz++)for(let dx=-ri;dx<=ri;dx++){if(dx*dx+dy*dy*1.3+dz*dz>r*r)continue;carve(Math.floor(px+dx),Math.floor(py+dy),Math.floor(pz+dz));}}}}
   // cave decoration
   if(kind==='crystal'||kind==='frozen')for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz,top=GH[lz*16+lx]-3;

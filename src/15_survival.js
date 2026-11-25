@@ -13,6 +13,7 @@ function playerSave(p){return p?{gm:p.gm||'survival',fly:!!p.flying,pos:p.pos.ma
 function saveWorld(){if(!survival()||!SURV.meta||!isHost()||SURV.loading||GUARD.tripped)return false;SURV.wantThumb=true;const data0=loadWorldData(SURV.meta.id);
   const data={v:1,seed:WSEED,time:worldTime,spawn:SURV.spawn,edits:editsToJSON(),day:GZ.day,player:playerSave(player),chests:[...chests].map(([k,c])=>[k,c.items]),furn:[...FURN],
     pets:mobs.filter(m=>m.alive&&m.owner).map(m=>({t:m.mob,p:m.pos.map(v=>+v.toFixed(2)),hp:m.health})),srv:SRV.cfg||(data0&&data0.srv)||null,others:Object.assign({},data0&&data0.others,SRV.players)};
+  survSaveExtra(data);
   let ok=true;try{localStorage.setItem('mcr_w_'+SURV.meta.id,JSON.stringify(data));}catch(e){ok=false;}
   const l=worldList();const m=l.find(w=>w.id===SURV.meta.id);if(m){m.played=Date.now();m.day=GZ.day;saveWorldList([m,...l.filter(w=>w!==m)]);}
   if(!ok)chatMsg('Could not save the world: browser storage is full.','#ff5555',false);infDirtySave=false;return ok;}
@@ -89,7 +90,7 @@ function captureThumb(){try{const c=mkCanvas(192,108),g=c.getContext('2d');const
   const url=c.toDataURL('image/jpeg',.72);if(!SURV.meta)return;const l=worldList();const m=l.find(x=>x.id===SURV.meta.id);if(m){m.thumb=url;m.day=GZ.day;saveWorldList(l);}}catch(e){}}
 $('saveBtn').addEventListener('click',()=>{if(saveWorld()){SURV.toast={t:3,txt:'Game saved'};sfx('pick');}else SURV.toast={t:3,txt:'Could not save the game'};$('resumeBtn').click();});
 function playWorld(meta,keepNet){sfx('click');if(!keepNet){if(net){net.leave();net=null;}online=false;}const data=loadWorldData(meta.id);
-  beginSurvival({meta,seed:data&&data.seed!=null?data.seed:meta.seed,edits:data?editsFromJSON(data.edits):new Map(),time:data?data.time:null,day:data&&data.day,spawn:data?data.spawn:null,me:data?data.player:null,chests:data&&data.chests,furn:data&&data.furn,pets:data&&data.pets});}
+  beginSurvival({meta,seed:data&&data.seed!=null?data.seed:meta.seed,edits:data?editsFromJSON(data.edits):new Map(),time:data?data.time:null,day:data&&data.day,spawn:data?data.spawn:null,me:data?data.player:null,chests:data&&data.chests,furn:data&&data.furn,pets:data&&data.pets,gen:data?(data.gen||1):2,dims:data&&data.dims,dragon:data&&data.dragon,bed:data&&data.bed});}
 $('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value,$('w_mode').value);$('w_seed').value='';playWorld(meta);});
 $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('menu');});
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});

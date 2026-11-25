@@ -14,7 +14,7 @@ const hitList=()=>typeof mobs!=='undefined'&&mobs.length?ents.concat(mobs):ents;
 const eyeH=e=>e.bat?0:e.gliding?.4:e.sneak?1.54:EYE;   // elytra flight: eyes at 0.4, like the 0.6-tall flying hitbox
 const eye=e=>[e.pos[0],e.pos[1]+eyeH(e),e.pos[2]];
 const fwd=e=>[-Math.sin(e.yaw)*Math.cos(e.pitch),Math.sin(e.pitch),-Math.cos(e.yaw)*Math.cos(e.pitch)];
-const owned=e=>e&&(e.isLocal||((e.kind==='bot'||e.kind==='mob')&&isHost()));
+const owned=e=>e&&(e.isLocal||(e.kind==='bot'&&isHost())||(e.kind==='mob'&&(isHost()||dimLocal())));
 const maxHP=e=>e.maxHp||20;
 
 function fluidAt(x,y,z){const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));return b?BD[b].liquid:false;}
@@ -107,7 +107,8 @@ function damage(t,amt,src,cause,kb,raw,fx){
   if(MATCH.mode==='survival'&&src&&src!==t&&src.kind==='player'&&t.kind==='player'&&!srvPvp())return false;   // the server has PvP turned off
   if(owned(t)){const ok=hurt(t,amt,src,cause,kb,raw);if(fx&&(ok||amt===0))for(const f of fx)giveEffect(t,...f);return ok;}
   // you hit someone on another computer: show the red flash and sound now instead of waiting for their reply to come back
-  if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();if(t.kind==='mob')mobSnd(t,'hurt');else sfx('hurt',{pos:t.pos});}
+  if(src===player&&amt>0&&typeof shieldBlocks==='function'&&shieldBlocks(t,src,cause))sfx('shieldblock',{pos:t.pos});
+  else if(src===player&&amt>0&&!inGrace()&&!(t.hurtT>0)&&MATCH.state==='play'){t.hurtT=.5;t.hitPred=performance.now();if(t.kind==='mob')mobSnd(t,'hurt');else sfx('hurt',{pos:t.pos});}
   const hs=src&&src.inv&&src.inv[src.sel];netSend(N.HIT,{t:t.id,d:amt,a:src?src.id:null,c:cause,kb,r:raw?1:0,fx,w:hs?hs.id:null},null);return true;
 }
 function deathText(e,killer,cause){
@@ -125,7 +126,7 @@ function deathText(e,killer,cause){
 }
 function kill(e,src,cause){if(e.kind==='mob'){mobDie(e,src,cause);return;}
   let killer=src||(e.lastAttackT<8?e.lastAttacker:null);if(killer===e)killer=null;
-  const msg={id:e.id,k:killer?killer.id:null,c:cause,inv:e.inv.filter(Boolean),armor:e.armor.filter(Boolean),pos:e.pos.slice()};
+  const msg={id:e.id,k:killer?killer.id:null,c:cause,inv:e.inv.filter(Boolean).concat(e.off?[e.off]:[]),armor:e.armor.filter(Boolean),pos:e.pos.slice()};
   netSend(N.DEATH,msg);onDeath(msg);
 }
 function onDeath(m){
@@ -135,7 +136,7 @@ function onDeath(m){
   if(killer)killer.kills++;
   feed.unshift({t:7,txt:deathText(e,killer,m.c)});if(feed.length>6)feed.pop();
   if(isHost()){for(const s of m.inv)hostSpawnDrop(m.pos,s.id,s.count);for(const a of m.armor)hostSpawnDrop(m.pos,a,1);}
-  e.inv=new Array(e.inv.length||9).fill(null);e.armor=[null,null,null,null];
+  e.inv=new Array(e.inv.length||9).fill(null);e.armor=[null,null,null,null];e.off=null;
   spawnParticles(e.pos[0],e.pos[1]+.8,e.pos[2],20,[.85,.85,.85],1.2,'poof');
   if(e===player){sfx('death');chestClose(false);player.bat=true;player.pos[1]+=2.2;player.vel=[0,0,0];spectate.mode='bat';showDeathPanel(killer);}
   if(e.kind==='player'&&e!==player)e.bat=true;
@@ -204,7 +205,7 @@ function updateProjs(dt){
 var dropSeq=1;
 function hostSpawnDrop(p,id,count,vel,by,rid){const d={did:dropSeq++,by,rid,pos:[p[0],p[1]+1,p[2]],vel:vel||[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6};drops.push(d);netSend(N.DROPADD,d);return d;}
 let dropRid=0;
-function requestDrop(p,id,count,vel){if(isHost()){hostSpawnDrop(p,id,count,vel);return;}const rid=++dropRid;
+function requestDrop(p,id,count,vel){if(dropAuth()){hostSpawnDrop(p,id,count,vel);return;}const rid=++dropRid;
   drops.push({did:-rid,ghost:4,pos:[p[0],p[1]+1,p[2]],vel:vel?vel.slice():[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6,pending:99});   // stand-in until the host's copy arrives
   netSend(N.DROPREQ,{p,id,c:count,v:vel,rid},'host');}
 function updateDrops(dt){
@@ -212,10 +213,10 @@ function updateDrops(dt){
     if(INF&&!chunkReadyAt(d.pos[0],d.pos[2]))continue;
     d.age+=dt;d.spin+=dt*2;d.vel[1]-=G*.7*dt;const ny=d.pos[1]+d.vel[1]*dt;
     if(d.vel[1]<0&&solid(Math.floor(d.pos[0]),Math.floor(ny-.15),Math.floor(d.pos[2]))){d.pos[1]=Math.floor(ny-.15)+1.15;d.vel[1]=0;d.vel[0]*=.5;d.vel[2]*=.5;}else d.pos[1]=ny;
-    if(fluidAt(d.pos[0],d.pos[1],d.pos[2])==='lava'&&isHost()){d.dead=true;netSend(N.DROPDEL,{did:d.did});}
+    if(fluidAt(d.pos[0],d.pos[1],d.pos[2])==='lava'&&dropAuth()){d.dead=true;netSend(N.DROPDEL,{did:d.did});}
     for(const k of [0,2]){const nx=d.pos[k]+d.vel[k]*dt;const t=d.pos.slice();t[k]=nx;if(!solid(Math.floor(t[0]),Math.floor(t[1]),Math.floor(t[2])))d.pos[k]=nx;else d.vel[k]=0;d.vel[k]*=Math.exp(-2*dt);}
     if(d.age>.6&&!d.pending&&!d.dead)for(const e of ents){if(!e.alive||!owned(e))continue;if(hdist(e.pos,d.pos)<1.3&&Math.abs(e.pos[1]+.8-d.pos[1])<1.6){
-      if(isHost()){const left=addItem(e,d.id,d.count);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
+      if(dropAuth()){const left=addItem(e,d.id,d.count);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
       else if(e===player&&d.did>0&&invRoom(e,d.id)){const left=addItem(e,d.id,d.count),took=d.count-left;if(took>0){sfx('pick');netSend(N.PICK,{did:d.did,id:d.id,n:took},'host');d.count=left;if(!left)d.dead=true;else d.pending=1;}}}}   // picked up at once; the host confirms or takes it back
     if(d.pending){d.pending-=dt;if(d.pending<=0)d.pending=0;}
     if(d.ghost){d.ghost-=dt;if(d.ghost<=0)d.dead=true;}

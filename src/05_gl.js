@@ -45,7 +45,7 @@ function emitQuad(o,flip,f){const ord=flip?ORD1:ORD0;for(let n=0;n<4;n++){const 
 const CULLS=new Uint8Array(256);function refreshCull(){for(let b=0;b<256;b++){const N=BD[b];CULLS[b]=N&&!N.cross&&!N.shape&&N.opaque&&N.render?1:0;}}
 // mesh blocks in x0..x0+15, z0..z0+15, y0..y1 into the scratch buffers (positions local to x0,z0).
 // The blocks and light around the chunk are copied into small padded arrays first so every neighbour lookup is plain index math.
-const PB_=new Uint8Array(18*18*132),PL_=new Uint8Array(18*18*132),PO_=new Uint8Array(18*18*132);
+const PB_=new Uint8Array(18*18*196),PL_=new Uint8Array(18*18*196),PO_=new Uint8Array(18*18*196);
 const AXO=[1,324,18];
 function meshRegion(x0,z0,y0,y1){
   if(!OPQ[B.STONE]){refreshLightTables();}if(!CULLS[B.STONE])refreshCull();
@@ -75,19 +75,19 @@ function meshRegion(x0,z0,y0,y1){
     for(let f=0;f<6;f++){
       const d=f>>1,s=(f&1)?-1:1;if(d===1&&s<0&&y===0)continue;const Fi=k+s*AXO[d];
       const nb=PB_[Fi];
-      if(liq){if(nb===b||(nb&&OPQ[nb]))continue;if(liq==='water'&&nb&&BD[nb].solid&&OPQ[nb])continue;}
+      if(liq){const NB=nb&&BD[nb];if(NB&&NB.liquid===liq){if(d===1||(NB.lh||1)>=(D.lh||1)-.001)continue;}else if(nb&&OPQ[nb])continue;if(liq==='water'&&nb&&BD[nb].solid&&OPQ[nb])continue;}
       else if(nb){if(CULLS[nb])continue;if(nb===b){const N=BD[nb];if(!N.cross&&!N.shape&&N.render)continue;}}
       if(opq&&PO_[Fi])continue;
       const tile=d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
       const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
       const u=(d+1)%3,v=(d+2)%3,AU=AXO[u],AV=AXO[v];
       const L=PL_[Fi];const sl=em?1:LB[(L>>4)&15],bl=em?1:Math.max(D.glow||0,Math.min(1,LB[L&15]*1.05));
-      const topW=liq&&PB_[k+324]!==b;
+      const AB_=PB_[k+324],topW=liq&&!(AB_&&BD[AB_].liquid===liq);
       for(let c=0;c<4;c++){const cu=CORN[c][0],cv2=CORN[c][1];_l[0]=_l[1]=_l[2]=0;_l[d]=s>0?1:0;_l[u]=cu;_l[v]=cv2;
         let ao=3;if(!em&&!liq&&smoothOn){const su=cu?AU:-AU,sv=cv2?AV:-AV;const s1=OPQ[PB_[Fi+su]],s2=OPQ[PB_[Fi+sv]],cc=OPQ[PB_[Fi+su+sv]];ao=(s1&&s2)?0:3-(s1+s2+cc);}
         QAO[c]=ao;
         let tu,tv;if(d==1){tu=_l[0];tv=_l[2];}else if(d==0){tu=_l[2];tv=1-_l[1];}else{tu=_l[0];tv=1-_l[1];}
-        const yy=topW&&_l[1]===1?.875:_l[1];
+        const yy=topW&&_l[1]===1?(D.lh||.875):_l[1];
         const q=QV[c];q[0]=lx+_l[0];q[1]=y+yy;q[2]=lz+_l[2];q[3]=(tx+.02+tu*(TILE-.04))/AS;q[4]=(ty+.02+tv*(TILE-.04))/AS;q[5]=sl;q[6]=bl;q[7]=em?1:FSHADE[f]*AOK[ao];
         q[8]=f*16+em+(liq==='water'&&topW&&f===2?3:wave);}
       emitQuad(liq==='water'?w:o,QAO[0]+QAO[2]<QAO[1]+QAO[3],0);

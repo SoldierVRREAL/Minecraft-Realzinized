@@ -84,4 +84,4 @@ item('sakura_mochi',{name:'Sakura Mochi',type:'food',food:6,sat:7,stack:64,color
 item('glow_stew',{name:'Glow Stew',type:'food',food:8,sat:10,stack:16,color:'#70c8ff',fx:[['regen',10,0]]});
 item('crystal_candy',{name:'Crystal Candy',type:'food',food:3,sat:2,stack:64,color:'#6ab4ff',fx:[['speed',30,0]]});
 ITEMS.ruby.tex='item/ruby';
-{const md=maxDur;maxDur=id=>{const it=id&&ITEMS[id];if(it&&it.type==='gadget')return it.uses||0;return md(id);};}
+{const md=maxDur;maxDur=id=>{const it=id&&ITEMS[id];if(it&&it.type==='gadget')return it.uses||0;if(id==='shield')return 336;return md(id);};}
