@@ -181,7 +181,7 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 | F3 | Debug screen |
 | Esc | Pause (Leave Game saves your world) |
 
-**Mobile controls** (pocket-edition style): a square stick bottom-left (it moves to where your thumb lands; push past the top of the frame to sprint), and pixel-art buttons on the right: jump, sneak and use in a column, with sprint and attack beside them. Tap sneak or sprint to toggle them, or hold them. While flying, jump and sneak go up and down. Small buttons at the top: drop (hold to drop the whole stack), inventory, pause, and chat when online. Drag the right side to look, tap the world to hit, hold still to use. Options > Controls has Touch Look Speed, Button Size, Button Opacity and Vibration.
+**Mobile controls** (pocket-edition style): a square stick fixed bottom-left (push past the top of the frame to sprint), or a **D-pad** instead (Options > Controls > Touch Movement: slide between arrows, up-left/up-right appear while walking forward, double-tap forward to sprint, the middle is sneak), and pixel-art buttons on the right: jump, sneak and use in a column, with sprint and attack beside them. Tap sneak or sprint to toggle them, or hold them. While flying, jump and sneak go up and down. Small buttons at the top: drop (hold to drop the whole stack), inventory, pause, and chat when online. Drag the right side to look, tap the world to hit, hold still to use. Options > Controls has Touch Look Speed, Button Size, Button Opacity and Vibration.
 
 ## Beating the game: the Nether, the End and the Ender Dragon
 
@@ -195,7 +195,8 @@ Survival now has a full journey from the first night to the credits.
 
 **Water, lava and fire**
 - Water and lava now **flow**: water spreads 7 blocks and falls, lava spreads 3 (7 in the Nether), two sources make an infinite water source, and when they meet you get **obsidian** (from still lava) or **cobblestone**. Buckets pick up and pour both. Water boils away in the Nether.
-- Fire spreads to wood, leaves and wool and burns out (forever on netherrack); rain puts it out.
+- Fire looks and behaves like the game's: animated flames on all sides, smoke, crackling. It spreads to wood, leaves, wool and grass (more easily upward), burns blocks away, is started by lava next to flammable things, and burns out (forever on netherrack); rain puts it out.
+- Beds: you wake up next to your bed after dying; if the bed is gone you go back to the world spawn.
 
 **The Nether**
 - Build an **obsidian frame** (at least 4 wide and 5 tall, corners optional, up to 23x23) and light it with **Flint and Steel**. Stand in the purple swirl for 4 seconds. Portals link like the game: 1 block in the Nether is 8 in the Overworld, and an existing portal nearby is used, otherwise a new one is built for you.

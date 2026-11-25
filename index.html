@@ -169,6 +169,12 @@ table.res{border-collapse:collapse;margin:8px auto;font-size:22px}table.res td{p
 #tStickBase.on{opacity:var(--ta);transition:none}
 #tStickKnob{width:44%;height:44%;background:var(--tknob) 0 0/100% 100% no-repeat;image-rendering:pixelated}
 #tStickBase.on #tStickKnob{background-image:var(--tknobOn)}
+#tDpad{position:absolute;left:3vh;bottom:3vh;width:calc(36vh*var(--ts));height:calc(36vh*var(--ts));display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(.6vh*var(--ts));opacity:var(--ta);touch-action:none}
+#tDpad .dp{background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+#tDpad .dp i{display:block;width:58%;height:58%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
+#tDpad .dp.on{background-image:var(--tbtnOn)}#tDpad .dp.on i{margin-top:2%}#tDpad .dp.lit{background-image:var(--tbtnLit)}
+#tDpad .dp.gap{visibility:hidden}#tDpad .dp.diag{visibility:hidden}#tDpad.up .dp.diag{visibility:visible}
+#tDpad .dp[data-c="4"]{transform:scale(.8)}
 .tb{position:absolute;pointer-events:auto;touch-action:none;width:calc(12vh*var(--ts));height:calc(12vh*var(--ts));border:0;padding:0;background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:var(--ta);display:flex;align-items:center;justify-content:center}
 .tb i{display:block;width:62%;height:62%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
 .tb.on{background-image:var(--tbtnOn)}.tb.on i{margin-top:2%}.tb.lit{background-image:var(--tbtnLit)}.tb.lit.on{background-image:var(--tbtnOn)}
@@ -328,7 +334,7 @@ body.touch #clickResume{display:none!important}
 <div id="xhair" class="hidden"><i></i><b></b></div>
 <div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
-<div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
+<div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div><div id="tDpad" class="hidden"><div class="dp diag" data-c="0"><i></i></div><div class="dp" data-c="1"><i></i></div><div class="dp diag" data-c="2"><i></i></div><div class="dp" data-c="3"><i></i></div><div class="dp" data-c="4"><i></i></div><div class="dp" data-c="5"><i></i></div><div class="dp gap" data-c="6"><i></i></div><div class="dp" data-c="7"><i></i></div><div class="dp gap" data-c="8"><i></i></div></div></div>
   <button class="tb sm" id="tPause" aria-label="Pause"><i></i></button><button class="tb sm" id="tInv" aria-label="Inventory"><i></i></button><button class="tb sm" id="tDrop" aria-label="Drop item"><i></i></button><button class="tb sm" id="tChat" aria-label="Chat"><i></i></button>
   <button class="tb" id="tSneak" aria-label="Sneak"><i></i></button><button class="tb" id="tSprint" aria-label="Sprint"><i></i></button><button class="tb" id="tUse" aria-label="Use"><i></i></button>
   <button class="tb" id="tAttack" aria-label="Attack"><i></i></button><button class="tb" id="tJump" aria-label="Jump"><i></i></button><button class="tb" id="tReady" aria-label="Ready"><i></i></button><button class="tb" id="tList" aria-label="Players"><i></i></button></div>
@@ -954,7 +960,10 @@ const VB={};          // extra info: VB.waterF[level], VB.lavaF[level], bed ids.
     blk('PORTAL_X','Nether Portal','#7a30e0',[pt,pt,pt],{solid:false,opaque:false,light:11,portal:'x',shape:[[0,0,6/16,1,1,10/16]]});
     blk('PORTAL_Z',null,'#7a30e0',[pt,pt,pt],{solid:false,opaque:false,light:11,portal:'z',shape:[[6/16,0,0,10/16,1,1]]});}
   {const t1=tile('mob_spawner',{k:'cage',c:'#2a3a4a'});blk('SPAWNER','Monster Spawner','#2a3a4a',[t1,t1,t1],{opaque:false});}
-  {const t1=tile('fire_layer_0',{k:'fire',c:'#f08020'});blk('FIRE','Fire','#f08020',[t1,t1,t1],{solid:false,opaque:false,cross:true,light:15,fire:true});}
+  // fire: four sheets of flame round the edges and two through the middle (the second, taller flame layer), both animated (see 06d)
+  {const t1=tile('fire_layer_0',{k:'fire',c:'#f08020'}),t2=tile('fire_layer_1',{k:'fire',c:'#f0a030'});const e=.06,w=.002;
+    blk('FIRE','Fire','#f08020',[t1,t1,t1],{solid:false,opaque:false,light:15,fire:true,noShadow:true,
+      shape:[[e,0,0,e+w,1,1],[1-e-w,0,0,1-e,1,1],[0,0,e,1,1,e+w],[0,0,1-e-w,1,1,1-e],[.5-w/2,0,0,.5+w/2,1,1,t2],[0,0,.5-w/2,1,1,.5+w/2,t2]]});}
   // ---- the End ----
   {const ft=tile('endframe_top',{k:'noise',c:'#3a6a5a'}),fs=tile('endframe_side',{k:'noise',c:'#c8c890'}),fe=tile('endframe_eye',{k:'eye',c:'#2a8a70'});const es=BD[B.END_STONE].side;
     blk('END_FRAME','End Portal Frame','#3a6a5a',[ft,fs,es],{opaque:false,shape:[[0,0,0,1,13/16,1]],col:[[0,0,0,1,13/16,1]]});
@@ -3095,6 +3104,17 @@ function violetCanvas(img){const w=img.width,h=img.height,c=mkCanvas(w,h),g=c.ge
   g.putImageData(d,0,0);return c;}
 {const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half'])if(G[k]&&!G[k]._violet){G[k]=violetCanvas(G[k]);G[k]._violet=true;}return r;};}
 
+// animated tiles: fire and the Nether portal play their pack animation (the frames are stacked in one tall image)
+const ANIM_TILES={fire_layer_0:{fps:20},fire_layer_1:{fps:20},portal:{fps:12}};let animT=0;
+{const p0=packDeriveTiles;packDeriveTiles=async function(get,tiles){const n=await p0(get,tiles);
+    for(const name in ANIM_TILES){const A=ANIM_TILES[name];const img=await get('textures/blocks/'+name+'.png');if(!img||img.height<img.width*2)continue;A.cache=null;const fw=img.width,nf=Math.floor(img.height/fw);
+      A.frames=[];for(let i=0;i<nf;i++){const c=mkCanvas(fw,fw),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,i*fw,fw,fw,0,0,fw,fw);A.frames.push(c);}}
+    return n;};}
+function animTiles(dt){animT+=dt;if(!OPT.animTex&&OPT.animTex!==undefined)return;
+  for(const name in ANIM_TILES){const A=ANIM_TILES[name];if(!A.frames)continue;const t=TILE_PACK.indexOf(name);if(t<0)continue;const f=Math.floor(animT*A.fps)%A.frames.length;if(f===A.last&&A.tile===TILE)continue;
+    if(!A.cache||A.cacheT!==TILE){A.cache=A.frames.map(c=>{const o=mkCanvas(TILE,TILE),g=o.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(c,0,0,TILE,TILE);return o;});A.cacheT=TILE;}
+    A.last=f;A.tile=TILE;gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,(t%ACOLS)*TILE,Math.floor(t/ACOLS)*TILE,gl.RGBA,gl.UNSIGNED_BYTE,A.cache[f]);}}
+
 // ================= entities, physics, combat, hunger, effects =================
 const HW=.3,EH=1.8,EYE=1.62,G=28;
 const PLAYER_COLORS=['#e8e8e8','#5cd65c','#e04848','#4a8cf0','#f070c8','#f0d040','#f09030','#40d8d8','#a060f0','#8a5a3a','#60a0a0','#c0c0ff','#ff9090','#90ff90','#ffd090','#d0d0d0'];
@@ -3122,7 +3142,7 @@ function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
   let t=0,px=x,py=y,pz=z;
   for(let i=0;i<300&&t<=maxD;i++){const b=getB(x,y,z);if(b&&BD[b].solid&&b!==B.BARRIER)return {x,y,z,b,t,px,py,pz};
     // plants, flowers, grass and fire can be aimed at too (for breaking them, or placing a block in their place)
-    if(plants&&b&&BD[b].cross&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
+    if(plants&&b&&(BD[b].cross||BD[b].fire)&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
     px=x;py=y;pz=z;if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=tdx;}else if(ty<tz){y+=sy;t=ty;ty+=tdy;}else{z+=sz;t=tz;tz+=tdz;}}
   return null;
 }
@@ -5341,7 +5361,7 @@ function showBattleLogo(on){if(on){const im=new Image();im.onload=()=>{if(miniOp
 // jump, sneak and use), small buttons for pause, inventory, drop and chat. Drag anywhere on the right to look; a quick tap
 // on the world attacks, holding still on it uses the held item. Hotbar slots are tappable. All the art is drawn here.
 let touchActive=false;const touchIn={fw:0,st:0,jump:false,sneak:false,sprint:false};
-if(OPT.tSize==null)OPT.tSize=1;if(OPT.tAlpha==null)OPT.tAlpha=.8;if(OPT.tSens==null)OPT.tSens=1;
+if(OPT.tSize==null)OPT.tSize=1;if(!OPT.tMove)OPT.tMove='stick';if(OPT.tAlpha==null)OPT.tAlpha=.8;if(OPT.tSens==null)OPT.tSens=1;
 function wantTouch(){if(OPT.mobile==='on')return true;if(OPT.mobile==='off')return false;return ('ontouchstart' in window||navigator.maxTouchPoints>0)&&matchMedia('(pointer: coarse)').matches;}
 function applyTouchSetting(){touchActive=wantTouch();document.body.classList.toggle('touch',touchActive);if(touchActive&&document.pointerLockElement)document.exitPointerLock();applyTouchLook();}
 const TUI=$('touchUI');
@@ -5408,21 +5428,48 @@ tBtn('tChat',()=>{if(typeof openChat==='function'&&player&&!chatUI)openChat('');
 tBtn('tReady',()=>fakeKey('KeyR'));tBtn('tList',()=>fakeKey('Tab'));
 tBtn('tPause',()=>{if(!online)paused=true;show('pause');});
 
-// ---------- the stick: rests bottom-left, jumps to where the thumb lands in the left zone ----------
+// ---------- the stick: stays in one place bottom-left; the knob follows the thumb inside its frame ----------
 let stickId=null,stickO=[0,0];const SB=$('tStickBase'),SK=$('tStickKnob');
-$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();if(stickId!=null)return;stickId=e.pointerId;stickO=[e.clientX,e.clientY];try{e.target.setPointerCapture(e.pointerId);}catch(_){}
-  SB.style.left=e.clientX+'px';SB.style.top=e.clientY+'px';SB.classList.add('on');moveStick(e);});
-function moveStick(e){const R=SB.offsetWidth*.3||50;let dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];
-  // a thumb that runs past the edge drags the stick along with it
-  const m=Math.hypot(dx,dy);if(m>R*1.6){const k=(m-R*1.6)/m;stickO[0]+=dx*k;stickO[1]+=dy*k;dx-=dx*k;dy-=dy*k;SB.style.left=stickO[0]+'px';SB.style.top=stickO[1]+'px';}
-  // the knob stays inside the square frame
-  const kx=clamp(dx,-R,R),ky=clamp(dy,-R,R);SK.style.transform=`translate(${kx}px,${ky}px)`;
+$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();if(OPT.tMove==='dpad'||stickId!=null)return;const r=SB.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  if(Math.abs(e.clientX-cx)>r.width*.95||Math.abs(e.clientY-cy)>r.height*.95)return;   // only touches on or near the stick
+  stickId=e.pointerId;stickO=[cx,cy];try{e.target.setPointerCapture(e.pointerId);}catch(_){}SB.classList.add('on');moveStick(e);});
+function moveStick(e){const R=SB.offsetWidth*.3||50;const dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];
+  const kx=clamp(dx,-R,R),ky=clamp(dy,-R,R);SK.style.transform=`translate(${kx}px,${ky}px)`;   // the knob stays inside the square frame
   let st=dx/R,fw=-dy/R;const L=Math.hypot(st,fw);if(L>1){st/=L;fw/=L;}if(L<.15){st=0;fw=0;}touchIn.st=st;touchIn.fw=fw;
-  // push all the way forward (past the frame) to sprint
-  if(-dy>R*1.25&&Math.abs(dx)<R*.6)touchIn.autoSprint=true;else if(fw<.7)touchIn.autoSprint=false;}
+  // push past the top of the frame to sprint
+  if(-dy>R*1.3&&Math.abs(dx)<R*.7)touchIn.autoSprint=true;else if(fw<.7)touchIn.autoSprint=false;}
 $('tStickZone').addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e);});
-const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;touchIn.autoSprint=false;SK.style.transform='';SB.classList.remove('on');SB.style.left='';SB.style.top='';};
+const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;touchIn.autoSprint=false;SK.style.transform='';SB.classList.remove('on');};
 $('tStickZone').addEventListener('pointerup',stickEnd);$('tStickZone').addEventListener('pointercancel',stickEnd);
+
+// ---------- the D-pad (Options > Controls > Touch Movement): arrows you can slide between; up-left and up-right appear while
+// walking forward; double-tap forward to sprint; the middle is sneak ----------
+const DP=$('tDpad');let dpId=null,dpCell=-1,dpUpT=0,dpSneakT=0;
+const DP_CELLS=[[1,1,'ul'],[0,1,'u'],[-1,1,'ur'],[1,0,'l'],null,[-1,0,'r'],null,[0,-1,'d'],null];   // [strafe-left, forward]
+function dpAt(e){const r=DP.getBoundingClientRect();const cx=Math.floor((e.clientX-r.left)/(r.width/3)),cy=Math.floor((e.clientY-r.top)/(r.height/3));if(cx<0||cy<0||cx>2||cy>2)return -1;return cy*3+cx;}
+function dpSet(c){if(c===dpCell)return;const up=c===1||c===0||c===2;
+  if(c===1&&dpCell!==0&&dpCell!==2){const now=performance.now();if(now-dpUpT<420)touchIn.autoSprint=true;dpUpT=now;}
+  if(!up)touchIn.autoSprint=false;
+  dpCell=c;const C=c>=0?DP_CELLS[c]:null;
+  if(C&&(C[2]!=='ul'&&C[2]!=='ur'||DP.classList.contains('up'))){touchIn.st=-C[0];touchIn.fw=C[1];if(C[0]&&C[1]){touchIn.st*=.7071;touchIn.fw*=.7071;}}else{touchIn.st=0;touchIn.fw=0;}
+  DP.classList.toggle('up',up&&(c!==0&&c!==2||DP.classList.contains('up')));
+  for(const el of DP.children)el.classList.toggle('on',+el.dataset.c===c);
+  if(c>=0&&navigator.vibrate&&OPT.tBuzz!==false)try{navigator.vibrate(6);}catch(_){}}
+DP.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const c=dpAt(e);
+  if(c===4){dpSneakT=performance.now();touchIn.sneak=player&&player.flying?true:!touchIn.sneak;DP.children[4].classList.add('on');try{DP.setPointerCapture(e.pointerId);}catch(_){}dpId='s'+e.pointerId;return;}
+  if(dpId!=null)return;dpId=e.pointerId;try{DP.setPointerCapture(e.pointerId);}catch(_){}dpSet(c);});
+DP.addEventListener('pointermove',e=>{if(e.pointerId!==dpId)return;dpSet(dpAt(e));});
+const dpEnd=e=>{if(dpId==='s'+e.pointerId){dpId=null;DP.children[4].classList.remove('on');if((player&&player.flying)||performance.now()-dpSneakT>350)touchIn.sneak=false;return;}
+  if(e.pointerId!==dpId)return;dpId=null;dpSet(-1);DP.classList.remove('up');};
+DP.addEventListener('pointerup',dpEnd);DP.addEventListener('pointercancel',dpEnd);
+{const ic={ul:['#######...','######....','#####.....','######....','###.###...','##...###..','#.....###.','.......###','........##','..........'],
+    u:TICONS.jump.slice(0,7),d:TICONS.sneak.slice(0,7).reverse().map(r=>r).reverse(),
+    l:['...#......','..##......','.#########','##########','.#########','..##......','...#......'],r:['......#...','......##..','#########.','##########','#########.','......##..','......#...']};
+  ic.ur=ic.ul.map(r=>[...r].reverse().join(''));ic.d=['....##....','....##....','....##....','.########.','..######..','...####...','....##....'];
+  ic.u=['....##....','...####...','..######..','.########.','....##....','....##....','....##....'];
+  DP_CELLS.forEach((C,i)=>{const el=DP.children[i];if(i===4){el.querySelector('i').style.backgroundImage=iconURL(TICONS.sneak);return;}if(!C)return;el.querySelector('i').style.backgroundImage=iconURL(ic[C[2]]);});}
+function applyMoveMode(){const d=OPT.tMove==='dpad';DP.classList.toggle('hidden',!d);SB.classList.toggle('hidden',d);}
+applyMoveMode();
 Object.defineProperty(touchIn,'sprintNow',{get(){return touchIn.sprint||touchIn.autoSprint;}});
 
 // ---------- looking (right side): drag to turn; a quick tap attacks, a long still press uses the held item ----------
@@ -5450,7 +5497,7 @@ function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.
   // while flying the column turns into up/down; while dead the small buttons switch the spectator camera
   const key=(player.flying?'f':'w')+(alive?'a':'d');if(key!==touchLast){touchLast=key;
     $('tInv').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'inv':'sprint']);$('tDrop').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'drop':'use']);}
-  $('tSneak').classList.toggle('lit',touchIn.sneak&&!player.flying);$('tSprint').classList.toggle('lit',!!touchIn.sprintNow);}
+  $('tSneak').classList.toggle('lit',touchIn.sneak&&!player.flying);DP.children[4].classList.toggle('lit',touchIn.sneak&&!player.flying);$('tSprint').classList.toggle('lit',!!touchIn.sprintNow);}
 addEventListener('resize',applyTouchSetting);applyTouchSetting();
 
 // ================= Java-style Options screens (Options / Video Settings / Music & Sounds / Controls / Game Rules / Maps) =================
@@ -5506,6 +5553,7 @@ JPAGES.controls=()=>{const keys=[['Attack','Left Click'],['Use Item','Right Clic
   jSlider(()=>SENS<=0?'Sensitivity: *yawn*':SENS>=1?'Sensitivity: HYPERSPEED!!!':'Sensitivity: '+Math.round(SENS*200)+'%',()=>SENS,v=>{SENS=v;store('bb_sens',SENS);if($('o_sens'))$('o_sens').value=Math.round(SENS*200);},40),
   jBtn(()=>'Invert Mouse: '+onOff(INVY),()=>{INVY=!INVY;store('bb_invy',INVY?'1':'0');if($('o_invy'))$('o_invy').checked=INVY;}),
   jBtn(()=>'Raw Mouse Input: '+({on:'ON',off:'OFF'}[OPT.rawMouse]||'Auto ('+(IS_MAC?'OFF':'ON')+')'),()=>{OPT.rawMouse=OPT.rawMouse==='on'?'off':OPT.rawMouse==='off'?'auto':'on';saveOpt();if(document.pointerLockElement)document.exitPointerLock();}),
+  jBtn(()=>'Touch Movement: '+(OPT.tMove==='dpad'?'D-Pad':'Joystick'),()=>{OPT.tMove=OPT.tMove==='dpad'?'stick':'dpad';saveOpt();applyMoveMode();}),
   jSlider(()=>'Touch Look Speed: '+Math.round(OPT.tSens*100)+'%',()=>(OPT.tSens-.3)/1.7,v=>{OPT.tSens=Math.round((.3+v*1.7)*20)/20;saveOpt();},34),
   jSlider(()=>'Touch Button Size: '+Math.round(OPT.tSize*100)+'%',()=>(OPT.tSize-.7)/.7,v=>{OPT.tSize=Math.round((.7+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
   jSlider(()=>'Touch Button Opacity: '+Math.round(OPT.tAlpha*100)+'%',()=>(OPT.tAlpha-.3)/.7,v=>{OPT.tAlpha=Math.round((.3+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
@@ -5746,7 +5794,7 @@ function playWorld(meta,keepNet){sfx('click');if(!keepNet){if(net){net.leave();n
 $('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value,$('w_mode').value);$('w_seed').value='';playWorld(meta);});
 $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('menu');});
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});
-$('respawnBtn').addEventListener('click',survRespawn);
+$('respawnBtn').addEventListener('click',()=>survRespawn());
 $('deathMenu').addEventListener('click',()=>{hide('deathPanel');toMenu();});
 // ---------- Multiplayer: see 15h_servers.js (server list, hosting, commands) ----------
 // what a joining player needs to build the same world
@@ -7655,7 +7703,7 @@ function survSaveExtra(data){const ow=dimLive('overworld');data.gen=GENV;data.ed
 function travelTo(dim,pos,opt={}){if(!INF||!player)return;
   DIMDATA[DIM]={edits:worldEdits,chests,furn:FURN,drops:drops.filter(d=>d.did>0||!net)};const D=DIMDATA[dim]||{edits:new Map(),chests:new Map(),furn:new Map(),drops:[]};
   if(chestOpen)chestClose(false);if(typeof CR!=='undefined'&&CR.open)craftClose();
-  mobs=[];primed=[];projs=[];particles=[];mining=null;EYES.length=0;XPORBS.length=0;FLUIDQ.clear();FIREQ.clear();
+  mobs=[];primed=[];projs=[];particles=[];mining=null;EYES.length=0;XPORBS.length=0;FLUIDQ.clear();FIREQ.clear();FIRES.clear();FIRE_NEAR.length=0;
   DIM=dim;INF_WY=dimWY(dim);
   infInit(infRingFor(OPT.chunks),WSEED,D.edits);infRD=Math.min(OPT.chunks,infMaxRD());
   chests=D.chests;FURN=D.furn;drops=D.drops||[];DIMDATA[dim]=null;delete DIMDATA[dim];
@@ -7671,7 +7719,15 @@ function travelTo(dim,pos,opt={}){if(!INF||!player)return;
     if(!SURV.loading&&INF)dimTick(dt);};}
 // death sends you home
 {const r0=survRespawn;survRespawn=function(){r0();const p=player;if(!p)return;const bed=SURV.bedSpawn;const home=bed?bed.slice():SURV.spawn.slice();
-    if(DIM!=='overworld'){travelTo('overworld',home,{quiet:true,after:()=>{p.pos=home.slice();}});}else if(bed){p.pos=home;if(!chunkReadyAt(p.pos[0],p.pos[2])){SURV.loading=true;$('loading').classList.remove('hidden');}else settlePlayer(p);}};}
+    if(DIM!=='overworld'){travelTo('overworld',home,{quiet:true,after:()=>{p.pos=home.slice();bedArrive(p);}});return;}
+    if(bed){p.pos=home;if(!chunkReadyAt(p.pos[0],p.pos[2])){SURV.loading=true;SURV.afterLoad=()=>bedArrive(p);$('loading').classList.remove('hidden');}else{bedArrive(p);settlePlayer(p);}}};}
+// wake up next to the bed (like the game); if it is gone, back to the world spawn
+function bedArrive(p){const bed=SURV.bedSpawn;if(!bed)return;const bx=Math.floor(bed[0]),by=Math.floor(bed[1]),bz=Math.floor(bed[2]);
+  let found=null;for(let dy=-1;dy<=1&&!found;dy++)for(let dz=-1;dz<=1&&!found;dz++)for(let dx=-1;dx<=1&&!found;dx++){const b=getB(bx+dx,by+dy,bz+dz);if(BD[b]&&BD[b].bed)found=[bx+dx,by+dy,bz+dz];}
+  if(!found){SURV.bedSpawn=null;p.pos=SURV.spawn.slice();chatMsg('You have no home bed, or it was obstructed.','#ffffff',false);return;}
+  const free=(x,y,z)=>!(BD[getB(x,y,z)]||{}).solid&&!(BD[getB(x,y+1,z)]||{}).solid&&(BD[getB(x,y-1,z)]||{}).solid&&!isLavaB(getB(x,y,z));
+  for(let r=1;r<=2;r++)for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++)for(const dy of [0,1,-1]){const x=found[0]+dx,y=found[1]+dy,z=found[2]+dz;const b=getB(x,y,z);if(BD[b]&&BD[b].bed)continue;if(free(x,y,z)){p.pos=[x+.5,y,z+.5];return;}}
+  p.pos=[found[0]+.5,found[1]+.6,found[2]+.5];}
 
 // ---------- the world reacts to block changes: portals, beds and tall plants come apart, fluids and fire wake up ----------
 {const a0=applyBlock;applyBlock=function(x,y,z,b){const was=INF?getB(x,y,z):0;a0(x,y,z,b);if(INF&&was!==b)blockChanged(x,y,z,was,b);};}
@@ -7725,23 +7781,51 @@ function fluidUpdate(x,y,z){const b=getB(x,y,z);const D=BD[b];
     return id;}
   return null;}
 
-// ---------- fire ----------
+// ---------- fire: spreads through wood, leaves, wool and grass the way the game does, burns blocks away, dies in the rain ----------
 const FLAMMABLE=new Set();{for(const k of ['LOG','PLANKS','LEAVES','SPRUCE_LOG','SPRUCE_PLANKS','JLOG','JLEAVES','WOOL','WOOL_W','BOOKSHELF','HAY','FENCE','OAK_STAIRS','OAK_SLAB','TGRASS','FERN','SAKURA_LOG','SAKURA_LEAVES','SAKURA_PLANKS','REDWOOD_LOG','REDWOOD_LEAVES','REDWOOD_PLANKS','FROZEN_LOG','FROZEN_LEAVES','BURNT_LOG','TNT',
   'BIRCH_LOG','BIRCH_LEAVES','BIRCH_PLANKS','ACACIA_LOG','ACACIA_LEAVES','ACACIA_PLANKS','DARK_OAK_LOG','DARK_OAK_LEAVES','DARK_OAK_PLANKS','SPRUCE_LEAVES','TALLGRASS2','DEAD_BUSH','VINE','CARPET'])if(B[k]!=null)FLAMMABLE.add(B[k]);for(const w of MB_WOOLS)FLAMMABLE.add(B['WOOL_'+w[0].toUpperCase()]);}
-const FIRES=new Map();   // key -> age (only fires that will burn out)
-function fireTick(dt){if(!fluidAuth())return;const list=[];let n=0;
-  for(const [k,f] of FIRES){f.t-=dt;if(f.t>0)continue;if(++n>60)break;const [x,y,z]=k.split(',').map(Number);if(getB(x,y,z)!==B.FIRE||!chunkReadyAt(x,z)){FIRES.delete(k);continue;}
-    const below=getB(x,y-1,z);const eternal=below===B.NETHERRACK||below===B.MAGMA||(below===B.BEDROCK&&DIM==='end');
-    const rainy=WEATHER.rain>.5&&DIM==='overworld'&&(lightAt(x,y,z)>>4)>=15;
-    if(rainy||(!eternal&&f.life--<=0)){list.push(x,y,z,0);FIRES.delete(k);continue;}
-    f.t=.6+Math.random()*.8;
-    // burn and spread
-    for(const [dx,dy,dz] of N6){const X=x+dx,Y=y+dy,Z=z+dz;const nb=getB(X,Y,Z);if(!FLAMMABLE.has(nb)||Math.random()>.07)continue;
-      if(nb===B.TNT){igniteTNT(X,Y,Z,1.5,null);continue;}list.push(X,Y,Z,Math.random()<.6?B.FIRE:0);}
-    if(Math.random()<.2){const X=x+((Math.random()*3|0)-1),Y=y+((Math.random()*3|0)-1),Z=z+((Math.random()*3|0)-1);if(!getB(X,Y,Z)&&chunkReadyAt(X,Z)){let fuel=false;for(const [dx,dy,dz] of N6)if(FLAMMABLE.has(getB(X+dx,Y+dy,Z+dz)))fuel=true;if(fuel&&BD[getB(X,Y-1,Z)]&&BD[getB(X,Y-1,Z)].solid)list.push(X,Y,Z,B.FIRE);}}}
-  if(list.length){applyBlockList(list,false);if(net)netSend(N.BOOM,{l:list});for(let i=0;i<list.length;i+=4)if(list[i+3]===B.FIRE)fireAdd(list[i],list[i+1],list[i+2]);}}
-function fireAdd(x,y,z){FIRES.set(key(x,y,z),{t:.5+Math.random(),life:4+(Math.random()*8|0)});}
-function lightFire(x,y,z){if(getB(x,y,z)&&!replaceable(getB(x,y,z)))return false;const below=getB(x,y-1,z);if(!(BD[below]&&BD[below].solid)&&![1,0,-1].some(d=>FLAMMABLE.has(getB(x+d,y,z))||FLAMMABLE.has(getB(x,y,z+d))))return false;
+// how eagerly fire jumps to a block next to it (encouragement) and how fast the block burns away (flammability), like the game's table
+const FLAM={};{const set=(ks,e,f)=>{for(const k of ks)if(B[k]!=null)FLAM[B[k]]=[e,f];};
+  set(['PLANKS','SPRUCE_PLANKS','BIRCH_PLANKS','ACACIA_PLANKS','DARK_OAK_PLANKS','SAKURA_PLANKS','REDWOOD_PLANKS','FENCE','OAK_STAIRS','OAK_SLAB'],5,20);
+  set(['LOG','SPRUCE_LOG','JLOG','BIRCH_LOG','ACACIA_LOG','DARK_OAK_LOG','SAKURA_LOG','REDWOOD_LOG','FROZEN_LOG','BURNT_LOG'],5,5);
+  set(['LEAVES','JLEAVES','BIRCH_LEAVES','ACACIA_LEAVES','DARK_OAK_LEAVES','SPRUCE_LEAVES','SAKURA_LEAVES','REDWOOD_LEAVES','FROZEN_LEAVES'],30,60);
+  set(['WOOL','WOOL_W','CARPET'],30,60);for(const w of MB_WOOLS){const id=B['WOOL_'+w[0].toUpperCase()];if(id!=null)FLAM[id]=[30,60];}
+  set(['BOOKSHELF'],30,20);set(['HAY'],60,20);set(['TNT'],15,100);set(['VINE'],15,100);
+  set(['TGRASS','FERN','DEAD_BUSH','TALLGRASS2','TALLGRASS2_TOP','LARGE_FERN','LARGE_FERN_TOP','POPPY','DANDELION','ALLIUM','BLUE_ORCHID','AZURE','OXEYE','TULIP_RED','TULIP_ORANGE','TULIP_WHITE','TULIP_PINK','LILAC','LILAC_TOP','ROSE_BUSH','ROSE_BUSH_TOP','PEONY','PEONY_TOP','PETALS','REEDS'],60,100);
+  for(const id of FLAMMABLE)if(!FLAM[id])FLAM[id]=[5,20];for(const id in FLAM)FLAMMABLE.add(+id);}
+const FIRES=new Map();   // key -> {t: time to next tick, age 0..15}
+const enc=(x,y,z)=>{let e=0;for(const [dx,dy,dz] of N6){const f=FLAM[getB(x+dx,y+dy,z+dz)];if(f&&f[0]>e)e=f[0];}return e;};
+function fireEternal(x,y,z){const below=getB(x,y-1,z);return below===B.NETHERRACK||below===B.MAGMA||(below===B.BEDROCK&&DIM==='end');}
+function fireTick(dt){fireLook(dt);if(!fluidAuth())return;const list=[],adds=[];let n=0;const raining=WEATHER.rain>.5&&DIM==='overworld';
+  for(const [k,f] of FIRES){f.t-=dt;if(f.t>0)continue;if(++n>120)break;const [x,y,z]=k.split(',').map(Number);if(getB(x,y,z)!==B.FIRE||!chunkReadyAt(x,z)){FIRES.delete(k);continue;}
+    f.t=.7+Math.random()*.4;const eternal=fireEternal(x,y,z);
+    if(raining&&!eternal&&(lightAt(x,y+1,z)>>4)>=15&&Math.random()<.6){list.push(x,y,z,0);FIRES.delete(k);continue;}
+    if(f.age<15&&Math.random()<.6)f.age++;
+    if(!eternal){const below=getB(x,y-1,z);const canBurn=enc(x,y,z)>0;
+      if(!canBurn&&(!(BD[below]&&BD[below].solid)||f.age>3)){list.push(x,y,z,0);FIRES.delete(k);continue;}
+      if(f.age>=15&&!FLAM[below]&&Math.random()<.25){list.push(x,y,z,0);FIRES.delete(k);continue;}}
+    // burn the blocks it touches
+    for(const [dx,dy,dz] of N6){const X=x+dx,Y=y+dy,Z=z+dz;const nb=getB(X,Y,Z);const F=FLAM[nb];if(!F)continue;if(Math.random()*(dy?250:300)>=F[1]*2)continue;
+      if(nb===B.TNT){igniteTNT(X,Y,Z,1.5,null);continue;}
+      if(Math.random()<.6&&f.age<14){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,Math.min(15,f.age+1)]);}else list.push(X,Y,Z,0);}
+    // jump to nearby air next to something that burns (more easily upward)
+    for(let dy=-1;dy<=4;dy++)for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy&&!dz)continue;const X=x+dx,Y=y+dy,Z=z+dz;if(getB(X,Y,Z)||!chunkReadyAt(X,Z))continue;
+      const e=enc(X,Y,Z);if(!e)continue;let div=100;if(dy>1)div+=(dy-1)*100;const ch=3*(e+40)/(f.age+30)/div;if(raining&&(lightAt(X,Y,Z)>>4)>=15)continue;
+      if(Math.random()<ch){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,Math.min(15,f.age+(Math.random()*5|0)/4|0)]);}}}
+  // lava sets fire to things near it
+  LAVA_T-=dt;if(LAVA_T<=0&&player&&DIM!=='end'){LAVA_T=1;const p=player.pos;for(let i=0;i<40;i++){const x=Math.floor(p[0]+(Math.random()-.5)*24),y=Math.floor(p[1]+(Math.random()-.5)*14),z=Math.floor(p[2]+(Math.random()-.5)*24);if(!chunkReadyAt(x,z)||!isLavaB(getB(x,y,z)))continue;
+      for(let k=0;k<3;k++){const X=x+((Math.random()*3|0)-1),Y=y+1+(Math.random()*2|0),Z=z+((Math.random()*3|0)-1);if(!getB(X,Y,Z)&&enc(X,Y,Z)>0&&Math.random()<.35){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,0]);break;}}}}
+  if(list.length){applyBlockList(list,false);if(net)netSend(N.BOOM,{l:list});for(const [X,Y,Z,a] of adds)if(getB(X,Y,Z)===B.FIRE)fireAdd(X,Y,Z,a);}}
+let LAVA_T=1,FIRE_SCAN=0;const FIRE_NEAR=[];
+// fires near you: remember them (so ones made elsewhere burn too), throw flames and smoke, set things standing in them alight
+function fireLook(dt){FIRE_SCAN-=dt;const p=player;if(!p)return;
+  if(FIRE_SCAN<=0){FIRE_SCAN=1.5;FIRE_NEAR.length=0;const cx=Math.floor(p.pos[0]),cy=Math.floor(p.pos[1]),cz=Math.floor(p.pos[2]);
+    for(let y=cy-8;y<=cy+8;y++)for(let z=cz-14;z<=cz+14;z++)for(let x=cx-14;x<=cx+14;x++){if(getB(x,y,z)!==B.FIRE)continue;FIRE_NEAR.push([x,y,z]);if(!FIRES.has(key(x,y,z))&&FIRES.size<600)fireAdd(x,y,z,4);}}
+  for(const f of FIRE_NEAR){if(Math.random()<dt*3)spawnParticles(f[0]+.2+Math.random()*.6,f[1]+.3+Math.random()*.5,f[2]+.2+Math.random()*.6,1,[1,.55+Math.random()*.3,.1],.35,'poof');
+    if(Math.random()<dt*2.2)spawnParticles(f[0]+.5,f[1]+.9,f[2]+.5,1,[.22,.22,.22],.5,'poof');}
+  for(const m of mobs)if(m.alive&&!MOB_T[m.mob].fireproof&&touching(m,b=>b===B.FIRE))m.fire=Math.max(m.fire||0,8);}
+function fireAdd(x,y,z,age=0){FIRES.set(key(x,y,z),{t:.8+Math.random()*.8,age});}
+function lightFire(x,y,z){if(getB(x,y,z)&&!replaceable(getB(x,y,z)))return false;const below=getB(x,y-1,z);if(!(BD[below]&&BD[below].solid)&&!enc(x,y,z))return false;
   setBlockNet(x,y,z,B.FIRE);fireAdd(x,y,z);psnd(['fire/ignite'],[x,y,z],1);return true;}
 
 // ---------- Nether portals ----------
@@ -8306,6 +8390,8 @@ function showEndCredits(done){document.exitPointerLock&&document.exitPointerLock
 // first visits feel like milestones
 {const t0=travelTo;travelTo=function(dim,pos,opt={}){const first=!(SURV.visited||(SURV.visited={}))[dim];SURV.visited[dim]=true;t0(dim,pos,opt);
     if(first&&!opt.quiet&&dim!=='overworld')setTimeout(()=>{if(DIM===dim)SURV.toast={t:5,txt:dim==='nether'?'We Need to Go Deeper':'The End?'};},4500);};}
+// animated fire and portal tiles
+{const r0=render;let last=0;render=function(){const now=performance.now()/1000;if(last)animTiles(Math.min(.1,now-last));last=now;return r0.apply(this,arguments);};}
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.
