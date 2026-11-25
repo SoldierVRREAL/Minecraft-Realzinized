@@ -183,6 +183,8 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 
 **Mobile controls** (pocket-edition style): a square stick fixed bottom-left (push past the top of the frame to sprint), or a **D-pad** instead (Options > Controls > Touch Movement: slide between arrows, up-left/up-right appear while walking forward, double-tap forward to sprint, the middle is sneak), and pixel-art buttons on the right: jump, sneak and use in a column, with sprint and attack beside them. Tap sneak or sprint to toggle them, or hold them. While flying, jump and sneak go up and down. Small buttons at the top: drop (hold to drop the whole stack), inventory, pause, and chat when online. Drag the right side to look, tap the world to hit, hold still to use. Options > Controls has Touch Look Speed, Button Size, Button Opacity and Vibration.
 
+**Update log:** the title screen shows the version (bottom left) and a **What's New** button with the changes in each version; it opens by itself the first time a new version loads.
+
 ## Beating the game: the Nether, the End and the Ender Dragon
 
 Survival now has a full journey from the first night to the credits.
@@ -328,6 +330,7 @@ python3 build.py
 | `15m_dims.js` | Dimensions: travel, saving all three, Nether and End portals, flowing liquids, fire, buckets, beds, pearls, eyes, multiplayer |
 | `15n_mobs2.js` | Nether and End creatures, spawners, fireballs, the Ender Dragon fight, End Crystals, boss bar |
 | `15o_atmos.js` | Experience, weather and lightning, ambient sounds, the ending, menu entries |
+| `15q_news.js` | Version number and the What's New update log |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next

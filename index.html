@@ -191,6 +191,8 @@ body.touch #clickResume{display:none!important}
 #xhair{position:fixed;left:50%;top:50%;width:0;height:0;pointer-events:none;mix-blend-mode:difference;z-index:3}
 #xhair i,#xhair b{position:absolute;background:#fff;display:block}#xhair i{left:-9px;top:-1px;width:18px;height:2px}#xhair b{left:-1px;top:-9px;width:2px;height:18px}
 #chatBar{position:fixed;left:4px;right:4px;bottom:4px;z-index:6}#chatIn{width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:0;color:#fff;font:20px 'VT323',monospace;padding:3px 6px;outline:none}
+#newsBox{width:min(calc(var(--S)*300px),94vw)}#newsBody{max-height:min(62vh,calc(var(--S)*190px));overflow-y:auto;font:calc(var(--S)*5.5px)/1.45 monospace;color:#303030;text-align:left;-webkit-overflow-scrolling:touch}
+#newsBody h3{margin:.7em 0 .2em;font-size:1.15em;color:#202060}#newsBody h3:first-child{margin-top:0}#newsBody h3 small{color:#555;font-weight:normal}#newsBody ul{margin:0;padding-left:1.3em}#newsBody li{margin:.15em 0}
 .lbt{border-collapse:collapse}.lbt td{padding:calc(var(--S)*2px) calc(var(--S)*6px)}.lbt tr:first-child td{border-bottom:calc(var(--S)*1px) solid #8b8b8b}
 .srvpanel{width:min(760px,96vw)}.srvtitle{text-align:center}.srvlist{max-height:48vh;min-height:30vh}.srvbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px}.srvbtns .btn{flex:1 1 0;margin:0;min-width:110px}
 .srow{display:flex;gap:10px;align-items:center;padding:5px 8px;color:#fff;text-shadow:2px 2px 0 #000;border:2px solid transparent;cursor:pointer;user-select:none}.srow:hover{background:rgba(255,255,255,.08)}.srow.sel{border-color:#fff;background:rgba(0,0,0,.35)}
@@ -248,6 +250,7 @@ body.touch #clickResume{display:none!important}
     <button class="lbtn main" id="miniBtn">Mini Games</button>
     <button class="lbtn main" id="optBtn">Help &amp; Options</button>
     <button class="lbtn main" id="packBtn">Texture Packs</button>
+    <button class="lbtn main" id="newsBtn">What's New</button>
     <button class="lbtn mini hidden" id="battleBtn">Battle</button>
     <button class="lbtn mini hidden" id="brBtn">Battle Royale</button>
     <button class="lbtn mini hidden" id="tumbleBtn">Tumble</button>
@@ -275,6 +278,10 @@ body.touch #clickResume{display:none!important}
 </div><div class="lprompts" id="dressPrompts"></div></div>
 
 
+<div id="newsPanel" class="screen hidden"><div class="lpanel" id="newsBox">
+  <div class="lhead" data-t="What's New">What's New</div>
+  <div class="lsub" id="newsBody" tabindex="0" aria-label="Update log"></div>
+</div><div class="lprompts" id="newsPrompts"></div></div>
 <div id="lbPanel" class="screen hidden"><div class="lpanel">
   <div class="lhead" data-t="Leaderboards">Leaderboards</div>
   <div class="lsub"><table class="lbt" id="lbTable"></table></div>
@@ -4840,7 +4847,7 @@ function drawBRHud(){
 
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
-const OVERLAYS=['lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
+const OVERLAYS=['newsPanel','lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
 // raw mouse input (unadjustedMovement) skips OS acceleration, but on macOS it inflates movement while a mouse button is held,
@@ -5487,7 +5494,7 @@ const lookEnd=e=>{const L=looks.get(e.pointerId);if(!L)return;clearTimeout(L.tim
 $('tLook').addEventListener('pointerup',lookEnd);$('tLook').addEventListener('pointercancel',lookEnd);
 
 // ---------- show the controls only while actually playing ----------
-const TOUCH_BLOCK=['menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading'];
+const TOUCH_BLOCK=['deathPanel','newsPanel','menu','chestUI','pause','results','lobbyPanel','jOpt','optPanel','packPanel','dressPanel','lbPanel','loading','lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','endCredits'];   // any screen on top hides the controls (so its buttons can be tapped)
 const ICON_FOR={tInv:['inv','list'],tDrop:['drop','list']};
 let touchLast='';
 function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.state==='lobby'||MATCH.state==='over')&&!TOUCH_BLOCK.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');})&&!(typeof chatUI!=='undefined'&&chatUI);
@@ -7934,7 +7941,7 @@ function giveBucket(p,id){if(p.gm==='creative')return;const s=p.inv[p.sel];if(s.
 function placeBed(p,h){const X=h.px,Y=h.py,Z=h.pz;const fw=fwd(p);let f=0,bd=-9;for(let k=0;k<4;k++){const d=fw[0]*BED_DIR[k][0]+fw[2]*BED_DIR[k][1];if(d>bd){bd=d;f=k;}}   // the head points the way you look
   const dv=BED_DIR[f];const HX=X+dv[0],HZ=Z+dv[1];
   if(!replaceable(getB(X,Y,Z))||!replaceable(getB(HX,Y,HZ)))return;if(!(BD[getB(X,Y-1,Z)]||{}).solid||!(BD[getB(HX,Y-1,HZ)]||{}).solid)return;
-  const foot=VB.bed[f*2],head=VB.bed[f*2+1];setBlockNet(X,Y,Z,foot);setBlockNet(HX,Y,HZ,head);if(p.gm!=='creative')consume(p,p.sel);p.swing=1;sfx('dig',{pos:[X,Y,Z],mat:'cloth'});}
+  const foot=VB.bed[f*2],head=VB.bed[f*2+1];setBlockNet(X,Y,Z,foot);setBlockNet(HX,Y,HZ,head);if(DIM==='overworld'){SURV.bedSpawn=[HX+.5,Y+.6,HZ+.5];chatMsg('Respawn point set.','#ffffff',false);}if(p.gm!=='creative')consume(p,p.sel);p.swing=1;sfx('dig',{pos:[X,Y,Z],mat:'cloth'});}
 function useBed(p,h){if(DIM!=='overworld'){const c=[h.x+.5,h.y+.5,h.z+.5];setBlockNet(h.x,h.y,h.z,0);explode(c,5,p);for(let i=0;i<10;i++){const x=h.x+((Math.random()*5|0)-2),z=h.z+((Math.random()*5|0)-2);for(let y=h.y+2;y>=h.y-2;y--)if(!getB(x,y,z)&&(BD[getB(x,y-1,z)]||{}).solid){lightFire(x,y,z);break;}}return;}
   const W=BD[h.b];const dv=BED_DIR[W.facing];const hx=W.bed==='f'?h.x+dv[0]:h.x,hz=W.bed==='f'?h.z+dv[1]:h.z;
   SURV.bedSpawn=[hx+.5,h.y+.6,hz+.5];
@@ -8392,6 +8399,44 @@ function showEndCredits(done){document.exitPointerLock&&document.exitPointerLock
     if(first&&!opt.quiet&&dim!=='overworld')setTimeout(()=>{if(DIM===dim)SURV.toast={t:5,txt:dim==='nether'?'We Need to Go Deeper':'The End?'};},4500);};}
 // animated fire and portal tiles
 {const r0=render;let last=0;render=function(){const now=performance.now()/1000;if(last)animTiles(Math.min(.1,now-last));last=now;return r0.apply(this,arguments);};}
+
+// ================= Version number and the update log ("What's New" on the title screen) =================
+const GAME_VER='2.5';
+const NEWS=[
+ ['2.5','November 24, 2026',[
+   'Beds: you now wake up next to your bed after dying (the Respawn button skipped it before). Placing a bed or using it sets your respawn point. If the bed is broken you go back to the world spawn.',
+   'Mobile: the touch controls were covering the death screen, so tapping Respawn often did nothing. Any menu on top now hides the controls (death screen, crafting, world list, servers...).',
+   'Mobile: the joystick stays in one place; only the knob moves.',
+   'Mobile: new D-pad option (Options > Controls > Touch Movement). Slide between arrows, diagonals appear while walking forward, double-tap forward to sprint, the middle is sneak.',
+   'Fire spreads like the real game: through wood, leaves, wool, grass and flowers (faster upward), burns blocks away, and lava can start it. Rain puts it out.',
+   'Fire looks real: animated flames on every side, embers and smoke. The Nether portal swirl is animated too.',
+   'This update log, and the version number on the title screen.']],
+ ['2.4','November 24, 2026',[
+   'Grass, sand and snow now mix together in patches where two biomes meet.',
+   'You can break tall grass, flowers, ferns, mushrooms, sugar cane and fire. Placing a block on grass replaces it.',
+   'Fixed: creatures could not hit you (endermen, zombies, spiders and others). They fight properly again.',
+   'Hunger drains a little over twice as slowly in survival.']],
+ ['2.3','November 24, 2026',[
+   'New mobile controls in the pocket-edition style: square stick, pixel-art jump, sneak, use, sprint and attack buttons, plus drop, inventory, pause and chat.',
+   'Touch settings: look speed, button size, button opacity and vibration.']],
+ ['2.2','November 24, 2026',['Hearts are violet.']],
+ ['2.1','November 23, 2026',[
+   'The game can be beaten: Nether portals, the Nether with fortresses and blazes, endermen and ender pearls, eyes of ender, strongholds, the End, the Ender Dragon and the ending.',
+   'New terrain for new worlds: mountain ranges with snow caps, rivers, oceans, and new biomes (birch forest, taiga, savanna, desert, dark forest, windswept hills).',
+   'Flowing water and lava, obsidian, buckets, fire, beds, experience, rain, snow and thunderstorms, new ambient sounds.']],
+ ['2.0','November 2026',['Java 1.9+ combat in the Battle mini games: attack cooldown, sweeping swords, critical hits, shields and the off hand.']],
+ ['1.x','Earlier',['Infinite survival worlds with custom biomes, creatures and crafting; Battle, Battle Royale, Tumble and Glide mini games; online play.']]];
+function renderNews(){const el=$('newsBody');el.textContent='';for(const [v,date,items] of NEWS){const h=document.createElement('h3');h.textContent='Version '+v+' ';const sm=document.createElement('small');sm.textContent=date;h.appendChild(sm);
+    const ul=document.createElement('ul');for(const t of items){const li=document.createElement('li');li.textContent=t;ul.appendChild(li);}el.append(h,ul);}
+  setPrompts('newsPrompts',[['B','Back',closeNews]]);}
+function openNews(){sfx('click');hide('menu');show('newsPanel');renderNews();$('newsBody').scrollTop=0;try{localStorage.setItem('mcr_seenVer',GAME_VER);}catch(e){}}
+function closeNews(){sfx('click');hide('newsPanel');show('menu');}
+$('newsBtn').addEventListener('click',openNews);
+addEventListener('keydown',e=>{if(!$('newsPanel').classList.contains('hidden')&&(e.code==='Escape'||e.code==='Backspace'||e.code==='Enter')){e.preventDefault();closeNews();}});
+// the version on the title screen
+{const v=$('verL');v.dataset.t='Minecraft:realzanized v'+GAME_VER;v.textContent=v.dataset.t;if(typeof refreshLCE==='function')setTimeout(refreshLCE,0);}
+// show the log once after an update
+setTimeout(()=>{let seen=null;try{seen=localStorage.getItem('mcr_seenVer');}catch(e){}if(seen!==GAME_VER&&!$('menu').classList.contains('hidden')&&MATCH.state!=='play')openNews();},1500);
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.
