@@ -123,6 +123,12 @@ Like Java 1.21.6: in a Survival game with other players, the bar above the hotba
 
 **Mini Games**: Battle, Battle Royale, Tumble, Glide, Play Online (Battle Servers on Photon, see below) and Practice. Every game opens the Create / Join / Friends screen below. The Tumble arena and the Glide courses are this game's own designs.
 
+**Java combat (Battle and Battle Royale)**: fights use Java Edition's 1.9+ combat. Survival, Tumble and Glide keep the console-style 1.8 combat.
+- **Attack cooldown:** each weapon recharges at its own speed: swords 1.6 swings a second, axes 0.8 to 1.0, pickaxes 1.2, fists 4. A bar under the crosshair fills as you recharge and turns into a small sword when you're charged and aiming at someone. Damage runs from 20% to 100% with the charge, so spam-clicking barely hurts. Swinging at the air or switching items restarts the cooldown.
+- **Damage:** the Java 1.9+ values: swords 4/5/6/7 (wood/stone/iron/diamond; gold 4), axes 7/9/9/9 (gold 7). Sharpness adds 0.5 per level + 0.5. Strength adds 3 per level; Weakness takes off 4.
+- **Charged hits:** a charged hit while falling is a critical (×1.5), but not while sprinting. A charged hit while sprinting knocks back further. A charged sword hit while standing or walking sweeps: 1 damage and a push to anyone right beside the target.
+- **Shields:** swords no longer block; shields do. They're found in chests. Press **F** to swap the item in your hand with your off hand (the slot left of the hotbar), then hold right-click to raise it. A raised shield stops melee hits and arrows from the front and pushes melee attackers back. An axe hit knocks it down for 5 seconds. Shields wear out. Bots use shields too.
+
 **Tumble**: everyone starts on the top of three floating layers of patterned blocks over a lava lake.
 - **Tools** (a create option): **Snowballs** break the block they hit, push players back and set off the TNT hidden in the lower layers. **Shovels** break a block instantly, but only up close. **Both** gives everyone one of each (mouse wheel or LB/RB to switch).
 - Fall into the lava and you're out for the round. The last player standing wins it.
@@ -174,6 +180,41 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 | Q | Drop item |
 | F3 | Debug screen |
 | Esc | Pause (Leave Game saves your world) |
+
+## Beating the game: the Nether, the End and the Ender Dragon
+
+Survival now has a full journey from the first night to the credits.
+
+**A more natural Overworld (new worlds)**
+- New worlds use a rebuilt terrain generator: continents and oceans, long **mountain ranges** with stone cliffs and **snow-capped peaks**, rolling hills, and **rivers** winding through their own valleys to the sea. The world is 160 blocks tall to fit the mountains.
+- Biomes are placed by temperature and rainfall, so cold, temperate and hot places sit next to each other the way they should, and every border is blended. The six custom biomes are all still there, mixed in with new vanilla ones: **Birch Forest**, **Taiga** (spruce and pine), **Savanna** (acacia), **Desert** (cactus, dead bushes), **Dark Forest** (2x2 dark oaks, mushrooms), **Windswept Hills** and **Rivers**.
+- More plant life: tall grass, ferns and large ferns, eight new flowers and the two-block lilac, rose bush and peony, red and brown mushrooms, sugar cane on river banks, pumpkins, boulders, fallen logs, ponds and lava pools, cave mouths, and **ruined portals** with a chest of loot.
+- Worlds saved before this update keep their old terrain (and get strongholds too), so nothing you built moves.
+
+**Water, lava and fire**
+- Water and lava now **flow**: water spreads 7 blocks and falls, lava spreads 3 (7 in the Nether), two sources make an infinite water source, and when they meet you get **obsidian** (from still lava) or **cobblestone**. Buckets pick up and pour both. Water boils away in the Nether.
+- Fire spreads to wood, leaves and wool and burns out (forever on netherrack); rain puts it out.
+
+**The Nether**
+- Build an **obsidian frame** (at least 4 wide and 5 tall, corners optional, up to 23x23) and light it with **Flint and Steel**. Stand in the purple swirl for 4 seconds. Portals link like the game: 1 block in the Nether is 8 in the Overworld, and an existing portal nearby is used, otherwise a new one is built for you.
+- The Nether: huge caverns, a lava sea, soul sand, gravel, magma, glowstone, nether quartz ore, fire, mushrooms and nether wart.
+- **Nether Fortresses**: nether brick bridges on tall arches, **blaze spawners**, a nether wart garden and treasure rooms.
+- New creatures: **Zombie Pigmen** (neutral; hit one and they all come for you), **Ghasts** (their fireballs explode; punch one back), **Blazes** (fireballs, drop **Blaze Rods**), **Wither Skeletons**, and Magma Creatures.
+
+**Strongholds and the End**
+- **Endermen** roam at night (don't look them in the eye) and drop **Ender Pearls**. Throw a pearl to teleport. Blaze Rod -> 2 Blaze Powder; Blaze Powder + Ender Pearl -> **Eye of Ender**.
+- Throw an Eye of Ender and follow it: it flies toward one of the three **strongholds** hidden deep underground 640-1150 blocks from the middle of the world. The portal room has 12 **End Portal Frames** over a pool of lava; fill them all with eyes to open the **End Portal**.
+- **The End**: a dark floating island of end stone, ten obsidian pillars with **End Crystals** (two in iron cages), endermen everywhere, and the **Ender Dragon** (200 health, boss bar). It circles, strafes you with breath, charges, and lands on the exit portal to breathe acid. Crystals heal it: break them first (arrows work). Beds explode outside the Overworld...
+- When the dragon dies the **exit portal** opens and the **Dragon Egg** appears. Jump in for the ending (our own words), then you are back home. The fight stays won in your save.
+
+**Feeling more like the game**
+- **Experience**: orbs from creatures and ores, a level bar above the hotbar, and the classic level-up sound.
+- **Weather**: rain (snow in cold places and high up), dark thunderstorms with lightning that can start fires, and rain sounds.
+- **Beds**: sleep through the night and set where you respawn.
+- Ambient sounds in caves, underwater, the Nether and the End; lava pops and crackling fire; portal hums; the Nether's red haze and the End's dim sky.
+- The vanilla blocks above use the resource pack's own textures only. **No existing texture or block design was changed.**
+
+Multiplayer: everyone can be in a different dimension. Players only see the people in the same dimension as them, block changes and portals are shared, and creatures and dropped items in a dimension the host isn't in run on the computer of the player who is there.
 
 ## The Battle mini game
 
@@ -272,13 +313,23 @@ python3 build.py
 | `15g_creative.js` | Creative mode: item menu, flying, instant breaking, pick block |
 | `15h_servers.js` | Servers: the Multiplayer and Battle Servers screens, hosting, joining, bans/whitelist/kicks, saved player data, Tab player list |
 | `15i_commands.js` | Chat commands, run on the server host with operator permissions |
+| `15l_combat.js` | Java 1.9+ combat for Battle and Battle Royale: attack cooldown, damage, crits, sweeps, shields, the off hand |
 | `15k_minigames.js` | Tumble and Glide: arena and course generation, rules, rounds, elytra flight, bots, HUD and results |
 | `15j_battlecreate.js` | The Battle create screen (Casual / Competitive) and the Competitive rules; its picture is `battle_art.jpg` |
+| `02d_vanilla.js` | Vanilla blocks: birch/acacia/dark oak/spruce leaves, plants and flowers, flowing water and lava levels, nether and End blocks, portals, beds |
+| `03d_vanillaitems.js` | Ender pearls and eyes, blaze rods, buckets of water and lava, nether items; mining times and drops for the new blocks |
+| `04d_terrain.js` | Terrain v2: continents, mountains, rivers, climate biomes, new trees and plants, ruined portals, strongholds, loot chests |
+| `04e_dims.js` | Nether and End generators, Nether Fortresses, the End island, pillars and exit portal |
+| `06d_vanillapack.js` | Foliage tints and derived tiles (turned bed tops, End portal) from the resource pack |
+| `15bw_vanilla.js` | Recipes, fuel and smelting for the vanilla things |
+| `15m_dims.js` | Dimensions: travel, saving all three, Nether and End portals, flowing liquids, fire, buckets, beds, pearls, eyes, multiplayer |
+| `15n_mobs2.js` | Nether and End creatures, spawners, fireballs, the Ender Dragon fight, End Crystals, boss bar |
+| `15o_atmos.js` | Experience, weather and lightning, ambient sounds, the ending, menu entries |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
 
-Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End overhaul with the Void King.
+Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages, villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan), saplings and farming, and the End cities.
 
 ## Credits
 
