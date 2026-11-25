@@ -58,7 +58,7 @@ function creClick(kind,i,right,shift){const p=player;
 addEventListener('keydown',e=>{if(!CR.open||CR.mode!=='creative'||!CR.hover||CR.hover[0]!=='c')return;if(!e.code.startsWith('Digit'))return;const n=+e.code.slice(5)-1;if(n<0||n>8)return;
   const id=CRE.list[CR.hover[1]];if(!id)return;player.inv[n]={id,count:stackMax(id)};sfx('click');e.stopImmediatePropagation();craftRender();},true);
 // ---- breaking: instant, one block every quarter second while held (swords don't break blocks, like Java) ----
-function creativeMine(p,dt){p.creT=(p.creT||0)-dt;if(lmbEdge)p.creT=0;if(p.creT>0)return;const h=raycastBlock(eye(p),fwd(p),5);if(!h)return;
+function creativeMine(p,dt){p.creT=(p.creT||0)-dt;if(lmbEdge)p.creT=0;if(p.creT>0)return;const h=raycastBlock(eye(p),fwd(p),5,true,true);if(!h)return;
   const held=p.inv[p.sel];if(held&&ITEMS[held.id]&&ITEMS[held.id].tool==='sword')return;breakBlock(h.x,h.y,h.z,p);p.swing=1;p.creT=.25;}
 // ---- flying: double-tap jump ----
 addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||!locked||chatUI||chestOpen)return;const p=player;if(!creative()||!p.alive)return;
@@ -67,7 +67,7 @@ addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||!locked||chatUI||c
 function creFlyEdge(p){const rise=p.jump&&!p._jPrev;p._jPrev=p.jump;if(!rise||!(touchActive||padActive))return;if(perfT-CRE.lastSpace<.3){p.flying=!p.flying;CRE.lastSpace=-1;}else CRE.lastSpace=perfT;}
 // ---- pick block: middle click puts the block you look at in your hand ----
 document.addEventListener('mousedown',e=>{if(e.button!==1||!locked||!player||!player.alive||MATCH.mode!=='survival')return;e.preventDefault();const p=player;
-  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5);if(!h)return;let b=h.b;if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
+  const h=raycastBlock(eye(p),fwd(p),creative()?5:4.5,true,true);if(!h)return;let b=h.b;if(b>=37&&b<=40)b=37;if(b>=42&&b<=45)b=42;if(b>=46&&b<=49)b=46;if(b>=67&&b<=70)b=67;if(b>=72&&b<=75)b=72;
   const id='b'+b;if(!ITEMS[id])return;const have=p.inv.findIndex((s,i)=>i<9&&s&&s.id===id);if(have>=0){p.sel=have;selShow=2;return;}if(!creative())return;
   let slot=p.inv[p.sel]?p.inv.findIndex((s,i)=>i<9&&!s):p.sel;if(slot<0)slot=p.sel;p.inv[slot]={id,count:stackMax(id)};p.sel=slot;selShow=2;sfx('click');});
 // ---- switching game mode ----

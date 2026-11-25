@@ -74,7 +74,7 @@ function updatePlayer(dt){
   const f=[-Math.sin(p.yaw),-Math.cos(p.yaw)],r=[Math.cos(p.yaw),-Math.sin(p.yaw)];const wx=f[0]*fw+r[0]*st,wz=f[1]*fw+r[1]*st;
   p.sneak=canMove&&!!(keys.ShiftLeft||keys.ShiftRight||(padActive&&padIn.sneak)||(touchActive&&touchIn.sneak));
   const canSprint=fw>0&&!p.sneak&&!p.using&&p.food>6&&!p.effects.blind;
-  if(!canSprint||p.collidedH)p.sprint=false;else if((keys.ControlLeft||keys.ControlRight||sprintTap||(padActive&&padIn.sprint&&fw>.8)||(touchActive&&touchIn.sprint&&fw>.8))&&canSprint)p.sprint=true;
+  if(!canSprint||p.collidedH)p.sprint=false;else if((keys.ControlLeft||keys.ControlRight||sprintTap||(padActive&&padIn.sprint&&fw>.8)||(touchActive&&touchIn.sprintNow&&fw>.8))&&canSprint)p.sprint=true;
   if(!p.sprint)sprintTap=false;
   p.jump=canMove&&!!(keys.Space||(padActive&&padIn.jump)||(touchActive&&touchIn.jump));
   if(p.gm!=='creative'||!INF)p.flying=false;else creFlyEdge(p);if(p.flying){p.flyDown=p.sneak;p.sneak=false;if(p.onGround&&p.flyDown)p.flying=false;}
@@ -86,7 +86,7 @@ function updatePlayer(dt){
   if(lmb&&!p.using){const tgt=meleeTarget(p,3.2);
     if(tgt||!canBuild()){mining=null;if(lmbEdge)doAttack(p,tgt||null);}
     else if(p.gm==='creative'&&INF){mining=null;creativeMine(p,dt);}
-    else{const h=raycastBlock(eye(p),fwd(p),4.5);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
+    else{const h=raycastBlock(eye(p),fwd(p),4.5,true,true);const hs=p.inv[p.sel];const T=h&&(MATCH.mode==='survival'?mineTime(h.b,hs?hs.id:null):MINE_T[h.b]);
       if(h&&(h.b!==B.CHEST||MATCH.mode==='survival')&&T){if(!mining||mining.x!==h.x||mining.y!==h.y||mining.z!==h.z)mining={x:h.x,y:h.y,z:h.z,b:h.b,t:0};mining.T=T;mining.t+=dt;if(p.swing<=0)p.swing=1;
         if(((mining.t*5)|0)!==(((mining.t-dt)*5)|0))sfx('mine',{pos:[h.x,h.y,h.z],mat:blockMat(h.b)});if(mining.t>=T){breakBlock(h.x,h.y,h.z,p);mining=null;}}else mining=null;}}
   else mining=null;lmbEdge=false;
@@ -94,7 +94,7 @@ function updatePlayer(dt){
   if(rmbEdge){rmbEdge=false;
     if(!tryOpenChest()&&!(MATCH.mode==='survival'&&(mobInteract(p,s)||useSpecial(p,s)))){
       if(it&&it.type==='gadget'&&MATCH.mode==='survival'){if(s.id==='spyglass'){p.using='spy';p.useT=0;}else useGadget(p,s);}
-      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
+      else if(it&&it.type==='block'&&canBuild()){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);if(h&&placeBlock(h.px,h.py,h.pz,it.block)){consume(p,p.sel);p.swing=1;}}
       else if(it&&it.type==='armor'){const cur=p.armor[it.slot];p.armor[it.slot]=s.id;p.inv[p.sel]=cur?{id:cur,count:1}:null;sfx('pick');}
       else if(it&&it.type==='food'&&(p.food<20||it.always)){p.using='eat';p.useT=0;}
       else if(it&&it.type==='potion'){p.using='drink';p.useT=0;}

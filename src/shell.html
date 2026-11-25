@@ -160,17 +160,27 @@ table.res{border-collapse:collapse;margin:8px auto;font-size:22px}table.res td{p
 .jb.off,.jb.off:hover{background-image:var(--btnOff);cursor:default}.jb.off canvas.n{display:block!important}.jb.off canvas.s{display:none!important}
 .jslider,.jslider:hover,.jslider:focus-visible{background-image:var(--btnOff)}.jslider .knob{position:absolute;top:0;width:calc(var(--S)*8px);height:100%;background:var(--btn) 0 0/100% 100%;image-rendering:pixelated}
 .jslider:hover .knob,.jslider:focus-visible .knob{background-image:var(--btnSel)}
-/* touch controls */
-#touchUI{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
-#tLook{position:absolute;inset:0 0 0 38%;pointer-events:auto;touch-action:none}
-#tStickZone{position:absolute;left:0;bottom:0;width:38%;height:62%;pointer-events:auto;touch-action:none}
-#tStickBase{position:fixed;left:16vh;top:calc(100% - 22vh);width:22vh;height:22vh;margin:-11vh 0 0 -11vh;border-radius:50%;background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center}
-#tStickBase.on{background:rgba(0,0,0,.3)}#tStickKnob{width:9vh;height:9vh;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(0,0,0,.4)}
-.tb{position:absolute;pointer-events:auto;touch-action:none;width:11vh;height:11vh;border-radius:2vh;border:2px solid rgba(0,0,0,.6);background:rgba(110,110,110,.55);color:#fff;font:bold 4.6vh 'VT323',monospace;text-shadow:2px 2px 0 #333;display:flex;align-items:center;justify-content:center;padding:0}
-.tb b{font-weight:normal;pointer-events:none}.tb.on{background:rgba(150,155,214,.8)}.tb.lit{background:rgba(120,200,120,.7)}.tb.big{width:15vh;height:15vh;border-radius:50%}
-#tJump{right:4vh;bottom:8vh}#tAttack{right:21vh;bottom:5vh}#tUse{right:21vh;bottom:18vh}#tSneak{right:4vh;bottom:26vh}#tSprint{right:17vh;bottom:31vh}
-#tInv{right:12vh;top:2vh;width:8vh;height:8vh}#tDrop{right:22vh;top:2vh;width:8vh;height:8vh}#tPause{right:2vh;top:2vh;width:8vh;height:8vh}
-#tReady{right:21vh;bottom:18vh}#tList{right:4vh;bottom:26vh}
+/* touch controls (pixel-art buttons in the style of the pocket edition; art is drawn in 13d_touch.js) */
+#touchUI{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none;--ts:1;--ta:.8}
+#tLook{position:absolute;inset:0 0 0 40%;pointer-events:auto;touch-action:none}
+#tStickZone{position:absolute;left:0;bottom:0;width:40%;height:70%;pointer-events:auto;touch-action:none}
+#tStickBase{position:fixed;left:calc(4vh + 15vh*var(--ts));top:calc(100% - 4vh - 15vh*var(--ts));width:calc(30vh*var(--ts));height:calc(30vh*var(--ts));transform:translate(-50%,-50%);
+  background:var(--tjoy) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:calc(var(--ta)*.8);display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+#tStickBase.on{opacity:var(--ta);transition:none}
+#tStickKnob{width:44%;height:44%;background:var(--tknob) 0 0/100% 100% no-repeat;image-rendering:pixelated}
+#tStickBase.on #tStickKnob{background-image:var(--tknobOn)}
+.tb{position:absolute;pointer-events:auto;touch-action:none;width:calc(12vh*var(--ts));height:calc(12vh*var(--ts));border:0;padding:0;background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:var(--ta);display:flex;align-items:center;justify-content:center}
+.tb i{display:block;width:62%;height:62%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
+.tb.on{background-image:var(--tbtnOn)}.tb.on i{margin-top:2%}.tb.lit{background-image:var(--tbtnLit)}.tb.lit.on{background-image:var(--tbtnOn)}
+.tb.sm{width:calc(8.5vh*var(--ts));height:calc(8.5vh*var(--ts))}
+/* right hand: sprint and attack beside a column of jump, sneak and use (like the reference layout) */
+#tUse{right:3vh;bottom:4vh}
+#tSneak{right:3vh;bottom:calc(4vh + 14vh*var(--ts))}
+#tJump{right:3vh;bottom:calc(4vh + 28vh*var(--ts))}
+#tAttack{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 7vh*var(--ts))}
+#tSprint{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 21vh*var(--ts))}
+#tReady{right:calc(3vh + 15vh*var(--ts));bottom:calc(4vh + 7vh*var(--ts))}#tList{right:3vh;bottom:calc(4vh + 14vh*var(--ts))}
+#tPause{right:2vh;top:2vh}#tInv{right:calc(3vh + 9.5vh*var(--ts));top:2vh}#tDrop{right:calc(4vh + 19vh*var(--ts));top:2vh}#tChat{left:2vh;top:2vh}
 body.touch #clickResume{display:none!important}
 #xhair{position:fixed;left:50%;top:50%;width:0;height:0;pointer-events:none;mix-blend-mode:difference;z-index:3}
 #xhair i,#xhair b{position:absolute;background:#fff;display:block}#xhair i{left:-9px;top:-1px;width:18px;height:2px}#xhair b{left:-1px;top:-9px;width:2px;height:18px}
@@ -319,9 +329,9 @@ body.touch #clickResume{display:none!important}
 <div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
 <div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
-  <button class="tb" id="tPause" aria-label="Pause"><b>II</b></button><button class="tb" id="tInv" aria-label="Inventory"><b>E</b></button><button class="tb" id="tDrop" aria-label="Drop item"><b>Q</b></button>
-  <button class="tb" id="tSneak" aria-label="Sneak"><b>&#8615;</b></button><button class="tb" id="tSprint" aria-label="Sprint"><b>&#187;</b></button><button class="tb" id="tUse" aria-label="Use"><b>&#9995;</b></button>
-  <button class="tb" id="tAttack" aria-label="Attack"><b>&#9876;</b></button><button class="tb big" id="tJump" aria-label="Jump"><b>&#9650;</b></button><button class="tb" id="tReady" aria-label="Ready"><b>R</b></button><button class="tb" id="tList" aria-label="Players"><b>&#9776;</b></button></div>
+  <button class="tb sm" id="tPause" aria-label="Pause"><i></i></button><button class="tb sm" id="tInv" aria-label="Inventory"><i></i></button><button class="tb sm" id="tDrop" aria-label="Drop item"><i></i></button><button class="tb sm" id="tChat" aria-label="Chat"><i></i></button>
+  <button class="tb" id="tSneak" aria-label="Sneak"><i></i></button><button class="tb" id="tSprint" aria-label="Sprint"><i></i></button><button class="tb" id="tUse" aria-label="Use"><i></i></button>
+  <button class="tb" id="tAttack" aria-label="Attack"><i></i></button><button class="tb" id="tJump" aria-label="Jump"><i></i></button><button class="tb" id="tReady" aria-label="Ready"><i></i></button><button class="tb" id="tList" aria-label="Players"><i></i></button></div>
 <div id="lobbyPanel" class="screen hidden"><div class="panel"><h3>Lobby</h3><div id="lobbyInfo"></div>
   <div class="row"><button class="btn small" id="lobbyReady">Ready (R)</button><button class="btn small" id="lobbyOpts">Game Options</button><button class="btn small" id="lobbyStart">Start now</button><button class="btn small" id="lobbyClose">Close (Tab)</button></div></div></div>
 <div id="results" class="screen hidden">

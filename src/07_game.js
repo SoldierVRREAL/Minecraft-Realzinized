@@ -18,12 +18,14 @@ const owned=e=>e&&(e.isLocal||(e.kind==='bot'&&isHost())||(e.kind==='mob'&&(isHo
 const maxHP=e=>e.maxHp||20;
 
 function fluidAt(x,y,z){const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));return b?BD[b].liquid:false;}
-function raycastBlock(o,d,maxD,ignoreFluid=true){
+function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
   let x=Math.floor(o[0]),y=Math.floor(o[1]),z=Math.floor(o[2]);const sx=Math.sign(d[0]),sy=Math.sign(d[1]),sz=Math.sign(d[2]);
   const tdx=sx?Math.abs(1/d[0]):1e9,tdy=sy?Math.abs(1/d[1]):1e9,tdz=sz?Math.abs(1/d[2]):1e9;
   let tx=sx>0?(x+1-o[0])*tdx:sx<0?(o[0]-x)*tdx:1e9,ty=sy>0?(y+1-o[1])*tdy:sy<0?(o[1]-y)*tdy:1e9,tz=sz>0?(z+1-o[2])*tdz:sz<0?(o[2]-z)*tdz:1e9;
   let t=0,px=x,py=y,pz=z;
   for(let i=0;i<300&&t<=maxD;i++){const b=getB(x,y,z);if(b&&BD[b].solid&&b!==B.BARRIER)return {x,y,z,b,t,px,py,pz};
+    // plants, flowers, grass and fire can be aimed at too (for breaking them, or placing a block in their place)
+    if(plants&&b&&BD[b].cross&&!BD[b].liquid&&!BD[b].portal)return {x,y,z,b,t,px:x,py:y,pz:z,plant:true};
     px=x;py=y;pz=z;if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=tdx;}else if(ty<tz){y+=sy;t=ty;ty+=tdy;}else{z+=sz;t=tz;tz+=tdz;}}
   return null;
 }
@@ -63,7 +65,8 @@ function tickEffects(e,dt){
 function speedMul(e){let m=1;if(e.effects.speed)m*=1+.2*(e.effects.speed.amp+1);if(e.effects.slowness)m*=Math.max(.2,1-.15*(e.effects.slowness.amp+1));return m;}
 
 // ---------- hunger (1.8 exhaustion model, scaled by the Hunger Rate option) ----------
-function exhaust(e,v){e.exh+=v*(SET.hunger||1);}
+function exhaust(e,v){e.exh+=v*(MATCH.mode==='survival'?SURV_HUNGER:(SET.hunger||1));}
+const SURV_HUNGER=.45;   // survival food lasts a little over twice as long as the 1.8 rate
 function tickHunger(e,dt,moved){if(e.gm==='creative'){e.food=20;e.sat=Math.min(5,e.sat||5);e.exh=0;e.fire=0;e.air=300;return;}
   if(e.sprint&&e.onGround)exhaust(e,.1*moved);else if(e.onGround)exhaust(e,.01*moved);
   if(e.inWater)exhaust(e,.015*moved);

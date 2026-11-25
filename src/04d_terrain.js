@@ -63,6 +63,7 @@ function colInfo2(x,z){const S=WSEED;
   if(CI.b===BIO.ocean&&CI.h>=SEA)CI.b=b1;
   if(river>.5&&CI.under&&CI.b!==BIO.ocean)CI.b=BIOMES[b1].cold?b1:BIO.river;
   CI.beach=land<1&&land>.2&&CI.h>=SEA-2&&CI.h<=SEA+1&&!BIOMES[b1].cold&&m<.3;
+  CI.sb=CI.b===b1?surfBiome(PTS2,n,d1,b1,x,z,60):CI.b;
   return CI;}
 // dispatch: the old generator for old worlds
 {const c1=colInfo;colInfo=function(x,z){return GENV>=2?colInfo2(x,z):c1(x,z);};}
@@ -73,7 +74,7 @@ function genChunk2(cx,cz){
   const x0=cx*16,z0=cz*16;genCX=cx;genCZ=cz;const S=WSEED;
   for(let y=0;y<WY;y++){const row=y*WZ;for(let lz=0;lz<16;lz++){const o=(row+((z0+lz)&ZM))*WX+(x0&XM);world.fill(0,o,o+16);light.fill(0,o,o+16);}}
   for(let pz=0;pz<18;pz++)for(let px=0;px<18;px++){const x=x0+px-1,z=z0+pz-1;const c=colInfo2(x,z);GH2[pz*18+px]=c.h;
-    if(px>0&&px<17&&pz>0&&pz<17){const k=(pz-1)*16+px-1;GH[k]=c.h;GB[k]=c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;GRV[k]=c.river>.3?1:0;GM[k]=c.m*255|0;}}
+    if(px>0&&px<17&&pz>0&&pz<17){const k=(pz-1)*16+px-1;GH[k]=c.h;GB[k]=c.sb;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;GRV[k]=c.river>.3?1:0;GM[k]=c.m*255|0;}}
   for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz,k=lz*16+lx,q=(lz+1)*18+lx+1;const hh=GH[k],b=GB[k],D=BIOMES[b];const h=Math.min(WY-2,hh);
     const slope=Math.max(Math.abs(GH2[q-1]-hh),Math.abs(GH2[q+1]-hh),Math.abs(GH2[q-18]-hh),Math.abs(GH2[q+18]-hh));
     let top=D.top,fill=D.fill||B.DIRT,deep=B.STONE;const n=hash2(x,z,S+31);

@@ -93,7 +93,7 @@ function wrapText(s,maxW,size){const meas=t=>{if(FONT)return bmpWidth(t,Math.max
 function drawBlockHint(){
   const able=OPT.tips!==false&&player&&player.alive&&!chestOpen&&(MATCH.state==='play'&&!(MATCH.preT>0)||MATCH.state==='lobby')&&(locked||padActive||touchActive);
   if(!able)hintLook=null;
-  else{const h=raycastBlock(eye(player),fwd(player),5);const b=h?h.b:0;
+  else{const h=raycastBlock(eye(player),fwd(player),5,true,true);const b=h?h.b:0;
     if(b&&BLOCK_TIPS[b]&&!HINT_SEEN.has(b)){if(hintLook===b)hintLookT+=dtFrame;else{hintLook=b;hintLookT=0;}if(hintLookT>.6){HINT_SEEN.add(b);hintCur={b,t:5};hintLook=null;}}else hintLook=null;}
   if(!hintCur)return;hintCur.t-=dtFrame;if(hintCur.t<=0){hintCur=null;return;}
   const tip=BLOCK_TIPS[hintCur.b],name=Array.isArray(tip)?tip[0]:(BLOCK_NAMES[hintCur.b]||''),desc=Array.isArray(tip)?tip[1]:tip;

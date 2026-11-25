@@ -65,8 +65,13 @@ function colInfo(x,z){
   const oceanT=smooth01(.35,.43,cont);const oh=bioH(BIO.ocean,x,z);h=oh+(h-oh)*oceanT;
   CI.h=Math.floor(h);CI.b=oceanT<.35?BIO.ocean:b1;CI.lava=oceanT>.9?lava:-1;CI.cont=cont;CI.beach=oceanT<1&&CI.h>=SEA-2&&CI.h<=SEA+1&&CI.b!==BIO.frozen;CI.under=CI.h<SEA;
   if(CI.b===BIO.ocean&&CI.h>=SEA)CI.b=b1;
+  CI.sb=CI.b===b1?surfBiome(pts,pts.length,d1,b1,x,z,42):CI.b;
   return CI;}
 function biomeAt(x,z){return colInfo(Math.floor(x),Math.floor(z)).b;}
+// Near a border the ground of the two biomes mixes in patches (grass, sand, snow...), instead of meeting in a straight line.
+// pts: [distance, biome, ...]; R: blend width. Returns the biome whose surface this column gets.
+function surfBiome(pts,n,d1,b1,x,z,R){let tot=0;for(let k=0;k<n;k+=2){const w=Math.max(0,1-(pts[k]-d1)/R);pts[k]=w*w*w*w;tot+=pts[k];}if(tot<=1.0001)return b1;
+  const r=clamp((fbm(x/5,z/5,WSEED+61,2)-.5)*1.6+.5,0,1)*.85+hash2(x,z,WSEED+62)*.15;let acc=0;for(let k=0;k<n;k+=2){acc+=pts[k]/tot;if(r<acc)return pts[k+1];}return b1;}
 
 // ---------- chunk generation ----------
 const GH=new Int16Array(256),GB=new Uint8Array(256),GL=new Int16Array(256),GBE=new Uint8Array(256),GU=new Uint8Array(256);
@@ -78,7 +83,7 @@ function genChunk(cx,cz){
   const x0=cx*16,z0=cz*16;genCX=cx;genCZ=cz;const S=WSEED;
   for(let y=0;y<WY;y++){const row=y*WZ;for(let lz=0;lz<16;lz++){const o=(row+((z0+lz)&ZM))*WX+(x0&XM);world.fill(0,o,o+16);light.fill(0,o,o+16);}}
   // terrain columns
-  for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const c=colInfo(x,z);const k=lz*16+lx;GH[k]=c.h;GB[k]=c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;
+  for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const c=colInfo(x,z);const k=lz*16+lx;GH[k]=c.h;GB[k]=c.sb!=null?c.sb:c.b;GL[k]=c.lava;GBE[k]=c.beach?1:0;GU[k]=c.under?1:0;
     const D=BIOMES[c.b];const h=Math.min(WY-2,c.h);let top=D.top,fill=D.fill||B.DIRT;const n=hash2(x,z,S+31);
     if(c.under){top=c.b===BIO.ocean?(fbm(x/20,z/20,S+32,2)<.45?B.GRAVEL:B.SAND):(n<.5?B.DIRT:B.GRAVEL);fill=top===B.GRAVEL?B.GRAVEL:top===B.SAND?B.SAND:B.DIRT;if(fbm(x/9,z/9,S+37,2)>.7)top=B.CLAY;}
     else if(c.beach){top=B.SAND;fill=B.SAND;}

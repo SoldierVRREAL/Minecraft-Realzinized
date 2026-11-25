@@ -67,7 +67,7 @@ function mcTick(e){
   for(let i=0;i<3;i++)if(Math.abs(e.mot[i])<.005)e.mot[i]=0;
   if(e.flying){}else if(I.jump){if(e.inWater||e.inLava)e.mot[1]+=.04;else if(e.onGround&&e.jumpTicks===0){mcJump(e);e.jumpTicks=10;}}else e.jumpTicks=0;
   let moved=0;
-  e.eh=e.gliding?.6:undefined;   // vanilla: a player flying an elytra is 0.6 tall
+  if(e.kind!=='mob')e.eh=e.gliding?.6:undefined;   // vanilla: a player flying an elytra is 0.6 tall (creatures keep their own height)
   if(e.gliding){moved=glideTick(e);}
   else if(e.flying){   // Creative flight (EntityPlayer: fly speed 0.05, x2 sprinting; jump/sneak move 0.15 up/down; vertical speed x0.6 a tick)
     if(I.jump)e.mot[1]+=.15;if(e.flyDown)e.mot[1]-=.15;moveFlying(e,I.wx,I.wz,e.sprint?.1:.05);moved=moveEntity(e,e.mot[0],e.mot[1],e.mot[2]);e.mot[0]*=.91;e.mot[2]*=.91;e.mot[1]*=.6;e.fallDist=0;}

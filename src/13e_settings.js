@@ -51,6 +51,10 @@ JPAGES.controls=()=>{const keys=[['Attack','Left Click'],['Use Item','Right Clic
   jSlider(()=>SENS<=0?'Sensitivity: *yawn*':SENS>=1?'Sensitivity: HYPERSPEED!!!':'Sensitivity: '+Math.round(SENS*200)+'%',()=>SENS,v=>{SENS=v;store('bb_sens',SENS);if($('o_sens'))$('o_sens').value=Math.round(SENS*200);},40),
   jBtn(()=>'Invert Mouse: '+onOff(INVY),()=>{INVY=!INVY;store('bb_invy',INVY?'1':'0');if($('o_invy'))$('o_invy').checked=INVY;}),
   jBtn(()=>'Raw Mouse Input: '+({on:'ON',off:'OFF'}[OPT.rawMouse]||'Auto ('+(IS_MAC?'OFF':'ON')+')'),()=>{OPT.rawMouse=OPT.rawMouse==='on'?'off':OPT.rawMouse==='off'?'auto':'on';saveOpt();if(document.pointerLockElement)document.exitPointerLock();}),
+  jSlider(()=>'Touch Look Speed: '+Math.round(OPT.tSens*100)+'%',()=>(OPT.tSens-.3)/1.7,v=>{OPT.tSens=Math.round((.3+v*1.7)*20)/20;saveOpt();},34),
+  jSlider(()=>'Touch Button Size: '+Math.round(OPT.tSize*100)+'%',()=>(OPT.tSize-.7)/.7,v=>{OPT.tSize=Math.round((.7+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
+  jSlider(()=>'Touch Button Opacity: '+Math.round(OPT.tAlpha*100)+'%',()=>(OPT.tAlpha-.3)/.7,v=>{OPT.tAlpha=Math.round((.3+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
+  jBtn(()=>'Touch Vibration: '+onOff(OPT.tBuzz!==false),()=>{OPT.tBuzz=OPT.tBuzz===false;saveOpt();}),
   jBtn(()=>'Mac Click Fix: '+({on:'ON',off:'OFF'}[OPT.clickFix]||'Auto ('+(IS_MAC?'ON':'OFF')+')'),()=>{OPT.clickFix=OPT.clickFix==='on'?'off':OPT.clickFix==='off'?'auto':'on';saveOpt();})].concat(keys.map(([a,k])=>jBtn(`${a}: ${k}`,null,'off')))};};
 JPAGES.rules=()=>({title:'Game Rules',items:[ruleBtn('o_mode','Mode'),ruleBtn('o_round','Round Length'),ruleBtn('o_hunger','Hunger Rate'),ruleBtn('o_refill','Item Respawn'),ruleBtn('o_grace','Grace Period'),
   ruleBtn('o_show','Showdown'),ruleBtn('o_take','Take Everything'),ruleBtn('o_central','Central Spawn'),ruleBtn('o_bots','Bots'),ruleBtn('o_diff','Bot Difficulty'),ruleBtn('o_brlen','Battle Royale Length'),ruleBtn('o_brx','BR Extra Loot'),ruleBtn('o_ench','Enchanted Loot')]});
