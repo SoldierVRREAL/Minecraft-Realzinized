@@ -33,7 +33,10 @@ const VB={};          // extra info: VB.waterF[level], VB.lavaF[level], bed ids.
     blk('PORTAL_X','Nether Portal','#7a30e0',[pt,pt,pt],{solid:false,opaque:false,light:11,portal:'x',shape:[[0,0,6/16,1,1,10/16]]});
     blk('PORTAL_Z',null,'#7a30e0',[pt,pt,pt],{solid:false,opaque:false,light:11,portal:'z',shape:[[6/16,0,0,10/16,1,1]]});}
   {const t1=tile('mob_spawner',{k:'cage',c:'#2a3a4a'});blk('SPAWNER','Monster Spawner','#2a3a4a',[t1,t1,t1],{opaque:false});}
-  {const t1=tile('fire_layer_0',{k:'fire',c:'#f08020'});blk('FIRE','Fire','#f08020',[t1,t1,t1],{solid:false,opaque:false,cross:true,light:15,fire:true});}
+  // fire: four sheets of flame round the edges and two through the middle (the second, taller flame layer), both animated (see 06d)
+  {const t1=tile('fire_layer_0',{k:'fire',c:'#f08020'}),t2=tile('fire_layer_1',{k:'fire',c:'#f0a030'});const e=.06,w=.002;
+    blk('FIRE','Fire','#f08020',[t1,t1,t1],{solid:false,opaque:false,light:15,fire:true,noShadow:true,
+      shape:[[e,0,0,e+w,1,1],[1-e-w,0,0,1-e,1,1],[0,0,e,1,1,e+w],[0,0,1-e-w,1,1,1-e],[.5-w/2,0,0,.5+w/2,1,1,t2],[0,0,.5-w/2,1,1,.5+w/2,t2]]});}
   // ---- the End ----
   {const ft=tile('endframe_top',{k:'noise',c:'#3a6a5a'}),fs=tile('endframe_side',{k:'noise',c:'#c8c890'}),fe=tile('endframe_eye',{k:'eye',c:'#2a8a70'});const es=BD[B.END_STONE].side;
     blk('END_FRAME','End Portal Frame','#3a6a5a',[ft,fs,es],{opaque:false,shape:[[0,0,0,1,13/16,1]],col:[[0,0,0,1,13/16,1]]});

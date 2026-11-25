@@ -125,3 +125,5 @@ function showEndCredits(done){document.exitPointerLock&&document.exitPointerLock
 // first visits feel like milestones
 {const t0=travelTo;travelTo=function(dim,pos,opt={}){const first=!(SURV.visited||(SURV.visited={}))[dim];SURV.visited[dim]=true;t0(dim,pos,opt);
     if(first&&!opt.quiet&&dim!=='overworld')setTimeout(()=>{if(DIM===dim)SURV.toast={t:5,txt:dim==='nether'?'We Need to Go Deeper':'The End?'};},4500);};}
+// animated fire and portal tiles
+{const r0=render;let last=0;render=function(){const now=performance.now()/1000;if(last)animTiles(Math.min(.1,now-last));last=now;return r0.apply(this,arguments);};}

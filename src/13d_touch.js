@@ -3,7 +3,7 @@
 // jump, sneak and use), small buttons for pause, inventory, drop and chat. Drag anywhere on the right to look; a quick tap
 // on the world attacks, holding still on it uses the held item. Hotbar slots are tappable. All the art is drawn here.
 let touchActive=false;const touchIn={fw:0,st:0,jump:false,sneak:false,sprint:false};
-if(OPT.tSize==null)OPT.tSize=1;if(OPT.tAlpha==null)OPT.tAlpha=.8;if(OPT.tSens==null)OPT.tSens=1;
+if(OPT.tSize==null)OPT.tSize=1;if(!OPT.tMove)OPT.tMove='stick';if(OPT.tAlpha==null)OPT.tAlpha=.8;if(OPT.tSens==null)OPT.tSens=1;
 function wantTouch(){if(OPT.mobile==='on')return true;if(OPT.mobile==='off')return false;return ('ontouchstart' in window||navigator.maxTouchPoints>0)&&matchMedia('(pointer: coarse)').matches;}
 function applyTouchSetting(){touchActive=wantTouch();document.body.classList.toggle('touch',touchActive);if(touchActive&&document.pointerLockElement)document.exitPointerLock();applyTouchLook();}
 const TUI=$('touchUI');
@@ -70,21 +70,48 @@ tBtn('tChat',()=>{if(typeof openChat==='function'&&player&&!chatUI)openChat('');
 tBtn('tReady',()=>fakeKey('KeyR'));tBtn('tList',()=>fakeKey('Tab'));
 tBtn('tPause',()=>{if(!online)paused=true;show('pause');});
 
-// ---------- the stick: rests bottom-left, jumps to where the thumb lands in the left zone ----------
+// ---------- the stick: stays in one place bottom-left; the knob follows the thumb inside its frame ----------
 let stickId=null,stickO=[0,0];const SB=$('tStickBase'),SK=$('tStickKnob');
-$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();if(stickId!=null)return;stickId=e.pointerId;stickO=[e.clientX,e.clientY];try{e.target.setPointerCapture(e.pointerId);}catch(_){}
-  SB.style.left=e.clientX+'px';SB.style.top=e.clientY+'px';SB.classList.add('on');moveStick(e);});
-function moveStick(e){const R=SB.offsetWidth*.3||50;let dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];
-  // a thumb that runs past the edge drags the stick along with it
-  const m=Math.hypot(dx,dy);if(m>R*1.6){const k=(m-R*1.6)/m;stickO[0]+=dx*k;stickO[1]+=dy*k;dx-=dx*k;dy-=dy*k;SB.style.left=stickO[0]+'px';SB.style.top=stickO[1]+'px';}
-  // the knob stays inside the square frame
-  const kx=clamp(dx,-R,R),ky=clamp(dy,-R,R);SK.style.transform=`translate(${kx}px,${ky}px)`;
+$('tStickZone').addEventListener('pointerdown',e=>{e.preventDefault();if(OPT.tMove==='dpad'||stickId!=null)return;const r=SB.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  if(Math.abs(e.clientX-cx)>r.width*.95||Math.abs(e.clientY-cy)>r.height*.95)return;   // only touches on or near the stick
+  stickId=e.pointerId;stickO=[cx,cy];try{e.target.setPointerCapture(e.pointerId);}catch(_){}SB.classList.add('on');moveStick(e);});
+function moveStick(e){const R=SB.offsetWidth*.3||50;const dx=e.clientX-stickO[0],dy=e.clientY-stickO[1];
+  const kx=clamp(dx,-R,R),ky=clamp(dy,-R,R);SK.style.transform=`translate(${kx}px,${ky}px)`;   // the knob stays inside the square frame
   let st=dx/R,fw=-dy/R;const L=Math.hypot(st,fw);if(L>1){st/=L;fw/=L;}if(L<.15){st=0;fw=0;}touchIn.st=st;touchIn.fw=fw;
-  // push all the way forward (past the frame) to sprint
-  if(-dy>R*1.25&&Math.abs(dx)<R*.6)touchIn.autoSprint=true;else if(fw<.7)touchIn.autoSprint=false;}
+  // push past the top of the frame to sprint
+  if(-dy>R*1.3&&Math.abs(dx)<R*.7)touchIn.autoSprint=true;else if(fw<.7)touchIn.autoSprint=false;}
 $('tStickZone').addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e);});
-const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;touchIn.autoSprint=false;SK.style.transform='';SB.classList.remove('on');SB.style.left='';SB.style.top='';};
+const stickEnd=e=>{if(e.pointerId!==stickId)return;stickId=null;touchIn.fw=0;touchIn.st=0;touchIn.autoSprint=false;SK.style.transform='';SB.classList.remove('on');};
 $('tStickZone').addEventListener('pointerup',stickEnd);$('tStickZone').addEventListener('pointercancel',stickEnd);
+
+// ---------- the D-pad (Options > Controls > Touch Movement): arrows you can slide between; up-left and up-right appear while
+// walking forward; double-tap forward to sprint; the middle is sneak ----------
+const DP=$('tDpad');let dpId=null,dpCell=-1,dpUpT=0,dpSneakT=0;
+const DP_CELLS=[[1,1,'ul'],[0,1,'u'],[-1,1,'ur'],[1,0,'l'],null,[-1,0,'r'],null,[0,-1,'d'],null];   // [strafe-left, forward]
+function dpAt(e){const r=DP.getBoundingClientRect();const cx=Math.floor((e.clientX-r.left)/(r.width/3)),cy=Math.floor((e.clientY-r.top)/(r.height/3));if(cx<0||cy<0||cx>2||cy>2)return -1;return cy*3+cx;}
+function dpSet(c){if(c===dpCell)return;const up=c===1||c===0||c===2;
+  if(c===1&&dpCell!==0&&dpCell!==2){const now=performance.now();if(now-dpUpT<420)touchIn.autoSprint=true;dpUpT=now;}
+  if(!up)touchIn.autoSprint=false;
+  dpCell=c;const C=c>=0?DP_CELLS[c]:null;
+  if(C&&(C[2]!=='ul'&&C[2]!=='ur'||DP.classList.contains('up'))){touchIn.st=-C[0];touchIn.fw=C[1];if(C[0]&&C[1]){touchIn.st*=.7071;touchIn.fw*=.7071;}}else{touchIn.st=0;touchIn.fw=0;}
+  DP.classList.toggle('up',up&&(c!==0&&c!==2||DP.classList.contains('up')));
+  for(const el of DP.children)el.classList.toggle('on',+el.dataset.c===c);
+  if(c>=0&&navigator.vibrate&&OPT.tBuzz!==false)try{navigator.vibrate(6);}catch(_){}}
+DP.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const c=dpAt(e);
+  if(c===4){dpSneakT=performance.now();touchIn.sneak=player&&player.flying?true:!touchIn.sneak;DP.children[4].classList.add('on');try{DP.setPointerCapture(e.pointerId);}catch(_){}dpId='s'+e.pointerId;return;}
+  if(dpId!=null)return;dpId=e.pointerId;try{DP.setPointerCapture(e.pointerId);}catch(_){}dpSet(c);});
+DP.addEventListener('pointermove',e=>{if(e.pointerId!==dpId)return;dpSet(dpAt(e));});
+const dpEnd=e=>{if(dpId==='s'+e.pointerId){dpId=null;DP.children[4].classList.remove('on');if((player&&player.flying)||performance.now()-dpSneakT>350)touchIn.sneak=false;return;}
+  if(e.pointerId!==dpId)return;dpId=null;dpSet(-1);DP.classList.remove('up');};
+DP.addEventListener('pointerup',dpEnd);DP.addEventListener('pointercancel',dpEnd);
+{const ic={ul:['#######...','######....','#####.....','######....','###.###...','##...###..','#.....###.','.......###','........##','..........'],
+    u:TICONS.jump.slice(0,7),d:TICONS.sneak.slice(0,7).reverse().map(r=>r).reverse(),
+    l:['...#......','..##......','.#########','##########','.#########','..##......','...#......'],r:['......#...','......##..','#########.','##########','#########.','......##..','......#...']};
+  ic.ur=ic.ul.map(r=>[...r].reverse().join(''));ic.d=['....##....','....##....','....##....','.########.','..######..','...####...','....##....'];
+  ic.u=['....##....','...####...','..######..','.########.','....##....','....##....','....##....'];
+  DP_CELLS.forEach((C,i)=>{const el=DP.children[i];if(i===4){el.querySelector('i').style.backgroundImage=iconURL(TICONS.sneak);return;}if(!C)return;el.querySelector('i').style.backgroundImage=iconURL(ic[C[2]]);});}
+function applyMoveMode(){const d=OPT.tMove==='dpad';DP.classList.toggle('hidden',!d);SB.classList.toggle('hidden',d);}
+applyMoveMode();
 Object.defineProperty(touchIn,'sprintNow',{get(){return touchIn.sprint||touchIn.autoSprint;}});
 
 // ---------- looking (right side): drag to turn; a quick tap attacks, a long still press uses the held item ----------
@@ -112,5 +139,5 @@ function tickTouch(){const on=touchActive&&player&&(MATCH.state==='play'||MATCH.
   // while flying the column turns into up/down; while dead the small buttons switch the spectator camera
   const key=(player.flying?'f':'w')+(alive?'a':'d');if(key!==touchLast){touchLast=key;
     $('tInv').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'inv':'sprint']);$('tDrop').querySelector('i').style.backgroundImage=iconURL(TICONS[alive?'drop':'use']);}
-  $('tSneak').classList.toggle('lit',touchIn.sneak&&!player.flying);$('tSprint').classList.toggle('lit',!!touchIn.sprintNow);}
+  $('tSneak').classList.toggle('lit',touchIn.sneak&&!player.flying);DP.children[4].classList.toggle('lit',touchIn.sneak&&!player.flying);$('tSprint').classList.toggle('lit',!!touchIn.sprintNow);}
 addEventListener('resize',applyTouchSetting);applyTouchSetting();

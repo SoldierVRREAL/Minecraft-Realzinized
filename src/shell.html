@@ -169,6 +169,12 @@ table.res{border-collapse:collapse;margin:8px auto;font-size:22px}table.res td{p
 #tStickBase.on{opacity:var(--ta);transition:none}
 #tStickKnob{width:44%;height:44%;background:var(--tknob) 0 0/100% 100% no-repeat;image-rendering:pixelated}
 #tStickBase.on #tStickKnob{background-image:var(--tknobOn)}
+#tDpad{position:absolute;left:3vh;bottom:3vh;width:calc(36vh*var(--ts));height:calc(36vh*var(--ts));display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:calc(.6vh*var(--ts));opacity:var(--ta);touch-action:none}
+#tDpad .dp{background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+#tDpad .dp i{display:block;width:58%;height:58%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
+#tDpad .dp.on{background-image:var(--tbtnOn)}#tDpad .dp.on i{margin-top:2%}#tDpad .dp.lit{background-image:var(--tbtnLit)}
+#tDpad .dp.gap{visibility:hidden}#tDpad .dp.diag{visibility:hidden}#tDpad.up .dp.diag{visibility:visible}
+#tDpad .dp[data-c="4"]{transform:scale(.8)}
 .tb{position:absolute;pointer-events:auto;touch-action:none;width:calc(12vh*var(--ts));height:calc(12vh*var(--ts));border:0;padding:0;background:var(--tbtn) 0 0/100% 100% no-repeat;image-rendering:pixelated;opacity:var(--ta);display:flex;align-items:center;justify-content:center}
 .tb i{display:block;width:62%;height:62%;background:0 0/100% 100% no-repeat;image-rendering:pixelated;pointer-events:none;margin-top:-6%}
 .tb.on{background-image:var(--tbtnOn)}.tb.on i{margin-top:2%}.tb.lit{background-image:var(--tbtnLit)}.tb.lit.on{background-image:var(--tbtnOn)}
@@ -328,7 +334,7 @@ body.touch #clickResume{display:none!important}
 <div id="xhair" class="hidden"><i></i><b></b></div>
 <div id="tabList" class="hidden"></div>
 <div id="chatBar" class="hidden"><input id="chatIn" type="text" maxlength="100" autocomplete="off" aria-label="Chat message"></div>
-<div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div></div>
+<div id="touchUI" class="hidden"><div id="tLook"></div><div id="tStickZone"><div id="tStickBase"><div id="tStickKnob"></div></div><div id="tDpad" class="hidden"><div class="dp diag" data-c="0"><i></i></div><div class="dp" data-c="1"><i></i></div><div class="dp diag" data-c="2"><i></i></div><div class="dp" data-c="3"><i></i></div><div class="dp" data-c="4"><i></i></div><div class="dp" data-c="5"><i></i></div><div class="dp gap" data-c="6"><i></i></div><div class="dp" data-c="7"><i></i></div><div class="dp gap" data-c="8"><i></i></div></div></div>
   <button class="tb sm" id="tPause" aria-label="Pause"><i></i></button><button class="tb sm" id="tInv" aria-label="Inventory"><i></i></button><button class="tb sm" id="tDrop" aria-label="Drop item"><i></i></button><button class="tb sm" id="tChat" aria-label="Chat"><i></i></button>
   <button class="tb" id="tSneak" aria-label="Sneak"><i></i></button><button class="tb" id="tSprint" aria-label="Sprint"><i></i></button><button class="tb" id="tUse" aria-label="Use"><i></i></button>
   <button class="tb" id="tAttack" aria-label="Attack"><i></i></button><button class="tb" id="tJump" aria-label="Jump"><i></i></button><button class="tb" id="tReady" aria-label="Ready"><i></i></button><button class="tb" id="tList" aria-label="Players"><i></i></button></div>

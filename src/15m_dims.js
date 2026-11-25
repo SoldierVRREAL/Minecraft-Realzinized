@@ -41,7 +41,7 @@ function survSaveExtra(data){const ow=dimLive('overworld');data.gen=GENV;data.ed
 function travelTo(dim,pos,opt={}){if(!INF||!player)return;
   DIMDATA[DIM]={edits:worldEdits,chests,furn:FURN,drops:drops.filter(d=>d.did>0||!net)};const D=DIMDATA[dim]||{edits:new Map(),chests:new Map(),furn:new Map(),drops:[]};
   if(chestOpen)chestClose(false);if(typeof CR!=='undefined'&&CR.open)craftClose();
-  mobs=[];primed=[];projs=[];particles=[];mining=null;EYES.length=0;XPORBS.length=0;FLUIDQ.clear();FIREQ.clear();
+  mobs=[];primed=[];projs=[];particles=[];mining=null;EYES.length=0;XPORBS.length=0;FLUIDQ.clear();FIREQ.clear();FIRES.clear();FIRE_NEAR.length=0;
   DIM=dim;INF_WY=dimWY(dim);
   infInit(infRingFor(OPT.chunks),WSEED,D.edits);infRD=Math.min(OPT.chunks,infMaxRD());
   chests=D.chests;FURN=D.furn;drops=D.drops||[];DIMDATA[dim]=null;delete DIMDATA[dim];
@@ -57,7 +57,15 @@ function travelTo(dim,pos,opt={}){if(!INF||!player)return;
     if(!SURV.loading&&INF)dimTick(dt);};}
 // death sends you home
 {const r0=survRespawn;survRespawn=function(){r0();const p=player;if(!p)return;const bed=SURV.bedSpawn;const home=bed?bed.slice():SURV.spawn.slice();
-    if(DIM!=='overworld'){travelTo('overworld',home,{quiet:true,after:()=>{p.pos=home.slice();}});}else if(bed){p.pos=home;if(!chunkReadyAt(p.pos[0],p.pos[2])){SURV.loading=true;$('loading').classList.remove('hidden');}else settlePlayer(p);}};}
+    if(DIM!=='overworld'){travelTo('overworld',home,{quiet:true,after:()=>{p.pos=home.slice();bedArrive(p);}});return;}
+    if(bed){p.pos=home;if(!chunkReadyAt(p.pos[0],p.pos[2])){SURV.loading=true;SURV.afterLoad=()=>bedArrive(p);$('loading').classList.remove('hidden');}else{bedArrive(p);settlePlayer(p);}}};}
+// wake up next to the bed (like the game); if it is gone, back to the world spawn
+function bedArrive(p){const bed=SURV.bedSpawn;if(!bed)return;const bx=Math.floor(bed[0]),by=Math.floor(bed[1]),bz=Math.floor(bed[2]);
+  let found=null;for(let dy=-1;dy<=1&&!found;dy++)for(let dz=-1;dz<=1&&!found;dz++)for(let dx=-1;dx<=1&&!found;dx++){const b=getB(bx+dx,by+dy,bz+dz);if(BD[b]&&BD[b].bed)found=[bx+dx,by+dy,bz+dz];}
+  if(!found){SURV.bedSpawn=null;p.pos=SURV.spawn.slice();chatMsg('You have no home bed, or it was obstructed.','#ffffff',false);return;}
+  const free=(x,y,z)=>!(BD[getB(x,y,z)]||{}).solid&&!(BD[getB(x,y+1,z)]||{}).solid&&(BD[getB(x,y-1,z)]||{}).solid&&!isLavaB(getB(x,y,z));
+  for(let r=1;r<=2;r++)for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++)for(const dy of [0,1,-1]){const x=found[0]+dx,y=found[1]+dy,z=found[2]+dz;const b=getB(x,y,z);if(BD[b]&&BD[b].bed)continue;if(free(x,y,z)){p.pos=[x+.5,y,z+.5];return;}}
+  p.pos=[found[0]+.5,found[1]+.6,found[2]+.5];}
 
 // ---------- the world reacts to block changes: portals, beds and tall plants come apart, fluids and fire wake up ----------
 {const a0=applyBlock;applyBlock=function(x,y,z,b){const was=INF?getB(x,y,z):0;a0(x,y,z,b);if(INF&&was!==b)blockChanged(x,y,z,was,b);};}
@@ -111,23 +119,51 @@ function fluidUpdate(x,y,z){const b=getB(x,y,z);const D=BD[b];
     return id;}
   return null;}
 
-// ---------- fire ----------
+// ---------- fire: spreads through wood, leaves, wool and grass the way the game does, burns blocks away, dies in the rain ----------
 const FLAMMABLE=new Set();{for(const k of ['LOG','PLANKS','LEAVES','SPRUCE_LOG','SPRUCE_PLANKS','JLOG','JLEAVES','WOOL','WOOL_W','BOOKSHELF','HAY','FENCE','OAK_STAIRS','OAK_SLAB','TGRASS','FERN','SAKURA_LOG','SAKURA_LEAVES','SAKURA_PLANKS','REDWOOD_LOG','REDWOOD_LEAVES','REDWOOD_PLANKS','FROZEN_LOG','FROZEN_LEAVES','BURNT_LOG','TNT',
   'BIRCH_LOG','BIRCH_LEAVES','BIRCH_PLANKS','ACACIA_LOG','ACACIA_LEAVES','ACACIA_PLANKS','DARK_OAK_LOG','DARK_OAK_LEAVES','DARK_OAK_PLANKS','SPRUCE_LEAVES','TALLGRASS2','DEAD_BUSH','VINE','CARPET'])if(B[k]!=null)FLAMMABLE.add(B[k]);for(const w of MB_WOOLS)FLAMMABLE.add(B['WOOL_'+w[0].toUpperCase()]);}
-const FIRES=new Map();   // key -> age (only fires that will burn out)
-function fireTick(dt){if(!fluidAuth())return;const list=[];let n=0;
-  for(const [k,f] of FIRES){f.t-=dt;if(f.t>0)continue;if(++n>60)break;const [x,y,z]=k.split(',').map(Number);if(getB(x,y,z)!==B.FIRE||!chunkReadyAt(x,z)){FIRES.delete(k);continue;}
-    const below=getB(x,y-1,z);const eternal=below===B.NETHERRACK||below===B.MAGMA||(below===B.BEDROCK&&DIM==='end');
-    const rainy=WEATHER.rain>.5&&DIM==='overworld'&&(lightAt(x,y,z)>>4)>=15;
-    if(rainy||(!eternal&&f.life--<=0)){list.push(x,y,z,0);FIRES.delete(k);continue;}
-    f.t=.6+Math.random()*.8;
-    // burn and spread
-    for(const [dx,dy,dz] of N6){const X=x+dx,Y=y+dy,Z=z+dz;const nb=getB(X,Y,Z);if(!FLAMMABLE.has(nb)||Math.random()>.07)continue;
-      if(nb===B.TNT){igniteTNT(X,Y,Z,1.5,null);continue;}list.push(X,Y,Z,Math.random()<.6?B.FIRE:0);}
-    if(Math.random()<.2){const X=x+((Math.random()*3|0)-1),Y=y+((Math.random()*3|0)-1),Z=z+((Math.random()*3|0)-1);if(!getB(X,Y,Z)&&chunkReadyAt(X,Z)){let fuel=false;for(const [dx,dy,dz] of N6)if(FLAMMABLE.has(getB(X+dx,Y+dy,Z+dz)))fuel=true;if(fuel&&BD[getB(X,Y-1,Z)]&&BD[getB(X,Y-1,Z)].solid)list.push(X,Y,Z,B.FIRE);}}}
-  if(list.length){applyBlockList(list,false);if(net)netSend(N.BOOM,{l:list});for(let i=0;i<list.length;i+=4)if(list[i+3]===B.FIRE)fireAdd(list[i],list[i+1],list[i+2]);}}
-function fireAdd(x,y,z){FIRES.set(key(x,y,z),{t:.5+Math.random(),life:4+(Math.random()*8|0)});}
-function lightFire(x,y,z){if(getB(x,y,z)&&!replaceable(getB(x,y,z)))return false;const below=getB(x,y-1,z);if(!(BD[below]&&BD[below].solid)&&![1,0,-1].some(d=>FLAMMABLE.has(getB(x+d,y,z))||FLAMMABLE.has(getB(x,y,z+d))))return false;
+// how eagerly fire jumps to a block next to it (encouragement) and how fast the block burns away (flammability), like the game's table
+const FLAM={};{const set=(ks,e,f)=>{for(const k of ks)if(B[k]!=null)FLAM[B[k]]=[e,f];};
+  set(['PLANKS','SPRUCE_PLANKS','BIRCH_PLANKS','ACACIA_PLANKS','DARK_OAK_PLANKS','SAKURA_PLANKS','REDWOOD_PLANKS','FENCE','OAK_STAIRS','OAK_SLAB'],5,20);
+  set(['LOG','SPRUCE_LOG','JLOG','BIRCH_LOG','ACACIA_LOG','DARK_OAK_LOG','SAKURA_LOG','REDWOOD_LOG','FROZEN_LOG','BURNT_LOG'],5,5);
+  set(['LEAVES','JLEAVES','BIRCH_LEAVES','ACACIA_LEAVES','DARK_OAK_LEAVES','SPRUCE_LEAVES','SAKURA_LEAVES','REDWOOD_LEAVES','FROZEN_LEAVES'],30,60);
+  set(['WOOL','WOOL_W','CARPET'],30,60);for(const w of MB_WOOLS){const id=B['WOOL_'+w[0].toUpperCase()];if(id!=null)FLAM[id]=[30,60];}
+  set(['BOOKSHELF'],30,20);set(['HAY'],60,20);set(['TNT'],15,100);set(['VINE'],15,100);
+  set(['TGRASS','FERN','DEAD_BUSH','TALLGRASS2','TALLGRASS2_TOP','LARGE_FERN','LARGE_FERN_TOP','POPPY','DANDELION','ALLIUM','BLUE_ORCHID','AZURE','OXEYE','TULIP_RED','TULIP_ORANGE','TULIP_WHITE','TULIP_PINK','LILAC','LILAC_TOP','ROSE_BUSH','ROSE_BUSH_TOP','PEONY','PEONY_TOP','PETALS','REEDS'],60,100);
+  for(const id of FLAMMABLE)if(!FLAM[id])FLAM[id]=[5,20];for(const id in FLAM)FLAMMABLE.add(+id);}
+const FIRES=new Map();   // key -> {t: time to next tick, age 0..15}
+const enc=(x,y,z)=>{let e=0;for(const [dx,dy,dz] of N6){const f=FLAM[getB(x+dx,y+dy,z+dz)];if(f&&f[0]>e)e=f[0];}return e;};
+function fireEternal(x,y,z){const below=getB(x,y-1,z);return below===B.NETHERRACK||below===B.MAGMA||(below===B.BEDROCK&&DIM==='end');}
+function fireTick(dt){fireLook(dt);if(!fluidAuth())return;const list=[],adds=[];let n=0;const raining=WEATHER.rain>.5&&DIM==='overworld';
+  for(const [k,f] of FIRES){f.t-=dt;if(f.t>0)continue;if(++n>120)break;const [x,y,z]=k.split(',').map(Number);if(getB(x,y,z)!==B.FIRE||!chunkReadyAt(x,z)){FIRES.delete(k);continue;}
+    f.t=.7+Math.random()*.4;const eternal=fireEternal(x,y,z);
+    if(raining&&!eternal&&(lightAt(x,y+1,z)>>4)>=15&&Math.random()<.6){list.push(x,y,z,0);FIRES.delete(k);continue;}
+    if(f.age<15&&Math.random()<.6)f.age++;
+    if(!eternal){const below=getB(x,y-1,z);const canBurn=enc(x,y,z)>0;
+      if(!canBurn&&(!(BD[below]&&BD[below].solid)||f.age>3)){list.push(x,y,z,0);FIRES.delete(k);continue;}
+      if(f.age>=15&&!FLAM[below]&&Math.random()<.25){list.push(x,y,z,0);FIRES.delete(k);continue;}}
+    // burn the blocks it touches
+    for(const [dx,dy,dz] of N6){const X=x+dx,Y=y+dy,Z=z+dz;const nb=getB(X,Y,Z);const F=FLAM[nb];if(!F)continue;if(Math.random()*(dy?250:300)>=F[1]*2)continue;
+      if(nb===B.TNT){igniteTNT(X,Y,Z,1.5,null);continue;}
+      if(Math.random()<.6&&f.age<14){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,Math.min(15,f.age+1)]);}else list.push(X,Y,Z,0);}
+    // jump to nearby air next to something that burns (more easily upward)
+    for(let dy=-1;dy<=4;dy++)for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy&&!dz)continue;const X=x+dx,Y=y+dy,Z=z+dz;if(getB(X,Y,Z)||!chunkReadyAt(X,Z))continue;
+      const e=enc(X,Y,Z);if(!e)continue;let div=100;if(dy>1)div+=(dy-1)*100;const ch=3*(e+40)/(f.age+30)/div;if(raining&&(lightAt(X,Y,Z)>>4)>=15)continue;
+      if(Math.random()<ch){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,Math.min(15,f.age+(Math.random()*5|0)/4|0)]);}}}
+  // lava sets fire to things near it
+  LAVA_T-=dt;if(LAVA_T<=0&&player&&DIM!=='end'){LAVA_T=1;const p=player.pos;for(let i=0;i<40;i++){const x=Math.floor(p[0]+(Math.random()-.5)*24),y=Math.floor(p[1]+(Math.random()-.5)*14),z=Math.floor(p[2]+(Math.random()-.5)*24);if(!chunkReadyAt(x,z)||!isLavaB(getB(x,y,z)))continue;
+      for(let k=0;k<3;k++){const X=x+((Math.random()*3|0)-1),Y=y+1+(Math.random()*2|0),Z=z+((Math.random()*3|0)-1);if(!getB(X,Y,Z)&&enc(X,Y,Z)>0&&Math.random()<.35){list.push(X,Y,Z,B.FIRE);adds.push([X,Y,Z,0]);break;}}}}
+  if(list.length){applyBlockList(list,false);if(net)netSend(N.BOOM,{l:list});for(const [X,Y,Z,a] of adds)if(getB(X,Y,Z)===B.FIRE)fireAdd(X,Y,Z,a);}}
+let LAVA_T=1,FIRE_SCAN=0;const FIRE_NEAR=[];
+// fires near you: remember them (so ones made elsewhere burn too), throw flames and smoke, set things standing in them alight
+function fireLook(dt){FIRE_SCAN-=dt;const p=player;if(!p)return;
+  if(FIRE_SCAN<=0){FIRE_SCAN=1.5;FIRE_NEAR.length=0;const cx=Math.floor(p.pos[0]),cy=Math.floor(p.pos[1]),cz=Math.floor(p.pos[2]);
+    for(let y=cy-8;y<=cy+8;y++)for(let z=cz-14;z<=cz+14;z++)for(let x=cx-14;x<=cx+14;x++){if(getB(x,y,z)!==B.FIRE)continue;FIRE_NEAR.push([x,y,z]);if(!FIRES.has(key(x,y,z))&&FIRES.size<600)fireAdd(x,y,z,4);}}
+  for(const f of FIRE_NEAR){if(Math.random()<dt*3)spawnParticles(f[0]+.2+Math.random()*.6,f[1]+.3+Math.random()*.5,f[2]+.2+Math.random()*.6,1,[1,.55+Math.random()*.3,.1],.35,'poof');
+    if(Math.random()<dt*2.2)spawnParticles(f[0]+.5,f[1]+.9,f[2]+.5,1,[.22,.22,.22],.5,'poof');}
+  for(const m of mobs)if(m.alive&&!MOB_T[m.mob].fireproof&&touching(m,b=>b===B.FIRE))m.fire=Math.max(m.fire||0,8);}
+function fireAdd(x,y,z,age=0){FIRES.set(key(x,y,z),{t:.8+Math.random()*.8,age});}
+function lightFire(x,y,z){if(getB(x,y,z)&&!replaceable(getB(x,y,z)))return false;const below=getB(x,y-1,z);if(!(BD[below]&&BD[below].solid)&&!enc(x,y,z))return false;
   setBlockNet(x,y,z,B.FIRE);fireAdd(x,y,z);psnd(['fire/ignite'],[x,y,z],1);return true;}
 
 // ---------- Nether portals ----------

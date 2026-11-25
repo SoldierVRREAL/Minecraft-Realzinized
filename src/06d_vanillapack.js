@@ -17,3 +17,14 @@ function violetCanvas(img){const w=img.width,h=img.height,c=mkCanvas(w,h),g=c.ge
     D[i]=f(H+1/3)*255;D[i+1]=f(H)*255;D[i+2]=f(H-1/3)*255;}
   g.putImageData(d,0,0);return c;}
 {const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half'])if(G[k]&&!G[k]._violet){G[k]=violetCanvas(G[k]);G[k]._violet=true;}return r;};}
+
+// animated tiles: fire and the Nether portal play their pack animation (the frames are stacked in one tall image)
+const ANIM_TILES={fire_layer_0:{fps:20},fire_layer_1:{fps:20},portal:{fps:12}};let animT=0;
+{const p0=packDeriveTiles;packDeriveTiles=async function(get,tiles){const n=await p0(get,tiles);
+    for(const name in ANIM_TILES){const A=ANIM_TILES[name];const img=await get('textures/blocks/'+name+'.png');if(!img||img.height<img.width*2)continue;A.cache=null;const fw=img.width,nf=Math.floor(img.height/fw);
+      A.frames=[];for(let i=0;i<nf;i++){const c=mkCanvas(fw,fw),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,i*fw,fw,fw,0,0,fw,fw);A.frames.push(c);}}
+    return n;};}
+function animTiles(dt){animT+=dt;if(!OPT.animTex&&OPT.animTex!==undefined)return;
+  for(const name in ANIM_TILES){const A=ANIM_TILES[name];if(!A.frames)continue;const t=TILE_PACK.indexOf(name);if(t<0)continue;const f=Math.floor(animT*A.fps)%A.frames.length;if(f===A.last&&A.tile===TILE)continue;
+    if(!A.cache||A.cacheT!==TILE){A.cache=A.frames.map(c=>{const o=mkCanvas(TILE,TILE),g=o.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(c,0,0,TILE,TILE);return o;});A.cacheT=TILE;}
+    A.last=f;A.tile=TILE;gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,(t%ACOLS)*TILE,Math.floor(t/ACOLS)*TILE,gl.RGBA,gl.UNSIGNED_BYTE,A.cache[f]);}}

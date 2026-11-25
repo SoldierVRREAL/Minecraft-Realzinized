@@ -51,6 +51,7 @@ JPAGES.controls=()=>{const keys=[['Attack','Left Click'],['Use Item','Right Clic
   jSlider(()=>SENS<=0?'Sensitivity: *yawn*':SENS>=1?'Sensitivity: HYPERSPEED!!!':'Sensitivity: '+Math.round(SENS*200)+'%',()=>SENS,v=>{SENS=v;store('bb_sens',SENS);if($('o_sens'))$('o_sens').value=Math.round(SENS*200);},40),
   jBtn(()=>'Invert Mouse: '+onOff(INVY),()=>{INVY=!INVY;store('bb_invy',INVY?'1':'0');if($('o_invy'))$('o_invy').checked=INVY;}),
   jBtn(()=>'Raw Mouse Input: '+({on:'ON',off:'OFF'}[OPT.rawMouse]||'Auto ('+(IS_MAC?'OFF':'ON')+')'),()=>{OPT.rawMouse=OPT.rawMouse==='on'?'off':OPT.rawMouse==='off'?'auto':'on';saveOpt();if(document.pointerLockElement)document.exitPointerLock();}),
+  jBtn(()=>'Touch Movement: '+(OPT.tMove==='dpad'?'D-Pad':'Joystick'),()=>{OPT.tMove=OPT.tMove==='dpad'?'stick':'dpad';saveOpt();applyMoveMode();}),
   jSlider(()=>'Touch Look Speed: '+Math.round(OPT.tSens*100)+'%',()=>(OPT.tSens-.3)/1.7,v=>{OPT.tSens=Math.round((.3+v*1.7)*20)/20;saveOpt();},34),
   jSlider(()=>'Touch Button Size: '+Math.round(OPT.tSize*100)+'%',()=>(OPT.tSize-.7)/.7,v=>{OPT.tSize=Math.round((.7+v*.7)*20)/20;saveOpt();applyTouchLook();},14),
   jSlider(()=>'Touch Button Opacity: '+Math.round(OPT.tAlpha*100)+'%',()=>(OPT.tAlpha-.3)/.7,v=>{OPT.tAlpha=Math.round((.3+v*.7)*20)/20;saveOpt();applyTouchLook();},14),

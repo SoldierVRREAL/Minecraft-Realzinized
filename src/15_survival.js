@@ -94,7 +94,7 @@ function playWorld(meta,keepNet){sfx('click');if(!keepNet){if(net){net.leave();n
 $('wCreate').addEventListener('click',()=>{const meta=newWorldMeta($('w_name').value,$('w_seed').value,$('w_mode').value);$('w_seed').value='';playWorld(meta);});
 $('wBack').addEventListener('click',()=>{sfx('click');hide('worldPanel');show('menu');});
 $('w_gfx').addEventListener('change',()=>{applyPreset($('w_gfx').value);});
-$('respawnBtn').addEventListener('click',survRespawn);
+$('respawnBtn').addEventListener('click',()=>survRespawn());
 $('deathMenu').addEventListener('click',()=>{hide('deathPanel');toMenu();});
 // ---------- Multiplayer: see 15h_servers.js (server list, hosting, commands) ----------
 // what a joining player needs to build the same world
