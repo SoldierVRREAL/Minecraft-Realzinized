@@ -19,14 +19,15 @@ class MeshNet{
       err=>{this.onFail&&this.onFail(err);});
   }
   post(o){if(!this.left)this.tr.post(o);}
-  beat(){if(this.ready&&this.isHost()&&this.tr.advertise&&this.getAdvert&&(this.advN=(this.advN||0)+1)%3===1){const a=this.getAdvert();if(a)this.tr.advertise(Object.assign({t:'adv',ver:2,room:this.opt.room,from:this.myId},a));}
+  beat(){this.lastBeat=performance.now();if(this.ready&&this.isHost()&&this.tr.advertise&&this.getAdvert&&(this.advN=(this.advN||0)+1)%3===1){const a=this.getAdvert();if(a)this.tr.advertise(Object.assign({t:'adv',ver:2,room:this.opt.room,from:this.myId},a));}
     const me=this.members.get(this.myId);this.post({t:'hb',from:this.myId,name:this.name,joined:me.joined,r:this.ready?1:0,pt:Math.round(performance.now())});const now=Date.now();
-    for(const [id,m] of [...this.members]){if(id!==this.myId&&now-m.seen>this.opt.timeout){this.members.delete(id);if(m.r)this.onLeave&&this.onLeave(id);this.checkHost();}}}
+    const hold=this.tr.reconnecting||performance.now()<(this.tr.graceUntil||0);   // we were the ones cut off: don't count everyone else as gone
+    if(!hold)for(const [id,m] of [...this.members]){if(id!==this.myId&&now-m.seen>this.opt.timeout){this.members.delete(id);if(m.r)this.onLeave&&this.onLeave(id);this.checkHost();}}}
   recv(m){if(m&&m.from===this.myId){if(m.t==='hb'&&m.pt)this.notePing(performance.now()-m.pt);return;}   // our own heartbeat coming back = round trip to the relay
     if(!m||typeof m.from!=='number'||this.blocked.has(m.from))return;
     if(m.t==='hb'){const had=this.members.has(m.from);const ex=this.members.get(m.from)||{id:m.from};ex.seen=Date.now();ex.name=String(m.name||'Player').slice(0,16);ex.joined=+m.joined||Date.now();const wasR=ex.r;ex.r=!!m.r;this.members.set(m.from,ex);
       if(ex.r&&!wasR&&this.ready)this.onJoin&&this.onJoin(m.from,ex.name);if(!had||ex.r!==wasR)this.checkHost();return;}
-    if(m.t==='bye'&&m.will){const ex=this.members.get(m.from);if(ex)ex.seen=Math.min(ex.seen,Date.now()-this.opt.timeout+3500);return;}   // dropped, not left: 3.5 s to reconnect before they count as gone
+    if(m.t==='bye'&&m.will){const ex=this.members.get(m.from);if(ex)ex.seen=Math.min(ex.seen,Date.now()-this.opt.timeout+(this.opt.grace||3500));return;}   // dropped, not left: a little while to reconnect before they count as gone
     if(m.t==='bye'){const ex=this.members.get(m.from);if(ex){this.members.delete(m.from);if(ex.r)this.onLeave&&this.onLeave(m.from);this.checkHost();}return;}
     if(m.t==='ev'){if(m.to&&!m.to.includes(this.myId))return;const ex=this.members.get(m.from);if(!ex)return;ex.seen=Date.now();this.onEvent&&this.onEvent(m.code,m.data,m.from);}}
   // only members that finished joining can be host, so a newcomer never steals the host role

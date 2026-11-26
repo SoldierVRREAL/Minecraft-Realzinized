@@ -1,6 +1,10 @@
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='2.8';
+const GAME_VER='2.8.1';
 const NEWS=[
+ ['2.8.1','November 25, 2026',[
+   'Servers no longer close after a while. A world\'s join data grows as it gets played, and once it passed Photon\'s limit (about 500 KB in a short time) Photon disconnected the host. Big messages are now compressed and sent in small parts.',
+   'If the connection drops for a moment (Wi-Fi blip, phone screen off), the game reconnects to the same server instead of closing it. Players get up to 20 seconds to come back before they count as gone.',
+   'A host whose tab is in the background keeps the server running: heartbeats keep going and the world keeps ticking.']],
  ['2.8','November 25, 2026',[
    'Point at any item in a menu (inventory, crafting, chests, furnaces, creative) to see its name. On phones and tablets, tap the item.',
    'Forests, birch forests and dark forests are now mystical: deeper green grass and leaves, green mist, drifting motes and weeping willows with long curtains of leaves and vines. The grass there has a new texture made from your pack\'s own grass, so it still looks like Minecraft.',
