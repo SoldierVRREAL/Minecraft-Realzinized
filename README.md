@@ -227,6 +227,12 @@ The engine runs at 20 ticks a second on the host (or in single player), in `15s_
 - **Paintings:** hang one on a wall and it picks the biggest picture that fits. Uses the pictures from your resource pack.
 - **The jukebox** still plays original tunes made for this game. The real music discs are copyrighted, so they are not included.
 
+## Keeping servers open
+
+- **Big messages:** Photon Cloud disconnects a client that pushes about 500 KB through it in a short time. The data a joining player gets (every changed block in the world) grows past that in a well-played world. Messages over 24 KB are now compressed (deflate), cut into 24 KB parts and sent about 9 a second. Everything sent after a big message waits for it, so events always arrive in order. Messages meant for one player are only sent to that player.
+- **Reconnecting:** if a connection drops, the game reconnects and rejoins the same server: guests try for 24 seconds, the host for 90 seconds (re-opening the server if it emptied). Everyone waits 20 seconds for a missing player or host before counting them as gone, and someone who was cut off doesn't drop everyone else when they get back.
+- **Background tabs:** browsers slow page timers in background tabs, down to once a minute after a few minutes. A small worker (`08c_netkeep.js`) ticks every 50 ms. It keeps the heartbeat and Photon's keep-alive going, and while the tab is hidden it runs the world at 20 ticks a second.
+
 ## Mystical forests, ruins and skinwalkers
 
 - **Item names:** point at an item in any menu to see its name and enchantments. On a touch screen, tap it.
@@ -393,6 +399,8 @@ python3 build.py
 | `15t_vehicles.js` | Rail shapes, minecarts, boats, riding, and saving these per dimension |
 | `15u_horses.js` | Horses, donkeys, mules, saddled pigs, leads, name tags, armour stands |
 | `15v_banners.js` | Banners and patterns, paintings |
+| `08c_netkeep.js` | A steady clock from a worker, which keeps networking going in background tabs |
+| `15z_netkeep.js` | Background heartbeats and world ticks, and the reconnecting messages |
 | `02h_lush.js` | The mystical forest tiles (grass, leaves, tall grass) without a pack |
 | `06f_lush.js` | The same tiles made from the resource pack |
 | `15w_tips.js` | Item names when pointing at or tapping a slot in any menu |
