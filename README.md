@@ -198,9 +198,43 @@ Click the Battle title, or press left or right on it, to switch to Battle Royale
 - **Cauldron:** fill it with a water bucket. Take the water back out with a bucket, or with a glass bottle to get a water bottle.
 - **Jukebox:** play a music disc. Each disc plays an original tune generated for this game from the disc's name; no recorded music is included. Right-click again to take the disc out.
 
-**Items:** fishing rods (cast into water, reel in when the float dips: fish, junk or treasure), spawn eggs for every creature, Bottles o' Enchanting (throw them for experience), fire charges, fireworks (launch them from the ground, or use one while gliding for a boost) and maps (an empty map becomes a map of the land around you while you hold it). Glass bottles fill at water. Bowls come back after you eat mushroom stew, and glass bottles come back after you drink a potion. Minecarts, boats, saddles, horse armour, leads, name tags, armour stands and written books can be crafted or found in chests, but they have no use yet.
+**Items:** fishing rods (cast into water, reel in when the float dips: fish, junk or treasure), spawn eggs for every creature, Bottles o' Enchanting (throw them for experience), fire charges, fireworks (launch them from the ground, or use one while gliding for a boost) and maps (an empty map becomes a map of the land around you while you hold it). Glass bottles fill at water. Bowls come back after you eat mushroom stew, and glass bottles come back after you drink a potion. Written books can be crafted. Minecarts, boats, horses, saddles, leads, name tags, armour stands, banners and paintings all work (see below).
 
-**New blocks:** stained glass and panes (panes join up with each other and with walls), stained terracotta, red sandstone, jungle planks, emerald, lapis and redstone ores (all found underground), sponges, mushroom blocks, pistons, dispensers, droppers, command blocks, hoppers, daylight sensors, flower pots, rails, redstone torches, dust, repeaters and comparators, and more stairs and slabs. There is no redstone power, so the redstone blocks are decoration only. Everything has its vanilla recipe, which also shows on the crafting screen.
+**New blocks:** stained glass and panes (panes join up with each other and with walls), stained terracotta, red sandstone, jungle planks, emerald, lapis and redstone ores (all found underground), sponges, mushroom blocks, pistons, dispensers, droppers, command blocks, hoppers, daylight sensors, flower pots, rails, redstone torches, dust, repeaters and comparators, and more stairs and slabs. Redstone works (see below). Everything has its vanilla recipe, which also shows on the crafting screen.
+
+## Redstone
+
+Power comes from levers, buttons (stone 1 second, wood 1.5 seconds), pressure plates (wood and stone; gold and iron give power by how many things stand on them), redstone torches, daylight sensors (right-click to invert) and blocks of redstone. Dust carries power up to 15 blocks, losing one level a block, and draws itself joined up to its neighbours. Solid blocks pass power on the way the real game does: a block powered by a lever, a torch under it or a repeater powers dust next to it, while a block under plain dust only powers things right against it. Redstone torches turn off when the block they stand on is powered, and burn out if they flick too fast.
+
+- **Repeaters:** 1 to 4 ticks of delay (right-click to change), and a repeater powered from the side locks.
+- **Comparators:** compare mode or subtract mode (right-click). They read how full a chest, furnace, hopper, dispenser, jukebox or cauldron behind them is.
+- **Things that use power:** lamps, iron doors and trapdoors (only power opens them), wooden doors, trapdoors and fence gates, TNT, note blocks (right-click to tune, 25 notes), pistons, dispensers, droppers, hoppers (power stops them), powered rails, activator rails and command blocks.
+- **Pistons:** push up to 12 blocks. Obsidian, bedrock and some others can't be pushed; plants and torches break. Sticky pistons pull back the block in front, and slime blocks move the blocks stuck to them. Players and creatures in the way are pushed.
+- **Command blocks** (creative only): right-click to type a command; it runs each time the block gets power. They take the same commands as the chat box, such as `say`, `time set`, `tp` and `gamemode`.
+
+The engine runs at 20 ticks a second on the host (or in single player), in `15s_redstone.js`.
+
+## Minecarts, boats, horses and the rest
+
+- **Rails** join up and curve with their neighbours and climb one block at a time. Right-click a minecart to get in; W pushes it, Sneak gets you out. Golden rails boost a cart when powered and brake it when not. Detector rails give power while a cart is on them. Activator rails throw out the rider and set off TNT minecarts. Chest and hopper minecarts carry items (hopper minecarts pick them up), furnace minecarts push with coal.
+- **Boats** float on water. Get in with right-click and steer by looking.
+- **Horses, donkeys and mules** spawn on plains and savannas. Get on with an empty hand: the horse bucks you off until it trusts you. Then put on a saddle (and horse armour on horses, or a chest on donkeys and mules). Each horse has its own speed, jump and health. Hold Jump to fill the jump bar. Feed them wheat, sugar, apples, bread, golden carrots or hay to heal them and calm them down. Sneak and right-click to take things off.
+- **Pigs:** saddle a pig and get on; hold a carrot on a stick to steer it.
+- **Leads:** right-click an animal to lead it. Right-click a fence to tie it there.
+- **Name tags:** right-click an anvil while holding a name tag to name it (costs a level), then use it on a creature. Named creatures never despawn.
+- **Armour stands:** place them like a block, right-click with armour to dress them, right-click with an empty hand to take it back.
+- **Banners:** 16 colours (6 wool and a stick). Put a banner in a 3x3 crafting grid at a crafting table with dyes to add a stripe, border, cross, circle and more. Up to six patterns. A cauldron with water washes off the last one.
+- **Paintings:** hang one on a wall and it picks the biggest picture that fits. Uses the pictures from your resource pack.
+- **The jukebox** still plays original tunes made for this game. The real music discs are copyrighted, so they are not included.
+
+## Mystical forests, ruins and skinwalkers
+
+- **Item names:** point at an item in any menu to see its name and enchantments. On a touch screen, tap it.
+- **Forests:** forests, birch forests and dark forests have deeper green grass, leaves and tall grass, green mist, drifting motes and weeping willows hung with leaves and vines. The forest grass is a new texture made from the pack's own grass and dirt. Grass outside the forests is unchanged.
+- **Hearts:** the health hearts are blue (#3938e5).
+- **Ruins:** every ruin has a small buried vault under the chiseled stone brick in the middle of its floor. The chest inside holds common supplies 4 times out of 5. The other time it's a treasure chest: always an Enchanted Golden Apple, plus diamonds, a diamond block, emeralds, golden apples, enchanted diamond weapons, tools and armour, a Totem of Undying, bottles o' enchanting and more.
+- **Enchanted Golden Apple:** Regeneration II (20 s), Absorption IV (2 min), Resistance (5 min), Fire Resistance (5 min).
+- **Skinwalkers:** go two in-game days without sleeping and they spawn at night (one at a time, two after four days). A skinwalker copies the skin and name of one of the players and keeps its distance, watching. When you look straight at it, get close or hit it, it twists and stretches into its true shape, a gaunt figure nearly 3 blocks tall. Then it hunts you, leaping at you, and a boss bar shows its health (80). Daylight sends it away and sleeping resets the count. `/summon skinwalker` brings one in for testing.
 
 ## Beating the game: the Nether, the End and the Ender Dragon
 
@@ -352,11 +386,23 @@ python3 build.py
 | `02f_rotate.js` | Turned blocks: the extra ids for each facing and axis, the turned tiles, and the placement rules (`orientFor`) |
 | `03e_allitems.js` | The rest of the vanilla items: hoes, seeds and crops, fish and the fishing rod, books, bottles, brewing ingredients, records, minecarts, maps, fireworks; mining for the new blocks |
 | `15r_allitems.js` | What they do: farming and crop growth, trees from saplings, doors, the enchanting table, anvil, brewing stand, cauldron, jukebox tunes, fishing, spawn eggs, fireworks, maps, and all the new recipes |
+| `02g_redstone.js` | Ids for every state of the redstone blocks, rails, banners and note blocks |
+| `03f_rsitems.js` | Mining and drops for the redstone blocks |
+| `06e_rsdust.js` | Tinted redstone dust for each power level |
+| `15s_redstone.js` | The redstone engine: power, dust, torches, repeaters, comparators, pistons, hoppers, dispensers, note blocks, command blocks |
+| `15t_vehicles.js` | Rail shapes, minecarts, boats, riding, and saving these per dimension |
+| `15u_horses.js` | Horses, donkeys, mules, saddled pigs, leads, name tags, armour stands |
+| `15v_banners.js` | Banners and patterns, paintings |
+| `02h_lush.js` | The mystical forest tiles (grass, leaves, tall grass) without a pack |
+| `06f_lush.js` | The same tiles made from the resource pack |
+| `15w_tips.js` | Item names when pointing at or tapping a slot in any menu |
+| `15x_forest.js` | Forest fog and willows, which columns are forest, the Enchanted Golden Apple, the ruin loot |
+| `15y_skinwalker.js` | Skinwalkers: spawning, disguise, transformation, hunting, boss bar |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
 
-Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages, villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan), rideable minecarts, boats and horses, and the End cities.
+Structures (Lost Civilization, Sky Castle, Overgrown Temple, Forgotten Village, mushroom villages, villages), the bosses (Ancient Golem, Frost Dragon, Magma Titan) and the End cities.
 
 ## Credits
 

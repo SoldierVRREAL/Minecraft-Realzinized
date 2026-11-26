@@ -1215,6 +1215,137 @@ function orientFor(id,p,h){const R=ROT[id];if(!R||!h)return id;const fw=fwd(p);c
   return id;}
 atlasCanvas=makeProcAtlas();
 
+// ================= Redstone blocks: every state is its own block id =================
+// dust (16 power levels, shape from its connections), redstone torches (standing and on walls), levers, buttons and pressure plates,
+// repeaters (4 facings x 4 delays x on/off x locked), comparators, lamps, pistons and their heads (6 facings), dispensers and droppers
+// (6 facings), hoppers (5 facings), rails (every shape, powered/detector/activator on and off), daylight sensors.
+// The ids from 2.6 (repeater, comparator, rails, lever, redstone torch, dispenser...) are reused for the matching states.
+const DIRS4=[[0,0,-1],[1,0,0],[0,0,1],[-1,0,0]];                 // 0:-z 1:+x 2:+z 3:-x
+const F6=[[0,-1,0],[0,1,0],[0,0,-1],[0,0,1],[-1,0,0],[1,0,0]];    // down up north south west east
+const RS={dust:[],torch:{stand:[],wall:[]},lever:[],button:{stone:[],wood:[]},plate:{},rep:[],comp:[],lamp:[],piston:{n:[],s:[]},head:{n:[],s:[]},
+  rail:{},disp:{d:[],r:[]},hopper:[],daylight:[]};
+const rotTileG=(()=>{const rc={};return (src,r)=>{r=((r%4)+4)%4;if(!r)return src;const k=src+':'+r;if(rc[k]!=null)return rc[k];const t=TILE_PACK.length;TILE_PACK.push('~rot'+r+'_'+src);NEWT[t]={k:'noise',c:'#808080'};TILE_ROT.push([t,src,r]);return rc[k]=t;};})();
+// turn a box (built against the -z wall / pointing -z) by k quarter turns about the vertical axis: -z -> +x -> +z -> -x
+function turnBox(b,k){k=((k%4)+4)%4;let [x0,y0,z0,x1,y1,z1]=b;let of=b[7]?b[7].slice():null;
+  for(let i=0;i<k;i++){[x0,z0,x1,z1]=[1-z1,x0,1-z0,x1];if(of)of=[-of[2],of[1],of[0]];}
+  const o=[Math.min(x0,x1),y0,Math.min(z0,z1),Math.max(x0,x1),y1,Math.max(z0,z1)];if(b[6]!=null||of)o[6]=b[6];if(of)o[7]=of;return o;}
+// turn a box built for "up" to face F6 direction f
+function faceBox6(b,f){const P=(x,y,z)=>f===1?[x,y,z]:f===0?[x,1-y,z]:f===2?[x,z,1-y]:f===3?[x,z,y]:f===4?[1-y,x,z]:[y,x,z];
+  const a=P(b[0],b[1],b[2]),c=P(b[3],b[4],b[5]);const o=[Math.min(a[0],c[0]),Math.min(a[1],c[1]),Math.min(a[2],c[2]),Math.max(a[0],c[0]),Math.max(a[1],c[1]),Math.max(a[2],c[2])];if(b[6]!=null)o[6]=b[6];return o;}
+{let id=VB.lastId+1;const T=n=>{const i=TILE_PACK.indexOf(n);if(i>=0)return i;TILE_PACK.push(n);NEWT[TILE_PACK.length-1]={k:'noise',c:'#a02020'};return TILE_PACK.length-1;};
+  const mk=(o,reuse)=>{const i=reuse!=null?reuse:id++;const top=o.top!=null?o.top:o.t,side=o.side!=null?o.side:o.t;const D=Object.assign({},o);delete D.t;delete D.bc;def(i,top,side,o.bottom!=null?o.bottom:top,D);BLOCK_COL[i]=o.bc||'#a02020';return i;};
+  const base=(i,b)=>{if(i!==b)ROT_BASE[i]=b;};
+  const stone=BD[B.STONE].side,planks=BD[B.PLANKS].side,cob=BD[B.COBBLE].side;
+  // ---- dust: power 0..15 (the shape comes from rsDustBoxes in 15s) ----
+  for(let L=0;L<16;L++){const c=T('~rsd_c'+L),l=T('~rsd_l'+L);const lz=rotTileG(l,1);
+    const i=mk({t:c,solid:false,opaque:false,pick:true,dyn:(x,y,z)=>rsDustBoxes(x,y,z,L),shape:[[0,0,0,1,1/64,1]],rs:{k:'dust',lvl:L},dust:[c,l,lz],flatIcon:c,bc:'#a01010',sup:[0,-1,0]},L?null:B.RS_DUST);
+    RS.dust.push(i);base(i,B.RS_DUST);}
+  // ---- redstone torches: standing, and on the wall at DIRS4[a] ----
+  {const on=T('redstone_torch_on'),off=T('redstone_torch_off');
+    const torch=(lit,a)=>{const t=lit?on:off;const box=a<0?[7/16,0,7/16,9/16,10/16,9/16]:turnBox([7/16,3/16,0,9/16,13/16,2/16,null,[0,-3/16,7/16]],a);
+      return {t,solid:false,opaque:false,pick:true,light:lit?7:0,shape:[box],flatIcon:on,rs:{k:'torch',on:lit,a},sup:a<0?[0,-1,0]:DIRS4[a].slice(),bc:'#c01010'};};
+    RS.torch.stand=[mk(torch(0,-1)),mk(torch(1,-1),B.RS_TORCH)];for(let a=0;a<4;a++)RS.torch.wall.push([mk(torch(0,a)),mk(torch(1,a))]);
+    [RS.torch.stand[0]].concat(...RS.torch.wall).forEach(i=>base(i,B.RS_TORCH));}
+  // ---- levers: attached to the block at F6[s] (0 floor, 1 ceiling, 2..5 walls) ----
+  {const lv=T('lever');
+    const lever=(s,on)=>{const up=[[5/16,0,4/16,11/16,3/16,12/16,cob],(on?[7/16,3/16,9/16,9/16,11/16,11/16,lv,[0,-1/16,-2/16]]:[7/16,3/16,5/16,9/16,11/16,7/16,lv,[0,-1/16,2/16]])];
+      // "up" geometry is the floor lever; turn it to sit on the support's face
+      const f=s===0?1:s===1?0:[3,2,5,4][s-2];const sh=up.map(b=>{const r=faceBox6(b,f);if(b[7])r[7]=b[7];return r;});
+      return {t:lv,solid:false,opaque:false,pick:true,shape:sh,flatIcon:lv,rs:{k:'lever',on,s},sup:F6[s].slice(),bc:'#806040'};};
+    for(let s=0;s<6;s++)RS.lever.push([mk(lever(s,0),s===0?XB.lever[0]:null),mk(lever(s,1),s===0?XB.lever[1]:null)]);
+    RS.lever.flat().forEach(i=>base(i,XB.lever[0]));}
+  // ---- buttons: stone and wood, attached at F6[s] ----
+  for(const [kind,t,N] of [['stone',stone,'Stone Button'],['wood',planks,'Wooden Button']]){
+    for(let s=0;s<6;s++){const pair=[];for(const on of [0,1]){const dep=on?1/16:2/16;const up=[5/16,0,6/16,11/16,dep,10/16];const f=s===0?1:s===1?0:[3,2,5,4][s-2];const b=faceBox6(up,f);
+        pair.push(mk({t,solid:false,opaque:false,pick:true,shape:[b],rs:{k:'button',on,s,wood:kind==='wood'},sup:F6[s].slice(),bc:'#8a8a8a',flatIcon:t}));}RS.button[kind].push(pair);}
+    const item=RS.button[kind][2][0];BLOCK_NAMES[item]=N;B[kind==='stone'?'STONE_BUTTON':'WOOD_BUTTON']=item;RS.button[kind].flat().forEach(i=>base(i,item));}
+  // ---- pressure plates ----
+  for(const [kind,t,N] of [['stone',stone,'Stone Pressure Plate'],['wood',planks,'Wooden Pressure Plate'],['gold',BD[B.GOLDB].side,'Light Weighted Pressure Plate'],['iron',BD[B.IRON_BLOCK].side,'Heavy Weighted Pressure Plate']]){
+    const p=[];for(const on of [0,1]){const b=[1/16,0,1/16,15/16,on?1/32:1/16,15/16];p.push(mk({t,solid:false,opaque:false,pick:true,shape:[b],rs:{k:'plate',on,type:kind},sup:[0,-1,0],bc:'#9a9a9a'}));}
+    RS.plate[kind]=p;BLOCK_NAMES[p[0]]=N;B['PLATE_'+kind.toUpperCase()]=p[0];base(p[1],p[0]);}
+  // ---- repeaters: facing f = the side the signal leaves from (0:-z 1:+x 2:+z 3:-x) ----
+  {const ton=T('redstone_torch_on'),toff=T('redstone_torch_off'),bed=BD[B.BEDROCK]?BD[B.BEDROCK].side:stone;const ss=BD[41].side,st=BD[41].top;
+    const tb=(c,on,h)=>[7/16,2/16,c-1/16,9/16,(h||7)/16,c+1/16,on?ton:toff,[0,3/16,.5-c]];
+    for(let f=0;f<4;f++){RS.rep[f]=[];for(let d=1;d<=4;d++){RS.rep[f][d]=[];for(const on of [0,1]){RS.rep[f][d][on]=[];for(const lock of [0,1]){
+      const top=rotTileG(T(on?'repeater_on':'repeater_off'),f);const rc=(6+(d-1)*2+1)/16;
+      const bx=[[0,0,0,1,2/16,1],tb(3/16,on)].concat(lock?[[2/16,2/16,rc-1/16,14/16,4/16,rc+1/16,bed]]:[tb(rc,on)]).map(b=>turnBox(b,f));
+      const reuse=d===1&&!on&&!lock?(f===0?B.REPEATER:ROT[B.REPEATER].v[f]):null;
+      RS.rep[f][d][on][lock]=mk({top,side:ss,bottom:st,solid:true,opaque:false,shape:bx,col:[[0,0,0,1,2/16,1]],itemFlat:true,rs:{k:'rep',f,d,on,lock},sup:[0,-1,0],bc:'#a0a0a0'},reuse);base(RS.rep[f][d][on][lock],B.REPEATER);}}}}}
+  // ---- comparators: sub = subtract mode, on = output above 0 ----
+  {const ton=T('redstone_torch_on'),toff=T('redstone_torch_off');const ss=BD[41].side,st=BD[41].top;
+    const tb=(x,z,on,h)=>[x-1/16,2/16,z-1/16,x+1/16,h/16,z+1/16,on?ton:toff,[.5-x,(7-h+3)/16,.5-z]];
+    for(let f=0;f<4;f++){RS.comp[f]=[];for(const sub of [0,1]){RS.comp[f][sub]=[];for(const on of [0,1]){const top=rotTileG(T(on?'comparator_on':'comparator_off'),f);
+      const bx=[[0,0,0,1,2/16,1],tb(5/16,12/16,on,7),tb(11/16,12/16,on,7),tb(8/16,3/16,sub,5)].map(b=>turnBox(b,f));
+      const reuse=!sub&&!on?(f===0?B.COMPARATOR:ROT[B.COMPARATOR].v[f]):null;
+      RS.comp[f][sub][on]=mk({top,side:ss,bottom:st,solid:true,opaque:false,shape:bx,col:[[0,0,0,1,2/16,1]],itemFlat:true,rs:{k:'comp',f,sub,on},sup:[0,-1,0],bc:'#a0a0a0'},reuse);base(RS.comp[f][sub][on],B.COMPARATOR);}}}}
+  delete ROT[B.REPEATER];delete ROT[B.COMPARATOR];
+  // ---- redstone lamp (the old always-lit lamp block stays as it was) ----
+  RS.lamp=[mk({t:T('redstone_lamp_off'),rs:{k:'lamp',on:0},bc:'#6a4a2a'}),mk({t:T('redstone_lamp_on'),light:15,rs:{k:'lamp',on:1},bc:'#e0b060'})];base(RS.lamp[0],B.LAMP);base(RS.lamp[1],B.LAMP);
+  // ---- pistons: f = F6 direction of the head; faces [+x,-x,+y,-y,+z,-z] ----
+  {const side=T('piston_side'),bot=T('piston_bottom'),inner=T('piston_inner');const FRONT=[3,2,5,4,1,0];const OPP=[1,0,3,2,5,4];
+    // which way the side picture is turned on the x/y/z faces so its head end points along the piston
+    const R=[[2,2,2],[0,0,0],[3,0,0],[1,2,0],[0,3,3],[0,1,1]];   // [x faces, y faces, z faces]
+    const faces=(f,front,back)=>{const r=R[f];const o=[rotTileG(side,r[0]),rotTileG(side,r[0]),rotTileG(side,r[1]),rotTileG(side,r[1]),rotTileG(side,r[2]),rotTileG(side,r[2])];o[FRONT[f]]=front;o[OPP[FRONT[f]]]=back;return o;};
+    for(const [k,tn,key] of [['n','piston_top_normal','PISTON'],['s','piston_top_sticky','STICKY_PISTON']]){const top=T(tn);
+      for(let f=0;f<6;f++){const ret=mk({t:side,faces:faces(f,top,bot),rs:{k:'piston',f,ext:0,sticky:k==='s'},bc:'#8a7a5a'},f===1?B[key]:null);
+        const eb=faceBox6([0,0,0,1,12/16,1],f);const ext=mk({t:side,faces:faces(f,inner,bot),opaque:false,shape:[eb],col:[eb],rs:{k:'piston',f,ext:1,sticky:k==='s'},bc:'#8a7a5a'});
+        const hb=[faceBox6([0,12/16,0,1,1,1],f),faceBox6([6/16,-4/16,6/16,10/16,12/16,10/16],f)];
+        const head=mk({t:side,faces:faces(f,top,top),opaque:false,shape:hb,col:hb,rs:{k:'head',f,sticky:k==='s'},bc:'#8a7a5a'});
+        RS.piston[k][f]=[ret,ext];RS.head[k][f]=head;base(ret,B[key]);base(ext,B[key]);base(head,B[key]);}}}
+  // ---- dispensers and droppers facing any of the six ways ----
+  {const fs=BD[B.DISPENSER].side,ft=BD[B.DISPENSER].top;const FRONT=[3,2,5,4,1,0];
+    for(const [k,key,tv] of [['d','DISPENSER','dispenser_front_vertical'],['r','DROPPER','dropper_front_vertical']]){const fh=BD[B[key]].front,fv=T(tv);const R=ROT[B[key]].v;
+      for(let f=0;f<6;f++){const old={3:B[key],2:R[1],5:R[2],4:R[3]}[f];let fc;
+        if(f<2){fc=[ft,ft,ft,ft,ft,ft];fc[FRONT[f]]=fv;}else{fc=[fs,fs,ft,ft,fs,fs];fc[FRONT[f]]=fh;}
+        RS.disp[k][f]=mk({t:fs,top:ft,bottom:ft,faces:fc,rs:{k:'disp',f,drop:k==='r'},bc:'#707070'},old);base(RS.disp[k][f],B[key]);}
+      delete ROT[B[key]];}}
+  // ---- hoppers: spout down, or toward DIRS4[a] ----
+  {const H=BD[B.HOPPER];const top=H.shape.slice(0,6);const sp=[6/16,4/16,0,10/16,8/16,4/16];
+    RS.hopper=[B.HOPPER];BD[B.HOPPER].rs={k:'hopper',a:-1};for(let a=0;a<4;a++){const s=top.concat([turnBox(sp,a)]);RS.hopper.push(mk({t:H.side,top:H.top,bottom:H.bottom,opaque:false,shape:s,col:H.col,itemFlat:true,rs:{k:'hopper',a},bc:'#4a4a4a'}));base(RS.hopper[a+1],B.HOPPER);}}
+  // ---- daylight sensors (normal and inverted) ----
+  {const D=BD[B.DAYLIGHT];D.rs={k:'daylight',inv:0};const inv=mk({t:D.side,top:T('daylight_detector_inverted_top'),bottom:D.bottom,opaque:false,shape:D.shape,col:D.col,rs:{k:'daylight',inv:1},bc:'#8a9ab0'});RS.daylight=[B.DAYLIGHT,inv];base(inv,B.DAYLIGHT);}
+  // ---- rails: shapes 0 N-S, 1 E-W, 2..5 sloping up to the E, W, N, S, 6..9 curves SE SW NW NE ----
+  {const h=1/16;const flat=(t)=>[[0,h,0],[1,h,0],[1,h,1],[0,h,1],t];
+    const slope=(t,hi)=>{const Y=(x,z)=>h+(hi==='E'?x:hi==='W'?1-x:hi==='N'?1-z:z);return [[0,Y(0,0),0],[1,Y(1,0),0],[1,Y(1,1),1],[0,Y(0,1),1],t];};
+    const kinds=[['normal','rail_normal',null,XB.rails[0]],['golden','rail_golden','rail_golden_powered',XB.rails[1]],['detector','rail_detector','rail_detector_powered',XB.rails[2]],['activator','rail_activator','rail_activator_powered',XB.rails[3]]];
+    for(const [k,offT,onT,item] of kinds){RS.rail[k]=[];const old=[item,ROT[item].v[1]];
+      for(const on of onT?[0,1]:[0]){RS.rail[k][on]=[];const ns=T(on?onT:offT),ew=rotTileG(ns,1);
+        const n=k==='normal'?10:6;for(let s=0;s<n;s++){let q;
+          if(s===0)q=flat(ns);else if(s===1)q=flat(ew);else if(s<6)q=slope(s<4?ew:ns,['E','W','N','S'][s-2]);else{const cv=T('rail_normal_turned');q=flat(rotTileG(cv,s-6));}
+          const reuse=!on&&s<2?old[s]:null;
+          const i=mk({t:ns,solid:false,opaque:false,pick:true,quads:[q],shape:undefined,flatIcon:T(offT),rail:true,rs:{k:'rail',type:k,shape:s,on},sup:[0,-1,0],bc:'#8a8070'},reuse);
+          if(BD[i].shape)delete BD[i].shape;RS.rail[k][on][s]=i;base(i,item);}}
+      delete ROT[item];}}
+  // ---- note blocks: one id per pitch (0..24) ----
+  {const N0=BD[B.NOTEBLOCK];RS.notes=[B.NOTEBLOCK];for(let n=1;n<25;n++){const i=id++;BD[i]=Object.assign({},N0);BLOCK_COL[i]=BLOCK_COL[B.NOTEBLOCK];RS.notes.push(i);base(i,B.NOTEBLOCK);}}
+  VB.lastId=id-1;}
+// the redstone dust pictures: the pack's grey dust tinted for each power level (as the real game colours it)
+function rsDustColor(L){const f=L/15;const r=L?f*.6+.4:.3,g=Math.max(0,f*f*.7-.5),b=Math.max(0,f*f*.6-.7);const h=v=>('0'+Math.round(Math.min(1,v)*255).toString(16)).slice(-2);return '#'+h(r)+h(g)+h(b);}
+atlasCanvas=makeProcAtlas();
+
+// ---------- mystical forest tiles: a brighter, greener grass block, leaves and tall grass for the forest biomes ----------
+// Only the forests use these (see 15x_forest.js); grass everywhere else keeps its texture.
+// With a resource pack they are made from the pack's own grass, leaves and dirt (05/06f), so they keep the Minecraft look.
+const LUSH_RAMP=[[30,98,20],[44,128,28],[58,154,36],[74,178,44],[96,202,58],[126,226,84]];
+function lushRamp(t){t=Math.max(0,Math.min(.999,t))*(LUSH_RAMP.length-1);const i=Math.floor(t),f=t-i,a=LUSH_RAMP[i],b=LUSH_RAMP[i+1];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];}
+// how deep the grass hangs over the side at each of the 16 columns (Minecraft-style drips, a bit longer than usual)
+const LUSH_DRIP=[4,5,4,3,4,6,5,4,3,4,5,7,5,4,3,5];
+const LUSH={};
+{const T=n=>{const i=TILE_PACK.indexOf(n);if(i>=0)return i;TILE_PACK.push(n);return TILE_PACK.length-1;};
+  LUSH.top=T('~lush_grass_top');NEWT[LUSH.top]={k:'lush',part:'top'};
+  LUSH.side=T('~lush_grass_side');NEWT[LUSH.side]={k:'lush',part:'side'};
+  LUSH.leaves=T('~lush_leaves');NEWT[LUSH.leaves]={k:'lush',part:'leaves'};
+  LUSH.tall=T('~lush_tallgrass');NEWT[LUSH.tall]={k:'lush',part:'tall'};}
+// without a pack: drawn here, pixel by pixel
+{const prev=procTileX;const dirtT=TILE_PACK.indexOf('dirt'),leafT=TILE_PACK.indexOf('oak_leaves'),tallT=TILE_PACK.indexOf('short_grass');
+  procTileX=function(t,x,y){const D=NEWT[t];if(!D||D.k!=='lush')return prev(t,x,y);const h=hash2;
+    const n=h(x,y,911)*.55+h(x>>1,y>>1,912)*.3+h(x>>2,y>>2,913)*.15;
+    if(D.part==='top'){let v=n;if(h(x,y,914)>.93)v=.95;else if(h(x,y,915)>.9)v=.08;const c=lushRamp(v);return [c[0]|0,c[1]|0,c[2]|0,255];}
+    if(D.part==='side'){const dep=LUSH_DRIP[x];if(y<dep||(y===dep&&h(x,0,916)>.6)){const c=lushRamp(.25+n*.65-(y/dep)*.25);return [c[0]|0,c[1]|0,c[2]|0,255];}return procTile(dirtT,x,y);}
+    const p=procTile(D.part==='leaves'?leafT:tallT,x,y);if(p[3]===0)return p;const l=(p[0]+p[1]+p[2])/765;const c=lushRamp(l*1.15+(D.part==='leaves'?-.05:.1));return [c[0]|0,c[1]|0,c[2]|0,p[3]===undefined?255:p[3]];};}
+atlasCanvas=makeProcAtlas();
+let lushAt=(x,z)=>false;   // set in 15x_forest.js: true in the mystical forest biomes
+
 // ================= items (values follow the 1.8-era combat the console Battle used) =================
 const ITEMS={};
 function item(id,o){ITEMS[id]=Object.assign({stack:1},o);}
@@ -1597,6 +1728,13 @@ ITEMS.blue_dye.name='Lapis Lazuli';
   for(const f of XB.traps){const iron=f===b('TRAPDOOR_IRON');for(let i=0;i<16;i++)set([f+i],iron?5:3,iron?'p':'a',iron?0:null,'b'+f);}
   set(XB.frames,.05);set(XB.signs,1,'a',null,'b'+B.SIGN);
   MINE_DROP[144]='clay_ball';MINE_DROP[30]=null;}
+
+// mining the redstone pieces (turned and powered states copy these in 15r)
+{const T=MINE_T_X;for(const k of ['STONE_BUTTON','PLATE_STONE'])if(B[k]!=null){T[B[k]]=.5;PICK_BLOCKS.add(B[k]);}
+  for(const k of ['WOOD_BUTTON','PLATE_WOOD'])if(B[k]!=null){T[B[k]]=.5;AXE_BLOCKS.add(B[k]);}
+  for(const k of ['PLATE_GOLD','PLATE_IRON'])if(B[k]!=null){T[B[k]]=.5;PICK_BLOCKS.add(B[k]);}
+  for(const k of ['n','s'])for(const h of RS.head[k])MINE_DROP[h]=null;
+  T[B.COMMAND_BLOCK]=undefined;MINE_DROP[B.COMMAND_BLOCK]=null;}
 
 // ================= world storage, lighting, map generators =================
 let WX=84,WY=48,WZ=84,CX=42,CZ=42;
@@ -2379,7 +2517,11 @@ function buildFeature(f){const {x,y,z,r}=f;const R=(i)=>hash3(x,z,i,WSEED+90+(r*
   case 'ruin':{const w=5+(R(1)*4|0),d=5+(R(2)*4|0);for(let dz=0;dz<d;dz++)for(let dx=0;dx<w;dx++){const edge=dx===0||dz===0||dx===w-1||dz===d-1;const yy=y-1;
       gput(x+dx,yy,z+dz,R(dx*11+dz)<.4?B.MSBRICK:R(dx+dz*13)<.2?B.CRACKED:B.SBRICK);if(!edge)continue;const hh=Math.floor(R(dx*5+dz*7+3)*4);
       for(let i=0;i<hh;i++)gput(x+dx,y+i,z+dz,R(dx*3+dz*5+i)<.45?B.MSBRICK:R(i+dx)<.3?B.CRACKED:B.SBRICK);if(hh>0&&R(dx+dz+40)<.3)gsoft(x+dx,y+hh,z+dz,B.VINE);}
-    if(R(9)<.6){gput(x+(w>>1),y,z+(d>>1),B.CHISELED);}break;}
+    if(R(9)<.6){gput(x+(w>>1),y,z+(d>>1),B.CHISELED);}
+    // a small buried vault under the middle of the floor (a chiseled tile marks the spot) with a chest in it
+    {const mx=x+(w>>1),mz=z+(d>>1);gput(mx,y-1,mz,B.CHISELED);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){gput(mx+a,y-3,mz+b,B.SBRICK);if(a||b)gput(mx+a,y-2,mz+b,R(a*3+b*7+60)<.5?B.MSBRICK:B.SBRICK);}
+      gput(mx,y-2,mz,B.CHEST);if(typeof lootAdd==='function')lootAdd(mx,y-2,mz,'ruin');}
+    break;}
   }}
 function buildSpire(x,y,z,R,len){const ax=(R(5)-.5)*.7,az=(R(6)-.5)*.7;const r0=1.6+R(7)*1.2;
   for(let i=-2;i<len;i++){const t=Math.max(0,i)/len;const rr=r0*(1-t)+.35;const px=x+ax*i,pz=z+az*i;const ri=Math.ceil(rr);
@@ -2387,7 +2529,7 @@ function buildSpire(x,y,z,R,len){const ax=(R(5)-.5)*.7,az=(R(6)-.5)*.7;const r0=
   for(let k=0;k<3;k++){const a=R(30+k)*6.283,l=3+(R(40+k)*4|0);for(let i=0;i<l;i++)gput(Math.round(x+Math.cos(a)*(1+i*.6)),y+i,Math.round(z+Math.sin(a)*(1+i*.6)),B.CRYSTAL);}}
 
 // ---------- lighting (sky + block light, 4 bits each) recomputed for a box of columns ----------
-const NBLK=1024;const OPQ=new Uint8Array(NBLK),ATT=new Uint8Array(NBLK),EMIT=new Uint8Array(NBLK);
+const NBLK=2048;const OPQ=new Uint8Array(NBLK),ATT=new Uint8Array(NBLK),EMIT=new Uint8Array(NBLK);
 function refreshLightTables(){for(let b=0;b<NBLK;b++){const D=BD[b];OPQ[b]=D&&D.opaque?1:0;ATT[b]=D&&(D.leaves||D.liquid==='water'||b===B.ICE)?1:0;EMIT[b]=D?D.light|0:0;}}
 let LQ=new Int32Array(1<<20),LOLD=new Uint8Array(1<<16),LTOP=new Int16Array(4096);
 // recompute light in columns x0..x1, z0..z1 (inclusive); light flowing in from the ring of columns just outside is kept.
@@ -2947,17 +3089,22 @@ function meshRegion(x0,z0,y0,y1){
   const pxMax=INF?16:Math.min(16,WX-x0),pzMax=INF?16:Math.min(16,WZ-z0);const smoothOn=OPT.smooth;
   for(let ly=1;ly<NY-1;ly++){const y=ymn+ly-1;for(let pz=1;pz<=pzMax;pz++)for(let px=1;px<=pxMax;px++){const k=(ly*18+pz)*18+px;
     const b=PB_[k];if(!b)continue;const D=BD[b];if(!D.render)continue;const lx=px-1,lz=pz-1,x=x0+lx,z=z0+lz;const em=D.light>=7?8:0;
-    if(D.cross){const tx=(D.side%ACOLS)*TILE,ty=Math.floor(D.side/ACOLS)*TILE;const L=PL_[k];const sl=LB[(L>>4)&15],bl=Math.min(1,LB[L&15]*1.05);const j=(hash2(x,z,5)-.5)*.3;
+    if(D.cross){const ct=b===B.TGRASS&&lushAt(x,z)?LUSH.tall:D.side;const tx=(ct%ACOLS)*TILE,ty=Math.floor(ct/ACOLS)*TILE;const L=PL_[k];const sl=LB[(L>>4)&15],bl=Math.min(1,LB[L&15]*1.05);const j=(hash2(x,z,5)-.5)*.3;
       const u0=(tx+.02)/AS,u1=(tx+TILE-.02)/AS,v0=(ty+.02)/AS,v1=(ty+TILE-.02)/AS;const sh=em?1:.9,s1=em?1:sl,b1=em?1:bl;
       for(let q=0;q<2;q++){const ax=.15,az=q?.85:.15,bx=.85,bz=q?.15:.85;
         pv(o,lx+ax+j,y+1,lz+az,u0,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y+1,lz+bz,u1,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y,lz+bz,u1,v1,s1,b1,sh,32+em+2);pv(o,lx+ax+j,y,lz+az,u0,v1,s1,b1,sh,32+em+2);}continue;}
-    if(D.shape){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
-      const tw=D.trans?w:o;for(const bx of (D.fence?fenceBoxes(x,y,z,false):D.pane?paneBoxes(x,y,z):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
+    if(D.quads){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
+      // free quads (sloped rails...): [[x,y,z]*4, tile], drawn from both sides, texture corners in order (0,0) (1,0) (1,1) (0,1)
+      for(const qd of D.quads){const tile=qd[4];const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;for(const back of [0,1]){for(let c=0;c<4;c++){const P=qd[back?3-c:c];const cu=back?[0,1,1,0][3-c]:[0,1,1,0][c],cv2=back?[0,0,1,1][3-c]:[0,0,1,1][c];
+        const q=QV[c];q[0]=lx+P[0];q[1]=y+P[1];q[2]=lz+P[2];q[3]=(tx+.02+cu*(TILE-.04))/AS;q[4]=(ty+.02+cv2*(TILE-.04))/AS;q[5]=em?1:sl;q[6]=em?1:bl;q[7]=1;q[8]=4*16+em;}emitQuad(o,false,0);}}
+      if(!D.shape&&!D.dyn)continue;}
+    if(D.shape||D.dyn){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
+      const tw=D.trans?w:o;for(const bx of (D.dyn?D.dyn(x,y,z,b):D.fence?fenceBoxes(x,y,z,false):D.pane?paneBoxes(x,y,z):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
         const plane2=s>0?hi[d]:lo[d];
         if((s>0&&plane2>=1)||(s<0&&plane2<=0)){const nb=PB_[k+s*AXO[d]];if(nb&&BD[nb].opaque&&!BD[nb].shape)continue;}
         const tile=bx[6]!=null?bx[6]:D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
         for(let c=0;c<4;c++){const cu=CORN[c][0],cv2=CORN[c][1];_l[d]=plane2;_l[u]=cu?hi[u]:lo[u];_l[v]=cv2?hi[v]:lo[v];
-          let tu,tv;if(d==1){tu=_l[0];tv=_l[2];}else if(d==0){tu=_l[2];tv=1-_l[1];}else{tu=_l[0];tv=1-_l[1];}
+          let tu,tv;const OF=bx[7];const X0=_l[0]+(OF?OF[0]:0),Y0=_l[1]+(OF?OF[1]:0),Z0=_l[2]+(OF?OF[2]:0);if(d==1){tu=X0;tv=Z0;}else if(d==0){tu=Z0;tv=1-Y0;}else{tu=X0;tv=1-Y0;}
           const q=QV[c];q[0]=lx+_l[0];q[1]=y+_l[1];q[2]=lz+_l[2];q[3]=(tx+.02+tu*(TILE-.04))/AS;q[4]=(ty+.02+tv*(TILE-.04))/AS;q[5]=em?1:sl;q[6]=em?1:bl;q[7]=em?1:FSHADE[f];q[8]=f*16+em;}
         emitQuad(tw,false,0);}
       continue;}
@@ -2968,7 +3115,8 @@ function meshRegion(x0,z0,y0,y1){
       if(liq){const NB=nb&&BD[nb];if(NB&&NB.liquid===liq){if(d===1||(NB.lh||1)>=(D.lh||1)-.001)continue;}else if(nb&&OPQ[nb])continue;if(liq==='water'&&nb&&BD[nb].solid&&OPQ[nb])continue;}
       else if(nb){if(CULLS[nb])continue;if(nb===b){const N=BD[nb];if(!N.cross&&!N.shape&&N.render)continue;}}
       if(opq&&PO_[Fi])continue;
-      const tile=D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
+      let tile=D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
+      if((b===B.GRASS||b===B.LEAVES)&&lushAt(x,z)){if(b===B.LEAVES)tile=LUSH.leaves;else if(d!==1)tile=LUSH.side;else if(s>0)tile=LUSH.top;}   // mystical forests
       const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
       const u=(d+1)%3,v=(d+2)%3,AU=AXO[u],AV=AXO[v];
       const L=PL_[Fi];const sl=em?1:LB[(L>>4)&15],bl=em?1:Math.max(D.glow||0,Math.min(1,LB[L&15]*1.05));
@@ -3049,7 +3197,7 @@ const MODELS={wide:makePlayerModel(false),slim:makePlayerModel(true),armor:makeA
 const ITEM_CELL=32,ITEM_COLS=16,ITEM_ROWS=64;let itemAtlas=mkCanvas(ITEM_CELL*ITEM_COLS,ITEM_CELL*ITEM_ROWS),itemTex=null,itemMesh={},itemSlot={};
 function rebuildItemAtlas(){
   const g=itemAtlas.getContext('2d');g.clearRect(0,0,itemAtlas.width,itemAtlas.height);g.imageSmoothingEnabled=false;let i=0;itemSlot={};
-  for(const k in ITEMS){if(ITEMS[k].base&&ITEMS[ITEMS[k].base])continue;const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;g.drawImage(ICON_RAW[k]||ICONS[k],cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
+  for(const k in ITEMS){if(ITEMS[k].base&&ITEMS[ITEMS[k].base])continue;const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;const ic=ICON_RAW[k]||ICONS[k];if(ic)g.drawImage(ic,cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
   for(const k in ITEMS)if(!itemSlot[k]&&itemSlot[ITEMS[k].base])itemSlot[k]=itemSlot[ITEMS[k].base];
   if(itemTex)gl.deleteTexture(itemTex);itemTex=mkTex(itemAtlas);for(const k in itemMesh)gl.deleteBuffer(itemMesh[k].buf);itemMesh={};
 }
@@ -3067,7 +3215,7 @@ function heldMesh(id){const it=ITEMS[id];const b=it&&it.type==='block'?it.block:
     blockItemMesh[b]=meshFrom(o);}
   return {mesh:blockItemMesh[b],tex:atlasTex,block:true};}
 function getItemMesh(id){
-  if(itemMesh[id])return itemMesh[id];const [cx,cy]=itemSlot[id];const data=itemAtlas.getContext('2d').getImageData(cx,cy,ITEM_CELL,ITEM_CELL).data;
+  if(itemMesh[id])return itemMesh[id];if(!itemSlot[id]){rebuildItemAtlas();if(!itemSlot[id])return getItemMesh('stick');}const [cx,cy]=itemSlot[id];const data=itemAtlas.getContext('2d').getImageData(cx,cy,ITEM_CELL,ITEM_CELL).data;
   const N=ITEM_CELL,A=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&data[(y*N+x)*4+3]>40;const o=[];const W=itemAtlas.width,H=itemAtlas.height;const th=1/N;const S=1/N;
   const push=(p,n,uv)=>o.push(p[0],p[1],p[2],n[0],n[1],n[2],uv[0],uv[1]);
   const q=(a,b,c,d,n,ua,ub,uc,ud)=>{for(const [p,uv] of [[a,ua],[b,ub],[c,uc],[a,ua],[c,uc],[d,ud]])push(p,n,uv);};
@@ -3376,13 +3524,18 @@ const TILE_TINT={leaves_birch:'#80a755',leaves_spruce:'#619961',leaves_acacia:'#
       g.fillStyle='#05060c';g.fillRect(0,0,s,s);g.globalCompositeOperation='lighter';g.globalAlpha=.9;g.drawImage(img,0,0,64,64,0,0,s,s);g.globalAlpha=.5;g.drawImage(img,64,64,64,64,0,0,s,s);tiles[t]=c;n++;}}
     for(const name in TILE_TINT){const ti=TILE_PACK.indexOf(name);if(ti>=0&&tiles[ti]&&isGray(tiles[ti]))tiles[ti]=tintCanvas(dvCanvas(tiles[ti]),TILE_TINT[name]);}
     return n;};}
-// hearts are violet: the pack's red heart sprites are turned purple (same shading, new hue)
+// hearts are blue (#3938e5): the pack's red heart sprites get a new hue, same shading
 function violetCanvas(img){const w=img.width,h=img.height,c=mkCanvas(w,h),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,0);const d=g.getImageData(0,0,w,h);const D=d.data;
-  for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const r=D[i]/255,gg=D[i+1]/255,b=D[i+2]/255;const mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),l=(mx+mn)/2,dd=mx-mn;if(dd<.06||mx!==r)continue;   // only the reddish pixels
-    const s=l>.5?dd/(2-mx-mn):dd/(mx+mn);const H=280/360;const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
+  // the most common heart colour is brought to exactly #3938e5; lighter and darker shades keep their difference
+  const cnt={};for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const mx=Math.max(D[i],D[i+1],D[i+2]),mn=Math.min(D[i],D[i+1],D[i+2]);if(mx-mn<16||mx===D[i+1])continue;const k=mx+mn;cnt[k]=(cnt[k]||0)+1;}
+  let mainL=.5,best=0;for(const k in cnt)if(cnt[k]>best){best=cnt[k];mainL=k/510;}const gain=.559/Math.max(.1,mainL);
+  for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const r=D[i]/255,gg=D[i+1]/255,b=D[i+2]/255;const mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),dd=mx-mn;let l=(mx+mn)/2;if(dd<.06||mx===gg)continue;   // the coloured pixels, not the white shine or the outline
+    let hue=mx===r?((gg-b)/dd+6)%6:(r-gg)/dd+4;hue*=60;if(hue>40&&hue<200)continue;   // reds and purples only
+    const s=(l>.5?dd/(2-mx-mn):dd/(mx+mn))*.78;l=Math.min(.92,l*gain);const H=240.3/360;const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
     D[i]=f(H+1/3)*255;D[i+1]=f(H)*255;D[i+2]=f(H-1/3)*255;}
   g.putImageData(d,0,0);return c;}
-{const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half'])if(G[k]&&!G[k]._violet){G[k]=violetCanvas(G[k]);G[k]._violet=true;}return r;};}
+function blueHearts(){const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half','heart_hc_full','heart_hc_half'])if(G[k]&&!G[k]._blue){G[k]=violetCanvas(G[k]);G[k]._blue=true;}}
+{const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);blueHearts();return r;};}
 
 // animated tiles: fire and the Nether portal play their pack animation (the frames are stacked in one tall image)
 const ANIM_TILES={fire_layer_0:{fps:20},fire_layer_1:{fps:20},portal:{fps:12}};let animT=0;
@@ -3394,6 +3547,26 @@ function animTiles(dt){animT+=dt;if(!OPT.animTex&&OPT.animTex!==undefined)return
   for(const name in ANIM_TILES){const A=ANIM_TILES[name];if(!A.frames)continue;const t=TILE_PACK.indexOf(name);if(t<0)continue;const f=Math.floor(animT*A.fps)%A.frames.length;if(f===A.last&&A.tile===TILE)continue;
     if(!A.cache||A.cacheT!==TILE){A.cache=A.frames.map(c=>{const o=mkCanvas(TILE,TILE),g=o.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(c,0,0,TILE,TILE);return o;});A.cacheT=TILE;}
     A.last=f;A.tile=TILE;gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,(t%ACOLS)*TILE,Math.floor(t/ACOLS)*TILE,gl.RGBA,gl.UNSIGNED_BYTE,A.cache[f]);}}
+
+// the redstone dust pictures for each power level (see 02g)
+for(let L=0;L<16;L++){DV_TILES['~rsd_c'+L]=['redstone_dust_cross',i=>tintCanvas(dvFull(i),rsDustColor(L))];DV_TILES['~rsd_l'+L]=['redstone_dust_line',i=>tintCanvas(dvFull(i),rsDustColor(L))];}
+
+// mystical forest tiles from the resource pack: the pack's own grass, leaves and dirt, pushed to a deeper, brighter green (see 02h_lush.js)
+function lushRecolor(img,fn){const c=dvFull(img),g=c.getContext('2d'),w=c.width,h=c.height,d=g.getImageData(0,0,w,h),D=d.data;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(D[i+3]<8)continue;const o=fn(D[i],D[i+1],D[i+2],x*16/w|0,y*16/h|0);if(!o)continue;D[i]=o[0];D[i+1]=o[1];D[i+2]=o[2];}
+  g.putImageData(d,0,0);return c;}
+const lushL=(r,g,b)=>(r*.3+g*.59+b*.11)/255;
+const isGreen=(r,g,b)=>g>r+18&&g>b+10;
+DV_TILES['~lush_grass_top']=['grass_top',i=>lushRecolor(i,(r,g,b,x,y)=>{let v=(lushL(r,g,b)-.36)/.34-.06;if(hash2(x,y,914)>.94)v=.98;return lushRamp(v);})];
+DV_TILES['~lush_leaves']=['leaves_oak',i=>lushRecolor(i,(r,g,b)=>lushRamp((lushL(r,g,b)-.3)/.42))];
+DV_TILES['~lush_tallgrass']=['tallgrass',i=>lushRecolor(i,(r,g,b)=>lushRamp((lushL(r,g,b)-.3)/.45+.08))];
+// the side: the pack's dirt stays; its grass edge turns greener and hangs a little lower, with uneven drips
+DV_TILES['~lush_grass_side']=['grass_side',i=>{const base=dvFull(i),w=base.width,px=w/16,g=base.getContext('2d');const D=g.getImageData(0,0,w,w).data;
+  const c=lushRecolor(i,(r,g2,b)=>isGreen(r,g2,b)?lushRamp((lushL(r,g2,b)-.38)/.3):null);const cg=c.getContext('2d');
+  for(let x=0;x<16;x++){const dep=LUSH_DRIP[x];for(let y=0;y<dep;y++){const sx=Math.min(w-1,x*px+(px>>1)),sy=Math.min(w-1,y*px+(px>>1)),k=(sy*w+sx)*4;
+      if(isGreen(D[k],D[k+1],D[k+2]))continue;   // the pack already has grass here
+      const v=.18+hash2(x,y,917)*.5-(y/dep)*.15;const col=lushRamp(v);cg.fillStyle=`rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;cg.fillRect(x*px,y*px,px,px);}}
+  return c;}];
 
 // ================= entities, physics, combat, hunger, effects =================
 const HW=.3,EH=1.8,EYE=1.62,G=28;
@@ -3428,16 +3601,17 @@ function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
 }
 function los(a,b){const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],L=Math.hypot(...d);if(L<.01)return true;return !raycastBlock(a,[d[0]/L,d[1]/L,d[2]/L],L);}
 function rayBox(o,d,mn,mx){let t0=0,t1=1e9;for(let i=0;i<3;i++){if(Math.abs(d[i])<1e-9){if(o[i]<mn[i]||o[i]>mx[i])return -1;continue;}let a=(mn[i]-o[i])/d[i],b=(mx[i]-o[i])/d[i];if(a>b)[a,b]=[b,a];t0=Math.max(t0,a);t1=Math.min(t1,b);if(t0>t1)return -1;}return t0;}
-const entBox=(e,p=.1)=>{const w=e.hw||HW,h=e.eh||EH;return [[e.pos[0]-w-p,e.pos[1]-p,e.pos[2]-w-p],[e.pos[0]+w+p,e.pos[1]+h+p,e.pos[2]+w+p]];};
+let entBox=(e,p=.1)=>{const w=e.hw||HW,h=e.eh||EH;return [[e.pos[0]-w-p,e.pos[1]-p,e.pos[2]-w-p],[e.pos[0]+w+p,e.pos[1]+h+p,e.pos[2]+w+p]];};
 
 // ---------- inventory ----------
 const armorPts=e=>e.armor.reduce((s,a)=>s+(a?ITEMS[a].pts:0),0);
 const enchProt=e=>e.armor.reduce((s,a)=>s+enchLvl(a,'protection'),0);
-function addItem(e,id,count){
+const tagKey=t=>t?JSON.stringify(t):'';const tagEq=(a,b)=>tagKey(a&&a.tag)===tagKey(b&&b.tag);
+function addItem(e,id,count,tag){
   const it=ITEMS[id];if(!it)return 0;
-  if(it.type==='armor'){const cur=e.armor[it.slot];if(!cur||ITEMS[cur].pts<it.pts||(ITEMS[cur].pts===it.pts&&enchScore(id)>enchScore(cur))){e.armor[it.slot]=id;if(cur)addItem(e,cur,1);return 0;}} // auto-equip from chests
-  if(it.stack>1)for(const s of e.inv){if(s&&s.id===id&&s.count<it.stack){const m=Math.min(count,it.stack-s.count);s.count+=m;count-=m;if(!count)return 0;}}
-  for(let i=0;i<e.inv.length;i++)if(!e.inv[i]){const m=Math.min(count,it.stack);e.inv[i]={id,count:m};count-=m;if(!count)return 0;}
+  if(it.type==='armor'&&!tag){const cur=e.armor[it.slot];if(!cur||ITEMS[cur].pts<it.pts||(ITEMS[cur].pts===it.pts&&enchScore(id)>enchScore(cur))){e.armor[it.slot]=id;if(cur)addItem(e,cur,1);return 0;}} // auto-equip from chests
+  if(it.stack>1)for(const s of e.inv){if(s&&s.id===id&&s.count<it.stack&&tagKey(s.tag)===tagKey(tag)){const m=Math.min(count,it.stack-s.count);s.count+=m;count-=m;if(!count)return 0;}}
+  for(let i=0;i<e.inv.length;i++)if(!e.inv[i]){const m=Math.min(count,it.stack);e.inv[i]=tag?{id,count:m,tag}:{id,count:m};count-=m;if(!count)return 0;}
   return count;
 }
 const hasItem=(e,id)=>e.inv.findIndex(s=>s&&s.id===id);
@@ -3535,7 +3709,7 @@ function onDeath(m){
   e.place=ents.filter(x=>x.alive&&!x.spectator).length+1;if(e!==player)sfx('death',{pos:e.pos});
   if(killer)killer.kills++;
   feed.unshift({t:7,txt:deathText(e,killer,m.c)});if(feed.length>6)feed.pop();
-  if(isHost()){for(const s of m.inv)hostSpawnDrop(m.pos,s.id,s.count);for(const a of m.armor)hostSpawnDrop(m.pos,a,1);}
+  if(isHost()){for(const s of m.inv)hostSpawnDrop(m.pos,s.id,s.count,undefined,undefined,undefined,s.tag);for(const a of m.armor)hostSpawnDrop(m.pos,a,1);}
   e.inv=new Array(e.inv.length||9).fill(null);e.armor=[null,null,null,null];e.off=null;
   spawnParticles(e.pos[0],e.pos[1]+.8,e.pos[2],20,[.85,.85,.85],1.2,'poof');
   if(e===player){sfx('death');chestClose(false);player.bat=true;player.pos[1]+=2.2;player.vel=[0,0,0];spectate.mode='bat';showDeathPanel(killer);}
@@ -3603,11 +3777,11 @@ function updateProjs(dt){
 }
 // ---------- dropped items (host is authoritative) ----------
 var dropSeq=1;
-function hostSpawnDrop(p,id,count,vel,by,rid){const d={did:dropSeq++,by,rid,pos:[p[0],p[1]+1,p[2]],vel:vel||[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6};drops.push(d);netSend(N.DROPADD,d);return d;}
+function hostSpawnDrop(p,id,count,vel,by,rid,tag){const d={did:dropSeq++,by,rid,pos:[p[0],p[1]+1,p[2]],vel:vel||[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6};if(tag)d.tag=tag;drops.push(d);netSend(N.DROPADD,d);return d;}
 let dropRid=0;
-function requestDrop(p,id,count,vel){if(dropAuth()){hostSpawnDrop(p,id,count,vel);return;}const rid=++dropRid;
-  drops.push({did:-rid,ghost:4,pos:[p[0],p[1]+1,p[2]],vel:vel?vel.slice():[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6,pending:99});   // stand-in until the host's copy arrives
-  netSend(N.DROPREQ,{p,id,c:count,v:vel,rid},'host');}
+function requestDrop(p,id,count,vel,tag){if(dropAuth()){hostSpawnDrop(p,id,count,vel,undefined,undefined,tag);return;}const rid=++dropRid;
+  drops.push({did:-rid,ghost:4,pos:[p[0],p[1]+1,p[2]],vel:vel?vel.slice():[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,tag,age:0,spin:Math.random()*6,pending:99});   // stand-in until the host's copy arrives
+  netSend(N.DROPREQ,{p,id,c:count,v:vel,rid,t:tag},'host');}
 function updateDrops(dt){
   for(const d of drops){
     if(INF&&!chunkReadyAt(d.pos[0],d.pos[2]))continue;
@@ -3616,8 +3790,8 @@ function updateDrops(dt){
     if(fluidAt(d.pos[0],d.pos[1],d.pos[2])==='lava'&&dropAuth()){d.dead=true;netSend(N.DROPDEL,{did:d.did});}
     for(const k of [0,2]){const nx=d.pos[k]+d.vel[k]*dt;const t=d.pos.slice();t[k]=nx;if(!solid(Math.floor(t[0]),Math.floor(t[1]),Math.floor(t[2])))d.pos[k]=nx;else d.vel[k]=0;d.vel[k]*=Math.exp(-2*dt);}
     if(d.age>.6&&!d.pending&&!d.dead)for(const e of ents){if(!e.alive||!owned(e))continue;if(hdist(e.pos,d.pos)<1.3&&Math.abs(e.pos[1]+.8-d.pos[1])<1.6){
-      if(dropAuth()){const left=addItem(e,d.id,d.count);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
-      else if(e===player&&d.did>0&&invRoom(e,d.id)){const left=addItem(e,d.id,d.count),took=d.count-left;if(took>0){sfx('pick');netSend(N.PICK,{did:d.did,id:d.id,n:took},'host');d.count=left;if(!left)d.dead=true;else d.pending=1;}}}}   // picked up at once; the host confirms or takes it back
+      if(dropAuth()){const left=addItem(e,d.id,d.count,d.tag);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
+      else if(e===player&&d.did>0&&invRoom(e,d.id)){const left=addItem(e,d.id,d.count,d.tag),took=d.count-left;if(took>0){sfx('pick');netSend(N.PICK,{did:d.did,id:d.id,n:took},'host');d.count=left;if(!left)d.dead=true;else d.pending=1;}}}}   // picked up at once; the host confirms or takes it back
     if(d.pending){d.pending-=dt;if(d.pending<=0)d.pending=0;}
     if(d.ghost){d.ghost-=dt;if(d.ghost<=0)d.dead=true;}
   }
@@ -4131,7 +4305,7 @@ function onNetEvent(code,d,from){
     if(!drops.some(x=>x.did===d.did))drops.push(Object.assign({},d,{pos:d.pos.slice(),vel:d.vel.slice()}));break;
   case N.DROPUPD:{const x=drops.find(x=>x.did===d.did);if(x){x.count=d.count;if(x.count<=0)x.dead=true;}break;}
   case N.DROPDEL:{const x=drops.find(x=>x.did===d.did);if(x)x.dead=true;break;}
-  case N.DROPREQ:if(isHost()&&ITEMS[d.id]&&d.c>0)hostSpawnDrop(d.p,d.id,d.c,d.v,'p'+from,d.rid);break;
+  case N.DROPREQ:if(isHost()&&ITEMS[d.id]&&d.c>0)hostSpawnDrop(d.p,d.id,d.c,d.v,'p'+from,d.rid,d.t);break;
   case N.PICK:{if(!isHost())return;const x=drops.find(x=>x.did===d.did&&!x.dead);
     if(d.n>0){const id=d.id;if(!x||x.id!==id){netSend(N.GIVE,{to:'p'+from,items:[],revoke:[[id,d.n]]},from);break;}   // already gone: take back what they picked up
       const t=Math.min(d.n,x.count);x.count-=t;if(x.count<=0){x.dead=true;netSend(N.DROPDEL,{did:x.did});}else netSend(N.DROPUPD,{did:x.did,count:x.count});if(t<d.n)netSend(N.GIVE,{to:'p'+from,items:[],revoke:[[id,d.n-t]]},from);break;}
@@ -4593,7 +4767,8 @@ function drawHumanoid(e){
     :chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
   const headYaw=e.yaw-by,headPitch=-e.pitch;  // vanilla: positive pitch looks down
   const ls=(e.limbSwing||0)*.6662,la=e.limbAmt||0;const age=perfT*20+(e.color||0)*7;
-  let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;const rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
+  let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;let rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
+  if(e.sitPose){rlX=-1.4;llX=-1.4;rX=-.62;lX=-.62;}   // riding: legs out in front, hands forward
   const held=e.inv[e.sel];if(held)rX=rX*.5-Math.PI/10;
   if(e.using==='block'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}
   if(e.using==='shield'){if(held&&ITEMS[held.id]&&ITEMS[held.id].type==='shield'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}else{lX=lX*.5-Math.PI*.3;lY=Math.PI/6;}}
@@ -4944,7 +5119,7 @@ function icon9(pat,x,y,s,frac,pal,flip){
   const draw=(mode)=>pat.forEach((r,j)=>{for(let i=0;i<9;i++){const c=r[i];if(c==='.')continue;let col=c==='k'?'#000':mode==='empty'?pal.e:pal[c];if(!col)continue;hc.fillStyle=col;hc.fillRect(x+i*s,y+j*s,s,s);}});
   draw('empty');if(frac>0){hc.save();hc.beginPath();const w=9*s;if(flip)hc.rect(x+w*(1-frac),y,w*frac,9*s);else hc.rect(x,y,w*frac,9*s);hc.clip();draw('full');hc.restore();}
 }
-const HEART_PAL={e:'#2b2b2b',r:'#9b2de2',d:'#6510a4',w:'#ecd0ff'},POISON_PAL={e:'#2b2b2b',r:'#8aa61e',d:'#5e7514',w:'#e0f0a0'},ABS_PAL={e:'#2b2b2b',r:'#e8c21c',d:'#b08a10',w:'#fff2a0'},
+const HEART_PAL={e:'#2b2b2b',r:'#3938e5',d:'#1f1e9c',w:'#d2d2ff'},POISON_PAL={e:'#2b2b2b',r:'#8aa61e',d:'#5e7514',w:'#e0f0a0'},ABS_PAL={e:'#2b2b2b',r:'#e8c21c',d:'#b08a10',w:'#fff2a0'},
   FOOD_PAL={e:'#2b2b2b',m:'#b5592a',d:'#7a3416',b:'#e8e0c8'},ARMOR_PAL={e:'#2b2b2b',w:'#d8d8d8',a:'#8a8a8a'};
 function spr(name,x,y,w,h){const im=PACK.gui[name];if(!im)return false;hc.drawImage(im,x,y,w,h);return true;}
 const HFONT="'VT323','Courier New',monospace";
@@ -5040,13 +5215,13 @@ function drawBlockHint(){
   txt(name,x+pad,y+pad+14,sz,'#ffffff');lines.forEach((l,i)=>txt(l,x+pad,y+pad+38+i*20,sz-1,'#e8e8e8'));
   if(ic){const iy=y+h-pad-iconS,ix=Math.round(x+w/2-iconS/2);hc.fillStyle='rgba(225,232,234,.95)';hc.fillRect(ix-4,iy-4,iconS+8,iconS+8);hc.strokeStyle='#555';hc.lineWidth=1;hc.strokeRect(ix-3.5,iy-3.5,iconS+7,iconS+7);hc.drawImage(ic,ix,iy,iconS,iconS);}
   hc.globalAlpha=1;}
-function drawHotbar(){
+function drawHotbar(){if(typeof blueHearts==='function')blueHearts();
   const p=player;const G=hudGeom(),S=G.S,hx=G.hx,hy=G.hy;
   if(PACK.gui.hotbar){hc.drawImage(PACK.gui.hotbar,hx-S*.05,hy-S*.05,S*9+S*.1,S*1.1);}
   else{const u=S/20;hc.fillStyle='rgba(0,0,0,.55)';hc.fillRect(hx-u,hy-u,S*9+2*u,S+2*u);
     for(let i=0;i<9;i++){const x=hx+i*S;hc.fillStyle='rgba(139,139,139,.42)';hc.fillRect(x+u,hy+u,S-2*u,S-2*u);hc.fillStyle='rgba(55,55,55,.75)';hc.fillRect(x+u,hy+u,S-2*u,u);hc.fillRect(x+u,hy+u,u,S-2*u);
       hc.fillStyle='rgba(200,200,200,.45)';hc.fillRect(x+u,hy+S-2*u,S-2*u,u);hc.fillRect(x+S-2*u,hy+u,u,S-2*u);}}
-  for(let i=0;i<9;i++){const x=hx+i*S;const s=p.inv[i];if(s){hc.drawImage(ICONS[s.id],x+S*.14,hy+S*.14,S*.72,S*.72);if(s.count>1)txt(String(s.count),x+S-4,hy+S-5,13,'#fff','right');
+  for(let i=0;i<9;i++){const x=hx+i*S;const s=p.inv[i];if(s&&ICONS[s.id]){hc.drawImage(ICONS[s.id],x+S*.14,hy+S*.14,S*.72,S*.72);if(s.count>1)txt(String(s.count),x+S-4,hy+S-5,13,'#fff','right');
     if(s.dmg&&typeof maxDur==='function'&&maxDur(s.id)){const f=1-s.dmg/maxDur(s.id);hc.fillStyle='#000';hc.fillRect(x+S*.16,hy+S*.8,S*.68,S*.08);hc.fillStyle=`hsl(${Math.round(f*120)},90%,50%)`;hc.fillRect(x+S*.16,hy+S*.8,S*.68*f,S*.05);}}}
   const sx=hx+p.sel*S;if(PACK.gui.hotbar_sel)hc.drawImage(PACK.gui.hotbar_sel,sx-S*.08,hy-S*.1,S*1.16,S*1.2);else{const u=S/20;hc.strokeStyle='#000';hc.lineWidth=u;hc.strokeRect(sx-1.5*u,hy-1.5*u,S+3*u,S+3*u);hc.strokeStyle='#e6e6e6';hc.lineWidth=2*u;hc.strokeRect(sx,hy,S,S);hc.strokeStyle='#8a8a8a';hc.lineWidth=u;hc.strokeRect(sx+1.5*u,hy+1.5*u,S-3*u,S-3*u);const it=p.inv[p.sel];if(it){hc.drawImage(ICONS[it.id],sx+S*.14,hy+S*.14,S*.72,S*.72);if(it.count>1)txt(String(it.count),sx+S-4,hy+S-5,13,'#fff','right');}}
   const s=G.s,step=8*s;const left=hx,right=hx+S*9;
@@ -5120,6 +5295,7 @@ function drawBRHud(){
 
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
+let ASKOPEN=false;   // a text box is open (sign, name tag, command block)
 const OVERLAYS=['newsPanel','lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
@@ -5133,8 +5309,8 @@ function lookDelta(dx,dy){const f=SENS*.6+.2,k=f*f*f*8*.15*Math.PI/180;player.ya
 function setNetStatus(s){const el=$('status');if(el)el.textContent=s;}
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;
   if(locked){hide('clickResume');hide('pause');paused=false;}
-  else if((MATCH.state==='play'||MATCH.state==='lobby')&&!chestOpen&&!chatUI&&$('lobbyPanel').classList.contains('hidden')&&$('results').classList.contains('hidden')){if(!online)paused=true;show('pause');}});
-cv.addEventListener('click',()=>{if((MATCH.state==='play'||MATCH.state==='lobby')&&!locked&&!chestOpen)lockPointer();});
+  else if((MATCH.state==='play'||MATCH.state==='lobby')&&!chestOpen&&!chatUI&&!ASKOPEN&&$('lobbyPanel').classList.contains('hidden')&&$('results').classList.contains('hidden')){if(!online)paused=true;show('pause');}});
+cv.addEventListener('click',()=>{if((MATCH.state==='play'||MATCH.state==='lobby')&&!locked&&!chestOpen&&!ASKOPEN)lockPointer();});
 $('clickResume').addEventListener('click',()=>lockPointer());
 // ---- mouse look, with a fix for Mac browsers that over-report movement while a mouse button is held ----
 // Depending on the browser this shows up as duplicated drag events or as bigger deltas. Repeats while held are dropped, and the
@@ -5165,7 +5341,7 @@ document.addEventListener('keydown',e=>{
   if(!player||MATCH.state==='menu')return;
   if(e.code.startsWith('Digit')){const n=+e.code.slice(5);if(n>=1&&n<=9&&player.alive){player.sel=n-1;player.using=null;selShow=2;if(chestOpen)renderChest();}}
   if(e.code==='KeyE'){if(chestOpen)chestClose(true);else if(player.alive&&MATCH.state==='play'){if(!tryOpenChest())openInv();}else if(!player.alive){spectate.mode='follow';spectate.idx++;}}
-  if(e.code==='KeyQ'){if(!player.alive){spectate.mode='follow';spectate.idx--;}else if((locked||touchActive||padActive)&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6]);consume(player,player.sel);}}}
+  if(e.code==='KeyQ'){if(!player.alive){spectate.mode='follow';spectate.idx--;}else if((locked||touchActive||padActive)&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);consume(player,player.sel);}}}
   if(e.code==='KeyF'&&!player.alive)spectate.mode='bat';
   if(e.code==='Space'&&chestOpen&&SET.takeAll)chestOp('all');
   if(e.code==='KeyR'&&MATCH.state==='lobby'){toggleReady();}
@@ -5237,7 +5413,8 @@ function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;
 function chestClose(relock){if(!chestOpen)return;if(chestOpen.craft)craftClose();if(chestOpen.lce)lcClose();if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
 const INV_SCREEN={inv:true,items:[]};let invHover=null;
 function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;if(MATCH.mode==='survival')return craftOpen(player.gm==='creative'?'creative':'inv');chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
-function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?ITEMS[id].name:''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
+const stackName=s=>{const id=typeof s==='string'?s:s.id;return (s&&s.tag&&s.tag.name)||(s&&s.tag&&s.tag.title)||ITEMS[id].name;};
+function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?stackName(s):''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
 function slotCanvas(id,count){const S=GS,px=18*S,c=mkCanvas(px,px),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(ICONS[id],S,S,16*S,16*S);
   if(count>1){const t=pxCanvas(String(count),S,'#ffffff');g.drawImage(t,px-t.width,px-t.height+S);}return c;}
 function fillIcons(el,list){[...el.children].forEach((d,i)=>{const s=list[i];if(!s)return;const id=typeof s==='string'?s:s.id;if(!ICONS[id])return;d.prepend(slotCanvas(id,typeof s==='string'?1:s.count));});}
@@ -5370,7 +5547,7 @@ function showResults(m){
     $('sbAward').replaceChildren(iconCanvas(aw[1]),document.createTextNode(aw[0]));
     $('sbFav').replaceChildren(iconCanvas(r.fw&&ICONS[r.fw]?r.fw:null),document.createTextNode(r.fw&&ITEMS[r.fw]?'Favorite weapon':'No favorite weapon'));
     if(r.fw&&ITEMS[r.fw])$('sbFav').title=ITEMS[r.fw].name;
-    $('sbDealt').replaceChildren(heartPic('#9b2de2','#5a0f8a'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
+    $('sbDealt').replaceChildren(heartPic('#3938e5','#1f1e9c'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
     $('sbTaken').replaceChildren(heartPic('#3e3e3e','#1e1e1e'),document.createTextNode(Math.round(r.r||0)+' received'));
     $('sbWinner').textContent=r.id===m.w?'Winner':ordinal(r.p||rows.length)+' place';};
   rows.forEach((r,i)=>{const e=entById(r.id);const d=document.createElement('div');d.className='sbRow'+(r.id===me?' me':'');
@@ -5419,7 +5596,7 @@ function pollPad(dt){
     if(E('rt')){lmb=true;lmbEdge=true;}if(!B.rt&&padPrev.rt)lmb=false;
     if(E('lt')){rmb=true;rmbEdge=true;}if(!B.lt&&padPrev.lt)rmb=false;
     if(player.alive){if(E('lb')){player.sel=(player.sel+8)%9;player.using=null;selShow=2;sfx('click');}if(E('rb')){player.sel=(player.sel+1)%9;player.using=null;selShow=2;sfx('click');}
-      if(E('b')&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6]);consume(player,player.sel);}}
+      if(E('b')&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);consume(player,player.sel);}}
       if(E('y')&&MATCH.state==='play'){if(!tryOpenChest())openInv();}}
     else{if(E('lb')){spectate.mode='follow';spectate.idx--;}if(E('rb')){spectate.mode='follow';spectate.idx++;}if(E('x'))spectate.mode='bat';if(E('rt')){sfx('squeak');netSend(N.SQUEAK,{id:player.id});}}
     if(E('start')){if(online){show('pause');}else{paused=true;show('pause');}}
@@ -5703,7 +5880,7 @@ tBtn('tInv',()=>{if(!player)return;if(chestOpen){chestClose(false);return;}if(!p
 // drop: a tap drops one, holding drops the whole stack
 let dropHold=null;
 tBtn('tDrop',()=>{if(player&&!player.alive){spectate.mode='bat';return;}fakeKey('KeyQ');dropHold=setTimeout(()=>{const p=player;if(!p||!p.alive||MATCH.state==='lobby')return;const s=p.inv[p.sel];if(!s||s.count<=0)return;
-  const d=fwd(p);requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],s.id,s.count,[d[0]*6,d[1]*6+2,d[2]*6]);p.inv[p.sel]=null;if(navigator.vibrate)try{navigator.vibrate(20);}catch(_){}},500);},()=>clearTimeout(dropHold));
+  const d=fwd(p);requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],s.id,s.count,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);p.inv[p.sel]=null;if(navigator.vibrate)try{navigator.vibrate(20);}catch(_){}},500);},()=>clearTimeout(dropHold));
 tBtn('tChat',()=>{if(typeof openChat==='function'&&player&&!chatUI)openChat('');});
 tBtn('tReady',()=>fakeKey('KeyR'));tBtn('tList',()=>fakeKey('Tab'));
 tBtn('tPause',()=>{if(!online)paused=true;show('pause');});
@@ -6170,7 +6347,7 @@ const CR={open:false,mode:'inv',n:2,grid:[],cur:null,fk:null,hover:null};
 function craftOpen(mode,fk){if(!player||!player.alive)return false;CR.open=true;CR.mode=mode;CR.n=mode==='table'?3:2;CR.grid=new Array(CR.n*CR.n).fill(null);CR.fk=fk||null;CR.cur=null;
   chestOpen={inv:true,craft:true};sfx(mode==='inv'?'click':'chest');document.exitPointerLock&&document.exitPointerLock();show('craftUI');craftRender();return true;}
 function giveBack(s){if(!s)return;if(stackMax(s.id)===1&&ITEMS[s.id].type!=='armor'){const f=player.inv.findIndex(x=>!x);if(f>=0){player.inv[f]=s;return;}requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1);return;}
-  const left=addItem(player,s.id,s.count);if(left)requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,left);}
+  const left=addItem(player,s.id,s.count,s.tag);if(left)requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,left,undefined,s.tag);}
 function craftClose(){if(!CR.open)return;CR.open=false;for(const s of CR.grid)giveBack(s);CR.grid=[];giveBack(CR.cur);CR.cur=null;hide('craftUI');$('cursorItem').textContent='';}
 function craftResult(){if(CR.mode==='furnace')return null;return matchRecipe(CR.grid,CR.n);}
 function stackCanvas(s){const c=slotCanvas(s.id,s.count);const m=maxDur(s.id);if(s.dmg&&m){const g=c.getContext('2d'),S=GS,f=1-s.dmg/m;g.fillStyle='#000';g.fillRect(3*S,15*S,13*S,2*S);
@@ -6207,7 +6384,7 @@ function slotRef(kind,i){const p=player,f=CR.fk?furnAt(CR.fk):null;
   if(kind==='a')return [()=>p.armor[i]?{id:p.armor[i],count:1}:null,v=>{p.armor[i]=v?v.id:null;},1,s=>ITEMS[s.id].type==='armor'&&ITEMS[s.id].slot===i];
   return null;}
 const stackMax=id=>Math.max(1,ITEMS[id].stack||1);
-const sameStack=(a,b)=>a&&b&&a.id===b.id&&!a.dmg&&!b.dmg;
+const sameStack=(a,b)=>a&&b&&a.id===b.id&&!a.dmg&&!b.dmg&&tagEq(a,b);
 function slotClick(kind,i,right,shift){const p=player;
   if(kind==='o'){const r=craftResult();if(!r)return;const take=()=>{for(let k=0;k<CR.grid.length;k++){const s=CR.grid[k];if(!s)continue;s.count--;if(!s.count)CR.grid[k]=null;}};
     if(shift){let guard=64;while(guard--){const r2=craftResult();if(!r2||r2.out!==r.out)break;if(!invRoom(p,r2.out))break;take();const left=addItem(p,r2.out,r2.n);if(left)requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],r2.out,left);}}
@@ -6564,7 +6741,7 @@ function floorOk(x,y,z){const b=getB(x,y-1,z);return b&&BD[b].solid&&!BD[b].liqu
 function effLight(x,y,z){const L=lightAt(x,y,z);const sky=L>>4,blk=L&15;return Math.max(blk,sky-Math.round((1-dayAmt())*11));}
 function mobSpawnTick(dt){mobSpawnT-=dt;if(mobSpawnT>0)return;mobSpawnT=1.2;if(mobs.length>=44)return;
   const players=ents.filter(e=>e.kind==='player'&&e.alive&&!e.spectator);if(!players.length)return;
-  const p=players[Math.random()*players.length|0];let pas=0,hos=0;for(const m of mobs){if(!m.alive||hdist(m.pos,p.pos)>64)continue;if(MOB_T[m.mob].kind==='passive'||m.owner)pas++;else hos++;}
+  const p=players[Math.random()*players.length|0];let pas=0,hos=0;for(const m of mobs){if(!m.alive||hdist(m.pos,p.pos)>64||MOB_T[m.mob].kind==='object')continue;if(MOB_T[m.mob].kind==='passive'||m.owner)pas++;else hos++;}
   const farFromAll=(x,z,r)=>players.every(q=>Math.hypot(q.pos[0]-x,q.pos[2]-z)>=r);
   // animals: on the surface, in daylight-reachable spots, in small groups
   if(pas<9&&Math.random()<.45){const a=Math.random()*6.283,r=24+Math.random()*26;const x=Math.floor(p.pos[0]+Math.cos(a)*r),z=Math.floor(p.pos[2]+Math.sin(a)*r);
@@ -6767,7 +6944,7 @@ function mobsUpdate(dt){
   const host=isHost()||dimLocal();
   for(const e of mobs){e.invuln=Math.max(0,e.invuln-dt);e.hurtT=Math.max(0,e.hurtT-dt);e.atkCD-=dt;e.swing=Math.max(0,e.swing-dt*4);
     if(e.deathT!=null){e.deathT+=dt;if(e.deathT>.9){e.gone=true;spawnParticles(e.pos[0],e.pos[1]+e.eh*.5,e.pos[2],14,[.85,.85,.85],1.2,'poof');}continue;}
-    if(host)updateMob(e,dt);else{interpRemote(e,dt);if(e.bodyYawNet!=null)e.bodyYaw+=angTo(e.bodyYaw,e.bodyYawNet)*Math.min(1,dt*12);e.headYaw=e.yaw;}
+    if(host)updateMob(e,dt);else if(!e.localRide){interpRemote(e,dt);if(e.bodyYawNet!=null)e.bodyYaw+=angTo(e.bodyYaw,e.bodyYawNet)*Math.min(1,dt*12);e.headYaw=e.yaw;}
     // idle noises (every player makes their own)
     e.sayT-=dt;if(e.sayT<=0){e.sayT=8+Math.random()*16;if(e.alive)mobSnd(e,'say');}}
   if(mobs.some(m=>m.gone))mobs=mobs.filter(m=>!m.gone);
@@ -7816,7 +7993,7 @@ function glideHud(){const G=mapInfo.glide;if(!G)return;const p=player,laps=SET.g
   if(p.alive){const hs=Math.round(S*.7);for(let i=0;i<3;i++)drawHeartPx(Math.round(W/2-hs*1.6+i*hs*1.1),by-hs-10,hs,i<(p.hearts==null?3:p.hearts));}
   for(const e of ents){if(e===p||!e.alive||e.kind!=='player')continue;if(dist(camPos,e.pos)<90)nameTagMC(e,'#ffffff');}}
 function drawHeartPx(x,y,s,full){const H5=['.##.##.','#######','#######','.#####.','..###..','...#...'];const k=s/7;
-  H5.forEach((r,j)=>[...r].forEach((c,i)=>{if(c!=='#')return;hc.fillStyle=full?(j<2&&i>0&&i<3?'#d9a0ff':'#9b2de2'):'#3a3a3a';hc.fillRect(Math.round(x+i*k),Math.round(y+j*k),Math.ceil(k),Math.ceil(k));}));}
+  H5.forEach((r,j)=>[...r].forEach((c,i)=>{if(c!=='#')return;hc.fillStyle=full?(j<2&&i>0&&i<3?'#a8a8ff':'#3938e5'):'#3a3a3a';hc.fillRect(Math.round(x+i*k),Math.round(y+j*k),Math.ceil(k),Math.ceil(k));}));}
 
 // ================= Java Edition combat (1.9 and later) in Battle and Battle Royale =================
 // Survival, Tumble and Glide keep the console-style 1.8 combat. In Battle and Battle Royale:
@@ -8674,8 +8851,24 @@ function showEndCredits(done){document.exitPointerLock&&document.exitPointerLock
 {const r0=render;let last=0;render=function(){const now=performance.now()/1000;if(last)animTiles(Math.min(.1,now-last));last=now;return r0.apply(this,arguments);};}
 
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='2.6';
+const GAME_VER='2.8';
 const NEWS=[
+ ['2.8','November 25, 2026',[
+   'Point at any item in a menu (inventory, crafting, chests, furnaces, creative) to see its name. On phones and tablets, tap the item.',
+   'Forests, birch forests and dark forests are now mystical: deeper green grass and leaves, green mist, drifting motes and weeping willows with long curtains of leaves and vines. The grass there has a new texture made from your pack\'s own grass, so it still looks like Minecraft.',
+   'Hearts are blue.',
+   'Every ruin has a chest buried under the chiseled stone in the middle of its floor. Most hold plain supplies, but 1 in 5 is a treasure chest with an Enchanted Golden Apple, diamonds and enchanted diamond gear.',
+   'New: the Enchanted Golden Apple. It gives Regeneration II, Absorption IV, Resistance and Fire Resistance.',
+   'Skinwalkers: go two days without sleeping and they come at night. One copies a player\'s skin and name and watches from a distance. When you look at it, it twists into its true shape and hunts you, with a boss bar. Daylight drives it away, and sleeping in a bed keeps them away.']],
+ ['2.7','November 25, 2026',[
+   'Redstone works: levers, buttons, pressure plates, redstone torches, daylight sensors and blocks of redstone give power. Dust carries it up to 15 blocks and gets dimmer as it goes. Repeaters delay and lock, comparators compare and subtract and read how full a chest is. Lamps light up, iron doors and trapdoors open only with power, TNT goes off and note blocks play.',
+   'Pistons and sticky pistons push up to 12 blocks and move you too. Sticky pistons pull back the block in front, and slime blocks drag their neighbours along.',
+   'Hoppers move items between chests, furnaces and other hoppers, and pick up items dropped on top. Dispensers fire arrows, potions, fire charges and fireworks, pour buckets, place TNT, boats and minecarts, and use bone meal. Droppers pass items on. Command blocks run chat commands when powered.',
+   'Rails join up, curve and climb slopes. Ride minecarts (W to push, Sneak to get off). Golden rails boost or brake, detector rails give power when a cart passes and activator rails empty carts. Chest, hopper, furnace and TNT minecarts work too.',
+   'Boats float. Steer them with the look direction and W. Crashing hard into land breaks them.',
+   'Horses, donkeys and mules live on plains and savannas. Climb on to tame them, then add a saddle to ride: hold Jump to charge a leap. Horse armour protects them and donkeys and mules carry a chest. Saddled pigs can be ridden and steered with a carrot on a stick.',
+   'Leads take animals with you or tie them to a fence. Name a name tag on an anvil and give a creature a name. Armour stands hold any armour you put on them.',
+   'Banners in 16 colours stand or hang on walls. Add patterns with dyes in a 3x3 crafting grid; a cauldron washes off the last one. Paintings take the biggest picture that fits the wall.']],
  ['2.6','November 25, 2026',[
    'Turning blocks: logs, hay, bone blocks and quartz pillars lie along the side you click. Furnaces, pumpkins, dispensers and droppers face you. Stairs and slabs go upside down or to the top half when you click high on a side or under a block. Ladders and item frames hang on the wall you click. Rails, anvils and signs follow the way you look.',
    'Slabs stack: put a slab on a slab of the same kind to make a double slab.',
@@ -8983,9 +9176,9 @@ function slabMerge(p,h,id){const R=ROT[id];if(!R||R.kind!=='slab')return false;c
   const hb=h&&h.b,HD=hb&&BD[hb],cre=p.gm==='creative';
   // ---- using blocks (sneak to place against them instead) ----
   if(h&&!p.sneak&&HD){
-    if(HD.door){const d=HD.door;const lo=d.u?h.y-1:h.y;const lb=getB(h.x,lo,h.z),L=BD[lb];if(L&&L.door){const nb=d.first+L.door.f*4+(L.door.open?0:2);setMany([h.x,lo,h.z,nb,h.x,lo+1,h.z,nb+1]);
+    if(HD.door&&HD.door.first!==B.DOOR_IRON){const d=HD.door;const lo=d.u?h.y-1:h.y;const lb=getB(h.x,lo,h.z),L=BD[lb];if(L&&L.door){const nb=d.first+L.door.f*4+(L.door.open?0:2);setMany([h.x,lo,h.z,nb,h.x,lo+1,h.z,nb+1]);
         psnd(L.door.open?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.6,1);p.swing=1;return true;}}
-    if(HD.trap){const t=HD.trap;const ns=t.s>=2?t.s-2:t.s+2;setBlockNet(h.x,h.y,h.z,t.first+t.f*4+ns);psnd(t.s>=2?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.5,1.2);p.swing=1;return true;}
+    if(HD.trap&&HD.trap.first!==B.TRAPDOOR_IRON){const t=HD.trap;const ns=t.s>=2?t.s-2:t.s+2;setBlockNet(h.x,h.y,h.z,t.first+t.f*4+ns);psnd(t.s>=2?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.5,1.2);p.swing=1;return true;}
     if(HD.cake!=null&&(p.food<20||cre)){p.food=Math.min(20,p.food+2);p.sat=Math.min(p.food,(p.sat||0)+.4);sfx('eat');setBlockNet(h.x,h.y,h.z,HD.cake>=6?0:XB.cake[HD.cake+1]);p.swing=1;return true;}
     if(HD.lever!=null){setBlockNet(h.x,h.y,h.z,XB.lever[HD.lever?0:1]);psnd(['random/click','block/lever/click'],[h.x,h.y,h.z],.5,HD.lever?.5:.6);p.swing=1;return true;}
     if(hb===B.ENCHANT_TABLE){useEnchantTable(p,h);return true;}
@@ -9049,11 +9242,1146 @@ Object.assign(ORE_XP,{[B.EMERALD_ORE]:[3,7],[B.LAPIS_ORE]:[2,5],[B.REDSTONE_ORE]
 // eating stew gives the bowl back; drinking a potion gives the bottle back (13_ui)
 // ---------- creatures follow the food they like ----------
 const TEMPT={cow:['wheat'],sheep:['wheat'],pig:['carrot','potato','carrot_on_a_stick'],chicken:['seeds_wheat','seeds_melon','seeds_pumpkin','nether_wart_item'],deer:['carrot','golden_carrot']};
-{const u0=updateMob;updateMob=function(e,dt){const L=TEMPT[e.mob];e.tempt=null;if(L&&!(e.panic>0)&&!e.owner){let bd=10;for(const q of ents){if(q.kind!=='player'||!q.alive)continue;const s=q.inv&&q.inv[q.sel];if(!s||!L.includes(s.id))continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;e.tempt=q;}}}return u0(e,dt);};}
+{const u0=updateMob;updateMob=function(e,dt){const L=TEMPT[e.mob];e.tempt=e.leashTempt||null;if(L&&!(e.panic>0)&&!e.owner){let bd=10;for(const q of ents){if(q.kind!=='player'||!q.alive)continue;const s=q.inv&&q.inv[q.sel];if(!s||!L.includes(s.id))continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;e.tempt=q;}}}return u0(e,dt);};}
 {const a0=applyPack;applyPack=function(){const r=a0.apply(this,arguments);CRE.cats=null;return r;};}
 // ---------- the tick ----------
 {const t0=survTick;survTick=function(dt){t0(dt);if(!INF)return;cropTick(dt);fishTick(dt);rocketTick(dt);jukeTick();};}
 {const r0=restartSurvivalStream;restartSurvivalStream=function(){CROPS.clear();return r0.apply(this,arguments);};}
+
+// ================= Redstone power =================
+// Runs where the world is decided (single player, the host, or a player alone in their dimension). Game ticks are 1/20 s, redstone
+// ticks are 2 game ticks. Power works like the real game: sources (levers, buttons, pressure plates, redstone torches, blocks of
+// redstone, daylight sensors, detector rails, repeaters, comparators) power the blocks around them; a solid block is "strongly"
+// powered by a lever or button on it, a torch under it, a repeater or comparator pointing into it, and "weakly" powered by dust
+// on it or pointing into it. Dust carries power 15 blocks, losing one level a block; it takes power from strongly powered
+// blocks only. Mechanisms (lamps, pistons, doors, trapdoors, TNT, note blocks, dispensers, droppers, hoppers, rails, command
+// blocks) switch from anything next to them, including weakly powered blocks.
+const RSK=b=>b&&BD[b]?BD[b].rs:null;
+const pk3=(x,y,z)=>x+','+y+','+z;
+// blocks that carry power through them (full solid cubes)
+function rsCond(b){if(!b)return false;const D=BD[b];if(!D||!D.solid||!D.opaque||D.shape||D.cross||D.liquid||D.dyn||D.quads)return false;const r=D.rs;if(r&&(r.k==='piston'))return false;return b!==B.REDSTONE;}
+const OPPF=[1,0,3,2,5,4];
+const f6Of=(dx,dy,dz)=>dy<0?0:dy>0?1:dz<0?2:dz>0?3:dx<0?4:5;
+// ---- what a component at (x,y,z) sends toward its neighbour in direction d (F6 index): [weak, strong] ----
+function rsEmit(x,y,z,d){const b=getB(x,y,z);if(!b)return 0;if(b===B.REDSTONE)return 15;const r=RSK(b);if(!r)return 0;
+  switch(r.k){
+  case 'lever':case 'button':return r.on?15:0;
+  case 'plate':return r.on?rsPlateLvl(x,y,z,r):0;
+  case 'torch':{if(!r.on)return 0;const s=r.a<0?0:f6Of(...DIRS4[r.a]);return d===s?0:15;}
+  case 'rep':return r.on&&d===f6Of(...DIRS4[r.f])?15:0;
+  case 'comp':return d===f6Of(...DIRS4[r.f])?rsCompOut(x,y,z):0;
+  case 'dust':{if(!r.lvl)return 0;if(d===0)return r.lvl;if(d===1)return 0;const pts=rsDustPoints(x,y,z);const hi=[null,null,0,2,3,1][d];return pts[hi]?r.lvl:0;}
+  case 'daylight':return RS_DAY.get(pk3(x,y,z))||0;
+  case 'rail':return r.type==='detector'&&r.on?15:0;}
+  return 0;}
+function rsStrong(x,y,z,d){const b=getB(x,y,z);const r=RSK(b);if(!r)return 0;
+  switch(r.k){
+  case 'lever':case 'button':return r.on&&d===f6Of(...F6[r.s])?15:0;
+  case 'plate':return r.on&&d===0?rsPlateLvl(x,y,z,r):0;
+  case 'torch':return r.on&&d===1?15:0;
+  case 'rep':return r.on&&d===f6Of(...DIRS4[r.f])?15:0;
+  case 'comp':return d===f6Of(...DIRS4[r.f])?rsCompOut(x,y,z):0;
+  case 'rail':return r.type==='detector'&&r.on&&d===0?15:0;}
+  return 0;}
+// power a solid block gets: strong (from levers/torches/repeaters...) and any (also from dust)
+function blockStrong(x,y,z){let m=0;for(let d=0;d<6;d++){const [dx,dy,dz]=F6[d];const v=rsStrong(x+dx,y+dy,z+dz,OPPF[d]);if(v>m)m=v;}return m;}
+function blockPower(x,y,z){let m=0;for(let d=0;d<6;d++){const [dx,dy,dz]=F6[d];const v=rsEmit(x+dx,y+dy,z+dz,OPPF[d]);if(v>m)m=v;}return m;}
+// power a mechanism at (x,y,z) receives (skip one side, e.g. a piston's face)
+function rsInput(x,y,z,skip){let m=0;for(let d=0;d<6;d++){if(d===skip)continue;const [dx,dy,dz]=F6[d];const nx=x+dx,ny=y+dy,nz=z+dz;const nb=getB(nx,ny,nz);
+    const v=RSK(nb)||nb===B.REDSTONE?rsEmit(nx,ny,nz,OPPF[d]):rsCond(nb)?blockPower(nx,ny,nz):0;if(v>m)m=v;if(m>=15)break;}return m;}
+// ---- dust: links to other dust (flat, up a block side, down a block side) and which sides it points to ----
+const isDust=b=>{const r=RSK(b);return !!(r&&r.k==='dust');};
+function dustLinks(x,y,z){const out=[];const upOpen=!rsCond(getB(x,y+1,z));
+  for(let i=0;i<4;i++){const [dx,,dz]=DIRS4[i];const nx=x+dx,nz=z+dz;const nb=getB(nx,y,nz);
+    if(isDust(nb))out.push([nx,y,nz,i]);else{if(upOpen&&rsCond(nb)&&isDust(getB(nx,y+1,nz)))out.push([nx,y+1,nz,i]);if(!rsCond(nb)&&isDust(getB(nx,y-1,nz)))out.push([nx,y-1,nz,i]);}}
+  return out;}
+function dustConnects(b,i){const r=RSK(b);if(b===B.REDSTONE)return true;if(!r)return false;
+  switch(r.k){case 'lever':case 'button':case 'plate':case 'torch':case 'daylight':return true;case 'rep':return r.f%2===i%2;case 'comp':return r.f%2===i%2;case 'rail':return r.type==='detector';}return false;}
+function rsDustPoints(x,y,z){const p=[false,false,false,false];let n=0;const L=dustLinks(x,y,z);for(const l of L)if(!p[l[3]]){p[l[3]]=true;n++;}
+  for(let i=0;i<4;i++){if(p[i])continue;const [dx,,dz]=DIRS4[i];if(dustConnects(getB(x+dx,y,z+dz),i)){p[i]=true;n++;}}
+  if(n===0)return [true,true,true,true];if(n===1){for(let i=0;i<4;i++)if(p[i]){p[(i+2)%4]=true;break;}}return p;}
+// the dust shape: a cross centre with arms toward its connections, or one straight line, and lines up the sides of blocks
+function rsDustBoxes(x,y,z,L){const D=BD[RS.dust[L]];const [ct,lt,lz]=D.dust;const p=rsDustPoints(x,y,z);const h=1/64,o=[];
+  const all=p[0]&&p[1]&&p[2]&&p[3];const ns=p[0]&&p[2]&&!p[1]&&!p[3],ew=p[1]&&p[3]&&!p[0]&&!p[2];
+  if(ns)o.push([0,0,0,1,h,1,lz]);else if(ew)o.push([0,0,0,1,h,1,lt]);
+  else if(all&&!dustLinks(x,y,z).length&&![0,1,2,3].some(i=>dustConnects(getB(x+DIRS4[i][0],y,z+DIRS4[i][2]),i)))o.push([0,0,0,1,h,1,ct]);
+  else{o.push([5/16,0,5/16,11/16,h,11/16,ct]);const arm=[[5/16,0,0,11/16,h,5/16],[11/16,0,5/16,1,h,11/16],[5/16,0,11/16,11/16,h,1],[0,0,5/16,5/16,h,11/16]];for(let i=0;i<4;i++)if(p[i])o.push(arm[i].concat([ct]));}
+  // climbing the side of a block to dust on top of it
+  if(!rsCond(getB(x,y+1,z)))for(let i=0;i<4;i++){const [dx,,dz]=DIRS4[i];if(rsCond(getB(x+dx,y,z+dz))&&isDust(getB(x+dx,y+1,z+dz))){const w=[[0,0,0,1,1,h],[1-h,0,0,1,1,1],[0,0,1-h,1,1,1],[0,0,0,h,1,1]][i];o.push(w.concat([i%2?lz:lt]));}}
+  return o;}
+
+// ---- scheduling ----
+const COMPS=new Set(),RSQ=new Set(),RST=[],RS_DAY=new Map(),RS_EDGE=new Map(),RS_COMP=new Map(),RS_BURN=new Map(),RS_PLATES=new Set(),RS_SENSORS=new Set(),HOPPERS=new Set();
+let rsTick=0,rsAcc=0,rsBusy=0;
+const rsAuth=()=>INF&&MATCH.mode==='survival'&&(!net||isHost()||dimLocal());
+function rsNotify(x,y,z){if(!rsAuth())return;RSQ.add(pk3(x,y,z));for(const [dx,dy,dz] of F6){const nx=x+dx,ny=y+dy,nz=z+dz;RSQ.add(pk3(nx,ny,nz));
+    if(rsCond(getB(nx,ny,nz)))for(const [ex,ey,ez] of F6)RSQ.add(pk3(nx+ex,ny+ey,nz+ez));}
+  // dust two blocks away along a line, and dust going up or down a step
+  for(const [dx,,dz] of DIRS4){RSQ.add(pk3(x+dx,y+1,z+dz));RSQ.add(pk3(x+dx,y-1,z+dz));}}
+function rsLater(delay,x,y,z,fn,tag){const k=pk3(x,y,z)+'|'+(tag||'');if(RST.some(t=>t.k===k))return;RST.push({t:rsTick+delay,x,y,z,fn,k});}
+const rsPending=(x,y,z,tag)=>RST.some(t=>t.k===pk3(x,y,z)+'|'+(tag||''));
+// set blocks from the engine (one batch per tick, sent to other players)
+let rsBatch=[];
+function rsSet(x,y,z,b){if(getB(x,y,z)===b)return;rsBatch.push(x,y,z,b);applyBlockList([x,y,z,b],false);}
+function rsFlush(){if(rsBatch.length&&net)netSend(N.BOOM,{l:rsBatch});rsBatch=[];}
+// a block changed anywhere: wake the circuits around it
+{const a0=applyBlock;applyBlock=function(x,y,z,b){const was=getB(x,y,z);a0(x,y,z,b);if(INF&&was!==getB(x,y,z))rsChanged(x,y,z,was,getB(x,y,z));};}
+{const l0=applyBlockList;applyBlockList=function(list,fx){const was=[];if(INF)for(let i=0;i<list.length;i+=4)was.push(getB(list[i],list[i+1],list[i+2]));l0(list,fx);
+  if(INF)for(let i=0;i<list.length;i+=4){const x=list[i],y=list[i+1],z=list[i+2];const nb=getB(x,y,z);if(was[i/4]!==nb)rsChanged(x,y,z,was[i/4],nb);}};}
+function rsChanged(x,y,z,was,b){const R=RSK(b),W=RSK(was);
+  if(R&&R.k==='plate')RS_PLATES.add(pk3(x,y,z));if(R&&R.k==='daylight')RS_SENSORS.add(pk3(x,y,z));if(R&&R.k==='hopper')HOPPERS.add(pk3(x,y,z));if(R&&R.k==='comp')COMPS.add(pk3(x,y,z));
+  containerSync(x,y,z,was,b);rsNotify(x,y,z);}
+// chunks that load with circuits in them: find their plates, sensors and hoppers
+{const g0=genChunk;genChunk=function(cx,cz){const r=g0(cx,cz);const ed=worldEdits.get(ckey(cx,cz));if(ed)for(const [li,v] of ed){const R=RSK(v);if(!R)continue;const x=cx*16+(li&15),y=li>>8,z=cz*16+((li>>4)&15);
+    if(R.k==='plate')RS_PLATES.add(pk3(x,y,z));else if(R.k==='daylight')RS_SENSORS.add(pk3(x,y,z));else if(R.k==='hopper')HOPPERS.add(pk3(x,y,z));else if(R.k==='comp')COMPS.add(pk3(x,y,z));}return r;};}
+
+// ---- evaluating one position ----
+const dustDone=new Set();
+function rsEval(x,y,z){const b=getB(x,y,z);const r=RSK(b);if(!r){if(b===B.TNT&&rsInput(x,y,z)>0){rsSet(x,y,z,0);igniteTNT(x,y,z,4,null);}else if(rotBase(b)===B.NOTEBLOCK)rsEdge(x,y,z,()=>noteBlockPlay(x,y,z));
+    else{const D=BD[b];if(D&&D.door)rsDoor(x,y,z,D);else if(D&&D.trap)rsTrap(x,y,z,D);else if(b===B.COMMAND_BLOCK)rsEdge(x,y,z,()=>cmdBlockRun(x,y,z));}return;}
+  switch(r.k){
+  case 'dust':if(!dustDone.has(pk3(x,y,z)))rsSolveDust(x,y,z);break;
+  case 'torch':{const sx=x+(r.a<0?0:DIRS4[r.a][0]),sy=y+(r.a<0?-1:0),sz=z+(r.a<0?0:DIRS4[r.a][2]);const sb=getB(sx,sy,sz);
+    const pw=rsCond(sb)?blockPower(sx,sy,sz)>0:false;const want=!pw;const bt=RS_BURN.get(pk3(x,y,z));if(bt&&bt.until>rsTick&&want)break;
+    if(want!==!!r.on)rsLater(2,x,y,z,()=>{const c=RSK(getB(x,y,z));if(!c||c.k!=='torch')return;const sb2=getB(sx,sy,sz);const w2=!(rsCond(sb2)&&blockPower(sx,sy,sz)>0);if(w2===!!c.on)return;
+      // burnout: a torch flicking too fast goes dark for a while
+      let B2=RS_BURN.get(pk3(x,y,z));if(!B2||B2.t0<rsTick-60){B2={t0:rsTick,n:0,until:0};RS_BURN.set(pk3(x,y,z),B2);}B2.n++;
+      if(w2&&B2.n>8){B2.until=rsTick+160;spawnParticles(x+.5,y+.7,z+.5,6,[.3,.3,.3],1);psnd(['random/fizz'],[x,y,z],.4);return;}
+      rsSet(x,y,z,c.a<0?RS.torch.stand[w2?1:0]:RS.torch.wall[c.a][w2?1:0]);},'t');break;}
+  case 'rep':{const lock=repLocked(x,y,z,r);if(lock!==!!r.lock)rsSet(x,y,z,RS.rep[r.f][r.d][r.on][lock?1:0]);if(lock)break;
+    const want=repInput(x,y,z,r)>0;if(want!==!!r.on)rsLater(r.d*2,x,y,z,()=>{const c=RSK(getB(x,y,z));if(!c||c.k!=='rep'||c.lock)return;const w2=repInput(x,y,z,c)>0;
+      // a short pulse still gets through once
+      const v=w2!==!!c.on?w2:!c.on&&want;if(v!==!!c.on)rsSet(x,y,z,RS.rep[c.f][c.d][v?1:0][0]);if(!w2&&v)rsLater(c.d*2,x,y,z,()=>rsEval(x,y,z),'re');},'r');break;}
+  case 'comp':{const out=compCalc(x,y,z,r);const cur=RS_COMP.get(pk3(x,y,z))||0;if(out!==cur)rsLater(2,x,y,z,()=>{const c=RSK(getB(x,y,z));if(!c||c.k!=='comp')return;const o2=compCalc(x,y,z,c);RS_COMP.set(pk3(x,y,z),o2);
+      const id=RS.comp[c.f][c.sub][o2>0?1:0];if(getB(x,y,z)!==id)rsSet(x,y,z,id);else rsNotify(x,y,z);},'c');break;}
+  case 'lamp':{const p=rsInput(x,y,z)>0;if(p&&!r.on)rsSet(x,y,z,RS.lamp[1]);else if(!p&&r.on)rsLater(4,x,y,z,()=>{const c=RSK(getB(x,y,z));if(c&&c.k==='lamp'&&c.on&&!(rsInput(x,y,z)>0))rsSet(x,y,z,RS.lamp[0]);},'l');break;}
+  case 'piston':{const p=rsInput(x,y,z,r.f)>0||rsInput(x,y+1,z,0)>0&&false;if(p&&!r.ext)rsLater(0,x,y,z,()=>pistonExtend(x,y,z),'p');else if(!p&&r.ext)rsLater(0,x,y,z,()=>pistonRetract(x,y,z),'p');break;}
+  case 'head':{const [dx,dy,dz]=F6[r.f];const bb=RSK(getB(x-dx,y-dy,z-dz));if(!bb||bb.k!=='piston'||!bb.ext)rsSet(x,y,z,0);break;}
+  case 'button':if(r.on&&!rsPending(x,y,z,'b'))rsLater(r.wood?30:20,x,y,z,()=>{const c=RSK(getB(x,y,z));if(c&&c.k==='button'&&c.on){rsSet(x,y,z,RS.button[c.wood?'wood':'stone'][c.s][0]);psnd(['random/click'],[x,y,z],.3,.5);}},'b');break;
+  case 'disp':rsEdge(x,y,z,()=>rsLater(4,x,y,z,()=>dispense(x,y,z),'d'));break;
+  case 'rail':if(r.type==='golden'||r.type==='activator')railPower(x,y,z,r);break;
+  case 'daylight':break;}}
+// act once when power arrives (note blocks, dispensers, command blocks)
+function rsEdge(x,y,z,fn){const k=pk3(x,y,z);const p=rsInput(x,y,z)>0;const was=!!RS_EDGE.get(k);if(p!==was){RS_EDGE.set(k,p);if(p)fn();}}
+// doors and trapdoors follow the power when it changes (wooden ones can still be opened by hand)
+function rsDoor(x,y,z,D){const d=D.door;const lo=d.u?y-1:y;const L=BD[getB(x,lo,z)];if(!L||!L.door)return;const k=pk3(x,lo,z);const p=rsInput(x,lo,z)>0||rsInput(x,lo+1,z)>0;const was=RS_EDGE.get(k);
+  RS_EDGE.set(k,p);if(was===undefined&&!p)return;if(p===was)return;if(!!L.door.open===p)return;const nb=d.first+L.door.f*4+(p?2:0);rsSet(x,lo,z,nb);rsSet(x,lo+1,z,nb+1);psnd(p?DOOR_SND.open:DOOR_SND.close,[x,y,z],.6,1);}
+function rsTrap(x,y,z,D){const t=D.trap;const k=pk3(x,y,z);const p=rsInput(x,y,z)>0;const was=RS_EDGE.get(k);RS_EDGE.set(k,p);if(was===undefined&&!p)return;if(p===was)return;const open=t.s>=2;if(open===p)return;
+  rsSet(x,y,z,t.first+t.f*4+(p?t.s+2:t.s-2));psnd(p?DOOR_SND.open:DOOR_SND.close,[x,y,z],.5,1.2);}
+// ---- dust networks ----
+function dustExt(x,y,z){let m=0;for(let d=0;d<6;d++){const [dx,dy,dz]=F6[d];const nx=x+dx,ny=y+dy,nz=z+dz;const nb=getB(nx,ny,nz);if(isDust(nb))continue;
+    const v=RSK(nb)||nb===B.REDSTONE?rsEmit(nx,ny,nz,OPPF[d]):rsCond(nb)?blockStrong(nx,ny,nz):0;if(v>m)m=v;}return m;}
+function rsSolveDust(x,y,z){const seen=new Map(),order=[];const q=[[x,y,z]];seen.set(pk3(x,y,z),0);
+  while(q.length&&order.length<1500){const p=q.shift();order.push(p);for(const l of dustLinks(p[0],p[1],p[2])){const k=pk3(l[0],l[1],l[2]);if(!seen.has(k)){seen.set(k,0);q.push(l);}}}
+  for(const p of order){const k=pk3(p[0],p[1],p[2]);dustDone.add(k);seen.set(k,dustExt(p[0],p[1],p[2]));}
+  // spread: each level passes level-1 along the links
+  const buckets=[];for(let i=0;i<16;i++)buckets.push([]);for(const p of order){const v=seen.get(pk3(...p));if(v>0)buckets[v].push(p);}
+  for(let L=15;L>1;L--)for(const p of buckets[L]){if(seen.get(pk3(...p))!==L)continue;for(const l of dustLinks(p[0],p[1],p[2])){const k=pk3(l[0],l[1],l[2]);if(seen.has(k)&&seen.get(k)<L-1){seen.set(k,L-1);buckets[L-1].push(l);}}}
+  for(const p of order){const v=seen.get(pk3(...p));const id=RS.dust[v];if(getB(p[0],p[1],p[2])!==id)rsSet(p[0],p[1],p[2],id);}}
+// ---- repeaters and comparators ----
+function repInput(x,y,z,r){const [dx,,dz]=DIRS4[r.f];const bx=x-dx,bz=z-dz;const nb=getB(bx,y,bz);const back=f6Of(dx,0,dz);
+  if(RSK(nb)||nb===B.REDSTONE)return rsEmit(bx,y,bz,back);if(rsCond(nb))return blockPower(bx,y,bz);return 0;}
+function sideIn(x,y,z,r,diodes){let m=0;for(const s of [(r.f+1)%4,(r.f+3)%4]){const [dx,,dz]=DIRS4[s];const nb=getB(x+dx,y,z+dz);const R=RSK(nb);if(!R&&nb!==B.REDSTONE)continue;
+    if(diodes&&!(R&&(R.k==='rep'||R.k==='comp')))continue;m=Math.max(m,rsEmit(x+dx,y,z+dz,f6Of(-dx,0,-dz)));}return m;}
+const repLocked=(x,y,z,r)=>sideIn(x,y,z,r,true)>0;
+function rsCompOut(x,y,z){return RS_COMP.get(pk3(x,y,z))||0;}
+function compCalc(x,y,z,r){const [dx,,dz]=DIRS4[r.f];const bx=x-dx,bz=z-dz;let a=repInput(x,y,z,r);
+  // reading a container (or one behind a solid block)
+  let cv=containerLevel(bx,y,bz);if(cv==null&&rsCond(getB(bx,y,bz)))cv=containerLevel(bx-dx,y,bz-dz);if(cv!=null)a=Math.max(a,cv);
+  const s=sideIn(x,y,z,r,false);return r.sub?Math.max(0,a-s):(a>=s?a:0);}
+function containerLevel(x,y,z){const b=getB(x,y,z);if(!b)return null;const rb=rotBase(b);
+  const c=chests.get(pk3(x,y,z));if(c&&(rb===B.CHEST||RSK(b)&&(RSK(b).k==='disp'||RSK(b).k==='hopper')))return fullness(c.items);
+  if(rb===B.FURNACE){const f=FURN.get(pk3(x,y,z));return f?fullness([f.in,f.fuel,f.out]):0;}
+  if(b===B.JUKEBOX)return JUKE.pos&&JUKE.pos[0]===x&&JUKE.pos[1]===y&&JUKE.pos[2]===z&&JUKE.disc?RECORDS.indexOf(ITEMS[JUKE.disc].disc)+1:0;
+  if(BD[b].cake!=null)return (7-BD[b].cake)*2;if(rb===B.CAULDRON)return b===B.CAULDRON_W?3:0;return null;}
+function fullness(items){let s=0,any=false;for(const it of items){if(!it)continue;any=true;s+=it.count/stackMax(it.id);}return any?Math.floor(1+s/items.length*14):0;}
+// ---- pressure plates and daylight sensors ----
+function plateCount(x,y,z,type){let n=0;const box=[x+1/16,y,z+1/16,x+15/16,y+.25,z+15/16];const hit=(p,hw,h)=>p[0]+hw>box[0]&&p[0]-hw<box[3]&&p[2]+hw>box[2]&&p[2]-hw<box[5]&&p[1]<box[4]&&p[1]+h>box[1];
+  for(const e of ents)if(e.alive&&!e.spectator&&hit(e.pos,e.hw||.3,e.eh||1.8))n++;for(const m of mobs)if(m.alive&&hit(m.pos,m.hw||.3,m.eh||1))n++;
+  if(type!=='stone')for(const d of drops)if(hit(d.pos,.125,.25))n+=type==='wood'?1:d.count||1;return n;}
+function rsPlateLvl(x,y,z,r){const n=plateCount(x,y,z,r.type);return r.type==='gold'?Math.min(15,n):r.type==='iron'?Math.min(15,Math.ceil(n/10)):n?15:0;}
+function plateTick(){for(const k of RS_PLATES){const [x,y,z]=k.split(',').map(Number);if(!inB(x,y,z))continue;const r=RSK(getB(x,y,z));if(!r||r.k!=='plate'){RS_PLATES.delete(k);continue;}
+    const n=plateCount(x,y,z,r.type);const on=n>0;if(on&&!r.on){rsSet(x,y,z,RS.plate[r.type][1]);psnd(['random/click'],[x,y,z],.3,.6);}
+    else if(!on&&r.on&&!rsPending(x,y,z,'u'))rsLater(r.type==='gold'||r.type==='iron'?10:20,x,y,z,()=>{const c=RSK(getB(x,y,z));if(c&&c.k==='plate'&&c.on&&!plateCount(x,y,z,c.type)){rsSet(x,y,z,RS.plate[c.type][0]);psnd(['random/click'],[x,y,z],.3,.5);}},'u');
+    else if(on&&(r.type==='gold'||r.type==='iron'))rsNotify(x,y,z);}}
+function daylightTick(){const day=dayAmt();for(const k of RS_SENSORS){const [x,y,z]=k.split(',').map(Number);if(!inB(x,y,z))continue;const r=RSK(getB(x,y,z));if(!r||r.k!=='daylight'){RS_SENSORS.delete(k);RS_DAY.delete(k);continue;}
+    const sky=(lightAt(x,y,z)>>4)&15;let v=Math.round(sky*Math.max(0,Math.min(1,(day-.15)/.7)));if(r.inv)v=15-v;if(RS_DAY.get(k)!==v){RS_DAY.set(k,v);rsNotify(x,y,z);}}}
+// ---- powered and activator rails: powered directly, or through up to 8 rails of a powered line ----
+function railPower(x,y,z,r){const want=railPowered(x,y,z,r.type);if(want!==!!r.on){rsSet(x,y,z,RS.rail[r.type][want?1:0][r.shape]);}}
+function railPowered(x,y,z,type){if(rsInput(x,y,z)>0||rsInput(x,y-1,z)>0&&false)return true;
+  for(const dir of [1,-1]){let cx=x,cy=y,cz=z,shape=RSK(getB(x,y,z)).shape;for(let n=0;n<8;n++){const ex=RAIL_EXITS[shape];const e=dir>0?ex[1]:ex[0];cx+=e[0];cz+=e[2];
+      let nb=getB(cx,cy+e[1],cz),R=RSK(nb);if(R&&R.k==='rail')cy+=e[1];else{nb=getB(cx,cy-1,cz);R=RSK(nb);if(R&&R.k==='rail')cy-=1;else break;}
+      if(R.type!==type)break;if(rsInput(cx,cy,cz)>0)return true;shape=R.shape;}}return false;}
+const RAIL_EXITS=[[[0,0,-1],[0,0,1]],[[-1,0,0],[1,0,0]],[[-1,0,0],[1,1,0]],[[-1,1,0],[1,0,0]],[[0,1,-1],[0,0,1]],[[0,0,-1],[0,1,1]],[[0,0,1],[1,0,0]],[[0,0,1],[-1,0,0]],[[0,0,-1],[-1,0,0]],[[0,0,-1],[1,0,0]]];
+
+// ---- pistons ----
+const PISTON_IMMOVABLE=b=>{const D=BD[b];if(!D)return true;const rb=rotBase(b);const r=D.rs;
+  return b===B.OBSIDIAN||b===B.BEDROCK||b===28||D.portal||rb===B.CHEST||rb===B.FURNACE||rb===B.BEACON||rb===B.ENCHANT_TABLE||rb===B.JUKEBOX||b===B.COMMAND_BLOCK||rb===B.NOTEBLOCK||rb===B.BREWING_STAND||rb===B.ANVIL||rb===B.DAYLIGHT||
+    rb===B.SPAWNER||(r&&((r.k==='piston'&&r.ext)||r.k==='head'||r.k==='disp'||r.k==='hopper'||r.k==='comp'||r.k==='daylight'))||D.banner||b===B.END_PORTAL_FRAME||D.liquid&&false;};
+const PISTON_BREAKS=b=>{const D=BD[b];if(!D)return false;return D.cross||D.crop!=null||D.sapling||D.pick||D.rail||D.door||D.cake!=null||b===B.FLOWER_POT||D.fire||(D.rs&&['dust','torch','lever','button','plate','rep'].includes(D.rs.k))||b===B.LADDER||(BD[b].ladder)||b===B.WEB;};
+function pushPlan(sx,sy,sz,f,px,py,pz){const [dx,dy,dz]=F6[f];const q=[[sx,sy,sz]];const seen=new Set([pk3(sx,sy,sz)]);const move=[],destroy=[];
+  while(q.length){const [x,y,z]=q.shift();const b=getB(x,y,z);if(!b||(BD[b]&&BD[b].liquid))continue;if(y<1||y>=WY-1)return null;
+    if(PISTON_BREAKS(b)){destroy.push([x,y,z,b]);continue;}if(PISTON_IMMOVABLE(b))return null;move.push([x,y,z,b]);if(move.length>12)return null;
+    const nx=x+dx,ny=y+dy,nz=z+dz;if(!seen.has(pk3(nx,ny,nz))){seen.add(pk3(nx,ny,nz));q.push([nx,ny,nz]);}
+    if(b===B.SLIME)for(let d2=0;d2<6;d2++){if(d2===f||d2===OPPF[f])continue;const [ex,ey,ez]=F6[d2];const ox=x+ex,oy=y+ey,oz=z+ez;if(ox===px&&oy===py&&oz===pz)continue;const ob=getB(ox,oy,oz);
+      if(!ob||BD[ob].liquid||PISTON_BREAKS(ob)||PISTON_IMMOVABLE(ob))continue;if(!seen.has(pk3(ox,oy,oz))){seen.add(pk3(ox,oy,oz));q.push([ox,oy,oz]);}}}
+  return {move,destroy};}
+function applyMove(plan,f,extra){const [dx,dy,dz]=F6[plan.dir!=null?plan.dir:f];const list=[];const dest=new Set(plan.move.map(([x,y,z])=>pk3(x+dx,y+dy,z+dz)));
+  for(const [x,y,z,b] of plan.destroy){const d=mineDrops(b,null);if(d&&ITEMS[d]&&MATCH.mode==='survival')requestDrop([x+.5,y+.3,z+.5],d,1);list.push(x,y,z,0);}
+  for(const [x,y,z] of plan.move)if(!dest.has(pk3(x,y,z)))list.push(x,y,z,0);
+  for(const [x,y,z,b] of plan.move)list.push(x+dx,y+dy,z+dz,b);if(extra)list.push(...extra);
+  // things in the way get shoved along
+  for(const e of ents.concat(mobs)){if(!e.alive)continue;for(const [x,y,z] of plan.move.concat(extra?[[extra[0],extra[1],extra[2]]]:[])){const X=x+dx,Y=y+dy,Z=z+dz;
+      if(e.pos[0]+(e.hw||.3)>X&&e.pos[0]-(e.hw||.3)<X+1&&e.pos[2]+(e.hw||.3)>Z&&e.pos[2]-(e.hw||.3)<Z+1&&e.pos[1]<Y+1&&e.pos[1]+(e.eh||1.8)>Y){e.pos[0]+=dx;e.pos[1]+=dy>0?dy+.01:dy;e.pos[2]+=dz;if(e===player&&player.mot)player.mot[1]=Math.max(player.mot[1],0);break;}}}
+  for(let i=0;i<list.length;i+=4)rsSet(list[i],list[i+1],list[i+2],list[i+3]);}
+function pistonExtend(x,y,z){const r=RSK(getB(x,y,z));if(!r||r.k!=='piston'||r.ext)return;if(!(rsInput(x,y,z,r.f)>0))return;const [dx,dy,dz]=F6[r.f];
+  const plan=pushPlan(x+dx,y+dy,z+dz,r.f,x,y,z);if(!plan)return;const k=r.sticky?'s':'n';
+  applyMove(plan,r.f,[x+dx,y+dy,z+dz,RS.head[k][r.f]]);rsSet(x,y,z,RS.piston[k][r.f][1]);psnd(['tile/piston/out'],[x,y,z],.5,.8+Math.random()*.25);}
+function pistonRetract(x,y,z){const r=RSK(getB(x,y,z));if(!r||r.k!=='piston'||!r.ext)return;if(rsInput(x,y,z,r.f)>0)return;const [dx,dy,dz]=F6[r.f];const k=r.sticky?'s':'n';
+  const hr=RSK(getB(x+dx,y+dy,z+dz));if(hr&&hr.k==='head')rsSet(x+dx,y+dy,z+dz,0);rsSet(x,y,z,RS.piston[k][r.f][0]);
+  if(r.sticky){const fx=x+2*dx,fy=y+2*dy,fz=z+2*dz;const fb=getB(fx,fy,fz);if(fb&&!BD[fb].liquid&&!PISTON_IMMOVABLE(fb)&&!PISTON_BREAKS(fb)){const plan=pushPlan(fx,fy,fz,OPPF[r.f],x,y,z);if(plan&&!plan.destroy.length){plan.dir=OPPF[r.f];applyMove(plan,OPPF[r.f]);}}}
+  psnd(['tile/piston/in'],[x,y,z],.5,.7+Math.random()*.2);}
+
+// ---- dispensers, droppers and hoppers: their items live with the chests ----
+function contSize(b){const r=RSK(b);return r&&r.k==='disp'?9:r&&r.k==='hopper'?5:0;}
+function containerSync(x,y,z,was,b){const n=contSize(b),k=pk3(x,y,z);if(n&&!chests.has(k))chests.set(k,{x,y,z,items:new Array(n).fill(null)});
+  if(!n&&contSize(was)){const c=chests.get(k);if(c){if(MATCH.mode==='survival'&&rsAuth())for(const s of c.items)if(s)requestDrop([x+.5,y+.5,z+.5],s.id,s.count);chests.delete(k);if(chestOpen===c)chestClose(true);}}}
+function contPush(k){if(net&&isHost()){const c=chests.get(k);if(c)netSend(N.CHEST,{k,items:c.items});}const c=chests.get(k);if(c&&chestOpen===c)renderChest();}
+function contAdd(items,s){for(let i=0;i<items.length;i++){const t=items[i];if(t&&t.id===s.id&&!t.dmg&&!s.dmg&&!t.tag&&!s.tag&&t.count<stackMax(t.id)){t.count++;return true;}}
+  for(let i=0;i<items.length;i++)if(!items[i]){items[i]=Object.assign({},s,{count:1});return true;}return false;}
+// put one item into whatever container is at (x,y,z); from = F6 side it comes in from (furnaces: top -> input, sides -> fuel)
+function insertInto(x,y,z,s,from){const b=getB(x,y,z);const k=pk3(x,y,z);const c=chests.get(k);
+  if(c&&(rotBase(b)===B.CHEST||contSize(b))){if(contAdd(c.items,s)){contPush(k);return true;}return false;}
+  if(rotBase(b)===B.FURNACE){const f=furnAt(k);const slot=from===1?'in':'fuel';if(slot==='fuel'&&!FUEL[s.id])return false;const cur=f[slot];
+    if(!cur){f[slot]=Object.assign({},s,{count:1});return true;}if(cur.id===s.id&&cur.count<stackMax(s.id)){cur.count++;return true;}}return false;}
+function takeOne(x,y,z,toDown){const b=getB(x,y,z);const k=pk3(x,y,z);const c=chests.get(k);
+  if(c&&(rotBase(b)===B.CHEST||contSize(b))){for(let i=0;i<c.items.length;i++){const s=c.items[i];if(!s)continue;const one=Object.assign({},s,{count:1});return {s:one,undo:()=>{if(c.items[i])c.items[i].count++;else c.items[i]=one;},done:()=>{s.count--;if(s.count<=0)c.items[i]=null;contPush(k);}};}return null;}
+  if(rotBase(b)===B.FURNACE){const f=FURN.get(k);if(f&&f.out){const s=f.out;return {s:Object.assign({},s,{count:1}),done:()=>{s.count--;if(s.count<=0)f.out=null;}};}}return null;}
+function hopperTick(){for(const k of HOPPERS){const [x,y,z]=k.split(',').map(Number);if(!inB(x,y,z))continue;const r=RSK(getB(x,y,z));if(!r||r.k!=='hopper'){HOPPERS.delete(k);continue;}
+    const c=chests.get(k);if(!c)continue;if(rsInput(x,y,z)>0)continue;   // powered hoppers are locked
+    // push one item out of the spout
+    const [tx,ty,tz]=r.a<0?[x,y-1,z]:[x+DIRS4[r.a][0],y,z+DIRS4[r.a][2]];
+    for(let i=0;i<c.items.length;i++){const s=c.items[i];if(!s)continue;if(insertInto(tx,ty,tz,s,r.a<0?1:2)){s.count--;if(s.count<=0)c.items[i]=null;contPush(k);rsNotify(tx,ty,tz);rsNotify(x,y,z);}break;}
+    // pull one from above: a container, or items lying in the hopper's bowl
+    const t=takeOne(x,y+1,z);if(t){if(contAdd(c.items,t.s)){t.done();contPush(k);rsNotify(x,y+1,z);rsNotify(x,y,z);}}
+    else{for(const d of drops){if(d.dead)continue;if(Math.floor(d.pos[0])===x&&Math.floor(d.pos[2])===z&&d.pos[1]>=y+.5&&d.pos[1]<y+1.8){if(contAdd(c.items,{id:d.id,count:1,tag:d.tag})){d.count--;if(d.count<=0){d.count=0;hopperEat(d);}contPush(k);rsNotify(x,y,z);}break;}}}}}
+function hopperEat(d){d.dead=true;if(net)netSend(N.DROPDEL,{did:d.did});}
+// what a dispenser does with the item it picks
+function dispense(x,y,z){const b=getB(x,y,z);const r=RSK(b);if(!r||r.k!=='disp')return;const k=pk3(x,y,z);const c=chests.get(k);if(!c)return;
+  const full=c.items.map((s,i)=>s?i:-1).filter(i=>i>=0);if(!full.length){psnd(['random/click'],[x,y,z],.4,1.2);return;}const i=full[Math.random()*full.length|0];const s=c.items[i];const id=s.id,it=ITEMS[id];
+  const [dx,dy,dz]=F6[r.f];const fx=x+dx,fy=y+dy,fz=z+dz;const at=[x+.5+dx*.7,y+.5+dy*.7-(dy?0:.15),z+.5+dz*.7];const fb=getB(fx,fy,fz);
+  const use=()=>{s.count--;if(s.count<=0)c.items[i]=null;contPush(k);};const dropIt=()=>{const v=[dx*3+(Math.random()-.5),dy*3+1.5,dz*3+(Math.random()-.5)];requestDrop([at[0],at[1]-1,at[2]],id,1,v);use();};
+  psnd(['random/click'],[x,y,z],.4,1);spawnParticles(at[0],at[1],at[2],5,[.5,.5,.5],1);
+  if(r.drop){if(fb&&insertInto(fx,fy,fz,s,OPPF[r.f])){use();rsNotify(fx,fy,fz);}else dropIt();return;}
+  const vel=sp=>[dx*sp,dy*sp+.1,dz*sp];
+  if(id==='arrow'){spawnProj('arrow',at,vel(1.1),null,1);use();sfx('bow',{pos:at});return;}
+  if(it.type==='potion'&&/^splash_/.test(id)){spawnProj('splash',at,vel(.5),null,0,id);use();return;}
+  if(id==='experience_bottle'){spawnProj('splash',at,vel(.5),null,0,id);use();return;}
+  if(id==='fire_charge'){{fireballSpawn('small',at,[dx*16,dy*16,dz*16],null);use();return;}if(!fb&&lightFire(fx,fy,fz)){use();return;}}
+  if(id==='flint_and_steel'){if(fb===B.TNT){rsSet(fx,fy,fz,0);igniteTNT(fx,fy,fz,4,null);}else if(!lightFire(fx,fy,fz))return;s.dmg=(s.dmg||0)+1;if(s.dmg>=maxDur(id))c.items[i]=null;contPush(k);return;}
+  if(id==='water_bucket'||id==='lava_bucket'){if(!fb||replaceable(fb)){rsSet(fx,fy,fz,id==='water_bucket'?B.WATER:B.LAVA);c.items[i]={id:'bucket',count:1};contPush(k);wakeAround(fx,fy,fz);}else dropIt();return;}
+  if(id==='bucket'){if(fb===B.WATER||fb===B.LAVA){rsSet(fx,fy,fz,0);const out=fb===B.WATER?'water_bucket':'lava_bucket';use();if(!contAdd(c.items,{id:out,count:1}))requestDrop(at,out,1);contPush(k);}else dropIt();return;}
+  if(id==='b'+B.TNT){if(!fb||replaceable(fb)){igniteTNT(fx,fy,fz,4,null);use();}else dropIt();return;}
+  if(it.spawn){spawnMob(it.spawn,[at[0],fy,at[2]]);use();return;}
+  if(id==='bone_meal'&&fb&&BD[fb]){const D=BD[fb];if(D.crop!=null&&D.stage<D.maxStage){cropGrow(fx,fy,fz,fb,2+(Math.random()*3|0));use();return;}if(D.sapling){if(Math.random()<.45)growTree(fx,fy,fz,D.sapling);use();return;}}
+  if(id==='fireworks'){launchRocket(at);use();return;}
+  if(VEHICLE_ITEMS[id]&&typeof dispenseVehicle==='function'&&dispenseVehicle(id,fx,fy,fz,r.f)){use();return;}
+  if(it.type==='armor'){const p=ents.find(e=>e.alive&&e.kind==='player'&&Math.floor(e.pos[0])===fx&&Math.floor(e.pos[2])===fz&&Math.abs(e.pos[1]-fy)<1.5);
+    if(p&&!p.armor[it.slot]){if(p===player){p.armor[it.slot]=id;use();return;}}}
+  dropIt();}
+const VEHICLE_ITEMS={};
+const NOTES=RS.notes,NOTE_PITCH=b=>Math.max(0,NOTES.indexOf(b));
+// ---- note blocks: 25 pitches, instrument from the block underneath (a made-up chime: no recorded sounds) ----
+function noteBlockPlay(x,y,z){const b=getB(x,y,z);if(getB(x,y+1,z))return;const n=NOTE_PITCH(b);const below=getB(x,y-1,z);const m=below?blockMat(below):'';
+  const inst=m==='stone'?'bd':m==='sand'||m==='gravel'?'snare':m==='glass'?'hat':m==='wood'?'bass':'harp';noteSound(n,inst,[x+.5,y+.5,z+.5]);spawnParticles(x+.5,y+1.2,z+.5,1,[n/24,1-n/24,.5],.2);
+  if(net&&rsAuth())netSend(N.NOTE,{x,y,z,n,i:inst});}
+function noteSound(n,inst,pos){if(!actx)return;const d=camPos?dist(pos,camPos):0;if(d>48)return;const v=Math.max(0,1-d/48)*.25;const f=370*Math.pow(2,(n-12)/12)/(inst==='bass'?4:1);const t=actx.currentTime;
+  const o=actx.createOscillator(),g=actx.createGain();o.type=inst==='harp'?'triangle':inst==='bass'?'sawtooth':'square';o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+(inst==='harp'?1:.25));
+  if(inst==='bd'||inst==='snare'||inst==='hat'){o.type='square';o.frequency.setValueAtTime(inst==='bd'?120:inst==='snare'?300:2000,t);o.frequency.exponentialRampToValueAtTime(inst==='bd'?40:150,t+.15);}
+  o.connect(g);g.connect(masterOut||actx.destination);o.start(t);o.stop(t+1.1);}
+N.NOTE=70;
+// ---- command blocks ----
+const CMDS=new Map();
+function cmdBlockRun(x,y,z){const c=CMDS.get(pk3(x,y,z));if(!c)return;try{serverCmd({id:null,ent:player,name:'@',local:true,block:[x,y,z]},c);}catch(e){}}
+// ---- a small text box (command blocks, name tags...) ----
+function askText(title,init,cb){let d=$('askDlg');if(!d){d=document.createElement('div');d.id='askDlg';d.className='screen hidden';
+    d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:80';
+    d.innerHTML='<div style="background:#c6c6c6;border:4px solid #373737;box-shadow:inset -4px -4px #555,inset 4px 4px #fff;padding:18px;width:min(460px,90vw);font:18px monospace;color:#404040">'+
+      '<div id="askT" style="margin-bottom:10px"></div><input id="askIn" maxlength="200" autocomplete="off" style="width:100%;box-sizing:border-box;font:18px monospace;padding:6px;background:#000;color:#fff;border:2px solid #a0a0a0">'+
+      '<div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end"><button id="askCancel" class="sbtn" style="padding:6px 14px">Cancel</button><button id="askOk" class="sbtn" style="padding:6px 14px">Done</button></div></div>';
+    document.body.appendChild(d);OVERLAYS.push('askDlg');if(typeof TOUCH_BLOCK!=='undefined')TOUCH_BLOCK.push('askDlg');}
+  const inp=$('askIn');$('askT').textContent=title;inp.value=init||'';ASKOPEN=true;document.exitPointerLock&&document.exitPointerLock();show('askDlg');setTimeout(()=>{inp.focus();inp.select();},30);
+  const end=ok=>{hide('askDlg');ASKOPEN=false;inp.onkeydown=null;$('askOk').onclick=null;$('askCancel').onclick=null;for(const k in keys)keys[k]=false;if(ok)cb(inp.value.trim());if(!padActive&&!touchActive)lockPointer();};
+  $('askOk').onclick=()=>end(true);$('askCancel').onclick=()=>end(false);inp.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')end(true);else if(e.key==='Escape')end(false);};}
+
+// ---- placing redstone things the way the real game does ----
+function placeFace6(p,h){// pistons, dispensers, droppers: face the player, or up/down when they are right above/below
+  const px=p.pos[0],pz=p.pos[2],ey=eye(p)[1];if(Math.abs(px-(h.px+.5))<2&&Math.abs(pz-(h.pz+.5))<2){if(ey-h.py>2)return 1;if(h.py-ey>0)return 0;}const L=lookDir(p);return [3,4,2,5][L];}
+function rsPlaceId(id,p,h){const D=BD[id];const r=D&&D.rs;const pl=!!h.plant;const nx=pl?0:h.px-h.x,ny=pl?1:h.py-h.y,nz=pl?0:h.pz-h.z;const X=h.px,Y=h.py,Z=h.pz;
+  const solidAt=(x,y,z)=>{const b=getB(x,y,z);return !!b&&rsCond(b);};const topOk=solidAt(X,Y-1,Z)||(()=>{const b=getB(X,Y-1,Z);return b&&(BD[b].fence||(VB.SLAB_FULL&&ROT[rotBase(b)]&&ROT[rotBase(b)].kind==='slab'&&ROT[rotBase(b)].v[1]===b)||b===B.GLOW||b===B.HOPPER);})();
+  const wallIdx=()=>nz===1?0:nx===-1?1:nz===-1?2:3;   // DIRS4 index of the wall that was clicked
+  const L=lookDir(p);
+  if(id===B.RS_TORCH){if(ny===1)return topOk?RS.torch.stand[1]:null;if(ny===-1)return null;const a=wallIdx();return solidAt(X+DIRS4[a][0],Y,Z+DIRS4[a][2])?RS.torch.wall[a][1]:null;}
+  if(rotBase(id)===XB.lever[0]||(r&&r.k==='button')){const s=ny===1?0:ny===-1?1:[2,5,3,4][wallIdx()];const [sx,sy,sz]=F6[s];if(!solidAt(X+sx,Y+sy,Z+sz))return null;
+    return r&&r.k==='button'?RS.button[r.wood?'wood':'stone'][s][0]:RS.lever[s][0];}
+  if(r&&r.k==='plate')return topOk||(()=>{const b=getB(X,Y-1,Z);return b&&BD[b].fence;})()?id:null;
+  if(id===B.RS_DUST)return topOk?RS.dust[0]:null;
+  if(rotBase(id)===B.REPEATER)return topOk?RS.rep[L][1][0][0]:null;
+  if(rotBase(id)===B.COMPARATOR)return topOk?RS.comp[L][0][0]:null;
+  if(rotBase(id)===B.PISTON)return RS.piston.n[placeFace6(p,h)][0];
+  if(rotBase(id)===B.STICKY_PISTON)return RS.piston.s[placeFace6(p,h)][0];
+  if(rotBase(id)===B.DISPENSER)return RS.disp.d[placeFace6(p,h)];
+  if(rotBase(id)===B.DROPPER)return RS.disp.r[placeFace6(p,h)];
+  if(rotBase(id)===B.HOPPER)return ny?RS.hopper[0]:RS.hopper[1+(wallIdx())];
+  if(id===B.LAMP)return RS.lamp[0];
+  if(r&&r.k==='rail'&&typeof railPlaceShape==='function')return topOk?railPlaceShape(id,X,Y,Z,L):null;
+  return undefined;}
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return u0(p,s);const id=s&&s.id,it=id&&ITEMS[id];const h=raycastBlock(eye(p),fwd(p),4.5,true,true);
+  const hb=h&&h.b,R=hb&&RSK(hb),cre=p.gm==='creative';
+  // ---- using redstone things ----
+  if(h&&!p.sneak){
+    if(R&&R.k==='lever'){setBlockNet(h.x,h.y,h.z,RS.lever[R.s][R.on?0:1]);psnd(['random/click'],[h.x,h.y,h.z],.4,R.on?.5:.6);p.swing=1;return true;}
+    if(R&&R.k==='button'){if(!R.on){setBlockNet(h.x,h.y,h.z,RS.button[R.wood?'wood':'stone'][R.s][1]);psnd(['random/click'],[h.x,h.y,h.z],.4,.6);}p.swing=1;return true;}
+    if(R&&R.k==='rep'){setBlockNet(h.x,h.y,h.z,RS.rep[R.f][R.d%4+1][R.on][R.lock]);psnd(['random/click'],[h.x,h.y,h.z],.3,.55);p.swing=1;return true;}
+    if(R&&R.k==='comp'){setBlockNet(h.x,h.y,h.z,RS.comp[R.f][R.sub?0:1][R.on]);psnd(['random/click'],[h.x,h.y,h.z],.3,R.sub?.5:.55);p.swing=1;return true;}
+    if(R&&R.k==='daylight'){setBlockNet(h.x,h.y,h.z,RS.daylight[R.inv?0:1]);p.swing=1;return true;}
+    if(R&&(R.k==='disp'||R.k==='hopper')){const c=chests.get(pk3(h.x,h.y,h.z));if(c){chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();show('chestUI');
+        const lab=$('chestSub').querySelector('.lab');if(lab)pxSet(lab,R.k==='hopper'?'Item Hopper':R.drop?'Dropper':'Dispenser','#404040',false);renderChest();return true;}}
+    if(rotBase(hb)===B.NOTEBLOCK){const n=(NOTE_PITCH(hb)+1)%25;setBlockNet(h.x,h.y,h.z,NOTES[n]);noteSound(n,'harp',[h.x+.5,h.y+.5,h.z+.5]);spawnParticles(h.x+.5,h.y+1.2,h.z+.5,1,[n/24,1-n/24,.5],.2);p.swing=1;return true;}
+    if(hb===B.COMMAND_BLOCK){if(!cre){chatMsg('Only creative players can set commands.','#aaaaaa',false);return true;}const k=pk3(h.x,h.y,h.z);
+      askText('Command for this Command Block (runs when it gets power):',CMDS.get(k)||'',v=>{if(v)CMDS.set(k,v.replace(/^\//,''));else CMDS.delete(k);if(net)netSend(N.CMDB,{k,c:CMDS.get(k)||''},'all');});return true;}
+    // iron doors and trapdoors only open with redstone
+    if(BD[hb]&&BD[hb].door&&BD[hb].door.first===B.DOOR_IRON||BD[hb]&&BD[hb].trap&&BD[hb].trap.first===B.TRAPDOOR_IRON){if(!(it&&it.type==='block'))return true;}}
+  // ---- placing redstone things ----
+  if(it&&it.type==='block'&&h&&canBuild()){const pid=rsPlaceId(it.block,p,h);
+    if(pid!==undefined){if(pid===null)return true;if(placeBlock(h.px,h.py,h.pz,pid)){consume(p,p.sel);p.swing=1;}return true;}}
+  if(id==='redstone'&&h&&canBuild()){const pid=rsPlaceId(B.RS_DUST,p,h);if(pid&&replaceable(getB(h.px,h.py,h.pz))&&placeBlock(h.px,h.py,h.pz,pid)){consume(p,p.sel);p.swing=1;}return true;}
+  return u0(p,s);};}
+// left click on a note block plays it
+{const b0=breakBlock;breakBlock=function(x,y,z,e){const b=getB(x,y,z);if(rotBase(b)===B.NOTEBLOCK&&e===player&&player.gm!=='creative'&&!(mining&&mining.t>.05)){const n=NOTE_PITCH(b);noteSound(n,'harp',[x+.5,y+.5,z+.5]);}return b0.apply(this,arguments);};}
+// pieces that hang on a block fall off when it goes (torches, levers, buttons, dust, repeaters, rails, plates...)
+{const c0=blockChanged;blockChanged=function(x,y,z,was,b){c0(x,y,z,was,b);if(!INF||!was||(b&&BD[b].solid))return;
+  for(let d=0;d<6;d++){const [dx,dy,dz]=F6[d];const nx=x+dx,ny=y+dy,nz=z+dz;const nb=getB(nx,ny,nz);const D=nb&&BD[nb];if(!D||!D.sup)continue;
+    if(nx+D.sup[0]!==x||ny+D.sup[1]!==y||nz+D.sup[2]!==z)continue;if(dy===1&&(D.crop!=null))continue;
+    if(MATCH.mode==='survival'&&rsAuth()){const dr=mineDrops(nb,null);if(dr&&ITEMS[dr])requestDrop([nx+.5,ny+.3,nz+.5],dr,1);}applyBlockList([nx,ny,nz,0],true);}
+  // a piston and its head go together
+  const W=RSK(was);if(W&&W.k==='piston'&&W.ext&&!(RSK(b)&&RSK(b).k==='piston')){const [dx,dy,dz]=F6[W.f];const hr=RSK(getB(x+dx,y+dy,z+dz));if(hr&&hr.k==='head')applyBlockList([x+dx,y+dy,z+dz,0],true);}
+  if(W&&W.k==='head'&&!b){const [dx,dy,dz]=F6[W.f];const br=RSK(getB(x-dx,y-dy,z-dz));if(br&&br.k==='piston'&&br.ext){if(MATCH.mode==='survival'&&rsAuth()&&player&&player.gm!=='creative')requestDrop([x-dx+.5,y-dy+.3,z-dz+.5],'b'+B[W.sticky?'STICKY_PISTON':'PISTON'],1);applyBlockList([x-dx,y-dy,z-dz,0],true);}}};}
+// ---- the clock ----
+function redstoneTick(dt){if(!rsAuth()){RSQ.clear();RST.length=0;return;}rsAcc+=dt;let n=0;
+  while(rsAcc>=.05&&n<4){rsAcc-=.05;n++;rsTick++;dustDone.clear();
+    // timers that are due
+    const due=RST.filter(t=>t.t<=rsTick);if(due.length){for(let i=RST.length-1;i>=0;i--)if(RST[i].t<=rsTick)RST.splice(i,1);for(const t of due)try{t.fn();}catch(e){console.error(e);}}
+    // neighbour updates
+    let guard=0;while(RSQ.size&&guard<3000){const list=[...RSQ];RSQ.clear();for(const k of list){if(++guard>3000)break;const [x,y,z]=k.split(',').map(Number);if(inB(x,y,z))rsEval(x,y,z);}}
+    if(rsTick%4===0){plateTick();for(const k of COMPS){const [x,y,z]=k.split(',').map(Number);if(!inB(x,y,z))continue;const r=RSK(getB(x,y,z));if(!r||r.k!=='comp'){COMPS.delete(k);continue;}rsEval(x,y,z);}}if(rsTick%8===0)hopperTick();if(rsTick%20===0)daylightTick();
+    rsFlush();}
+  if(rsAcc>1)rsAcc=0;}
+{const t0=survTick;survTick=function(dt){t0(dt);if(INF)redstoneTick(dt);};}
+{const r0=restartSurvivalStream;restartSurvivalStream=function(){RSQ.clear();RST.length=0;RS_PLATES.clear();RS_SENSORS.clear();HOPPERS.clear();COMPS.clear();RS_EDGE.clear();return r0.apply(this,arguments);};}
+// ---- extra things saved with the world and sent to players who join (command blocks here; entities, banners... later) ----
+const XSAVE=[];let XSTART=null;
+{const s0=survSaveExtra;survSaveExtra=function(data){s0(data);for(const h of XSAVE)h.save(data);};}
+{const s0=survSnapshot;survSnapshot=function(jid){const s=s0(jid);for(const h of XSAVE)h.save(s,true);return s;};}
+{const a0=survApplyStart;survApplyStart=function(d){XSTART=d;return a0(d);};}
+{const b0=beginSurvival;beginSurvival=function(o){const X=XSTART||o||{};XSTART=null;for(const h of XSAVE)h.reset();const r=b0.apply(this,arguments);for(const h of XSAVE)h.load(X);return r;};}
+N.CMDB=71;
+XSAVE.push({save:d=>{d.cmds=[...CMDS];},reset:()=>CMDS.clear(),load:o=>{for(const [k,c] of o.cmds||[])CMDS.set(k,c);}});
+// ---- messages from other players ----
+const NET_X={};
+{const m0=mobNet;mobNet=function(code,d,from,fromHost){const h=NET_X[code];if(h){h(d,from,fromHost);return;}return m0(code,d,from,fromHost);};}
+NET_X[N.NOTE]=d=>noteSound(d.n,d.i,[d.x+.5,d.y+.5,d.z+.5]);
+NET_X[N.CMDB]=d=>{if(d.c)CMDS.set(d.k,d.c);else CMDS.delete(d.k);};
+// ---- recipes ----
+{const n0=RECIPES.length;const b=k=>'b'+B[k];
+  shapeless(['b3'],b('STONE_BUTTON'));shapeless([PLANKS],b('WOOD_BUTTON'));shaped(['SS'],{S:'b3'},b('PLATE_STONE'));shaped(['PP'],{P:PLANKS},b('PLATE_WOOD'));
+  shaped(['GG'],{G:'gold_ingot'},b('PLATE_GOLD'));shaped(['II'],{I:'iron_ingot'},b('PLATE_IRON'));shaped([' R ','RGR',' R '],{R:'redstone',G:'b17'},'b'+B.LAMP);
+  for(let i=n0;i<RECIPES.length;i++)LC_REC.push(lcRecipe(RECIPES[i]));
+  const T=n=>LC_TABS.find(t=>t.name===n).entries;T('Decoration').push(['Buttons and Plates',[b('STONE_BUTTON'),b('WOOD_BUTTON'),b('PLATE_STONE'),b('PLATE_WOOD'),b('PLATE_GOLD'),b('PLATE_IRON')]],['Redstone Lamp',['b'+B.LAMP]]);}
+
+// ================= Minecarts on rails, boats, and riding =================
+// Vehicles are "object" creatures: no AI, never despawn, saved with the world. Whoever rides a vehicle drives it on their own
+// machine and tells the host where it is (N.RIDE); everything else is moved by the host and sent with the other creatures.
+// Minecarts follow rails like the real game (slopes, curves, powered rails boost or brake, detector rails switch on, activator
+// rails tip riders out or light TNT carts). Boats float, go where you look, and break if they crash at speed.
+
+// ---------- rails: the shape a new rail takes, and neighbours turning to meet it ----------
+const RAIL_SHAPE_OF=(nsh,ewh,conn)=>{const [n,e,s,w]=[conn.includes(0),conn.includes(1),conn.includes(2),conn.includes(3)];
+  if(s&&e&&!n&&!w)return 6;if(s&&w&&!n&&!e)return 7;if(n&&w&&!s&&!e)return 8;if(n&&e&&!s&&!w)return 9;
+  if(n||s){if(nsh===0)return 4;if(nsh===2)return 5;return 0;}if(e||w){if(ewh===1)return 2;if(ewh===3)return 3;return 1;}return 0;};
+function railR(x,y,z){const r=RSK(getB(x,y,z));return r&&r.k==='rail'?r:null;}
+// the DIRS4 sides a rail's shape leads to (and whether that end is raised)
+function railEnds(shape){return RAIL_EXITS[shape].map(e=>[DIRS4.findIndex(d=>d[0]===e[0]&&d[2]===e[2]),e[1]]);}
+// a rail next to (x,y,z) on side i, at the same height, one up, or one down
+function railNear(x,y,z,i){const [dx,,dz]=DIRS4[i];for(const dy of [0,1,-1]){const r=railR(x+dx,y+dy,z+dz);if(r)return {x:x+dx,y:y+dy,z:z+dz,r,dy};}return null;}
+// does the rail at n lead back toward (x,y,z)?
+function railPointsAt(n,x,z){return railEnds(n.r.shape).some(([i])=>n.x+DIRS4[i][0]===x&&n.z+DIRS4[i][2]===z);}
+function railFree(n){// a rail with an end that leads nowhere can turn to meet a new one
+  return railEnds(n.r.shape).filter(([i])=>!railNear(n.x,n.y,n.z,i)).length>0;}
+function railShapeFor(x,y,z,type,L,forced){const cand=[];for(let i=0;i<4;i++){const n=railNear(x,y,z,i);if(!n)continue;if(forced&&forced.includes(i)){cand.push([i,n]);continue;}if(railPointsAt(n,x,z)||railFree(n))cand.push([i,n]);}
+  let pick=[];const has=i=>cand.find(c=>c[0]===i);
+  if(has(0)&&has(2))pick=[has(0),has(2)];else if(has(1)&&has(3))pick=[has(1),has(3)];
+  else if(type==='normal'&&cand.length>=2){const c=cand.slice(0,2);if(c[0][0]%2!==c[1][0]%2)pick=c;else pick=[c[0]];}
+  else if(cand.length)pick=[cand[0]];
+  const conn=pick.map(c=>c[0]);if(!conn.length)conn.push(L%2?1:0);if(conn.length===1)conn.push((conn[0]+2)%4);
+  // a raised end where the neighbour is one block up
+  let nsh=-1,ewh=-1;for(const [i,n] of pick)if(n.dy===1){if(i%2===0)nsh=i;else ewh=i;}
+  let s=RAIL_SHAPE_OF(nsh,ewh,conn);if(type!=='normal'&&s>5)s=conn[0]%2?1:0;return s;}
+function railPlaceShape(item,X,Y,Z,L){const type=BD[item].rs.type;const s=railShapeFor(X,Y,Z,type,L);
+  // neighbours that should now turn toward this rail
+  setTimeout(()=>{for(let i=0;i<4;i++){const n=railNear(X,Y,Z,i);if(!n)continue;const pts=railPointsAt(n,X,Z);if(!pts&&!railFree(n))continue;
+    const others=railEnds(n.r.shape).map(e=>e[0]).filter(j=>j!==(i+2)%4&&railNear(n.x,n.y,n.z,j));const want=others.slice(0,1).concat([(i+2)%4]);
+    const ns=railShapeFor(n.x,n.y,n.z,n.r.type,L,want);const id=RS.rail[n.r.type][n.r.on?1:0][ns];if(id&&getB(n.x,n.y,n.z)!==id)setBlockNet(n.x,n.y,n.z,id);}},0);
+  return RS.rail[type][0][s];}
+
+// ---------- vehicles as objects ----------
+const VEH_MODELS={
+  minecart:{b0:{p:[0,22,0],r:[HP2,0,0],b:[[-10,-8,-1,20,16,2,0,10]]},b5:{p:[0,22,0],r:[-HP2,0,0],b:[[-9,-7,-1,18,14,1,44,10]]},
+    b1:{p:[-9,22,0],r:[0,Math.PI*1.5,0],b:[[-8,-9,-1,16,8,2,0,0]]},b2:{p:[9,22,0],r:[0,HP2,0],b:[[-8,-9,-1,16,8,2,0,0]]},
+    b3:{p:[0,22,-7],r:[0,Math.PI,0],b:[[-8,-9,-1,16,8,2,0,0]]},b4:{p:[0,22,7],b:[[-8,-9,-1,16,8,2,0,0]]}},
+  boat:{b0:{p:[0,24,0],r:[HP2,0,0],b:[[-12,-8,-3,24,16,4,0,8]]},b1:{p:[-11,24,0],r:[0,Math.PI*1.5,0],b:[[-10,-7,-1,20,6,2,0,0]]},b2:{p:[11,24,0],r:[0,HP2,0],b:[[-10,-7,-1,20,6,2,0,0]]},
+    b3:{p:[0,24,-9],r:[0,Math.PI,0],b:[[-10,-7,-1,20,6,2,0,0]]},b4:{p:[0,24,9],b:[[-10,-7,-1,20,6,2,0,0]]}}};
+Object.assign(MOB_MODELS,VEH_MODELS);
+const CART_TYPES={normal:{item:'minecart',block:null},chest:{item:'chest_minecart',block:'b8'},furnace:{item:'furnace_minecart',block:'b118'},tnt:{item:'tnt_minecart',block:'b'+B.TNT},
+  hopper:{item:'hopper_minecart',block:'b'+B.HOPPER},command:{item:'command_block_minecart',block:'b'+B.COMMAND_BLOCK}};
+for(const [k,t] of [['minecart',{name:'Minecart',hp:4,hw:.49,eh:.7,model:'minecart',col:'#7a7a7a'}],['boat',{name:'Boat',hp:4,hw:.7,eh:.6,model:'boat',col:'#8a6a3a'}]]){
+  MOB_T[k]=Object.assign({kind:'object',spd:0,drops:[],persist:true,noAI:true},t);MOB_TYPES.push(k);MOB_TEXKEYS.push(k);}
+for(const k in CART_TYPES)VEHICLE_ITEMS[CART_TYPES[k].item]='cart:'+k;VEHICLE_ITEMS.boat='boat';
+{const l0=packLoadMobs;packLoadMobs=async function(get){const r=await l0(get);const M=PACK.mobs||(PACK.mobs={});
+  for(const [k,p] of [['minecart','minecart'],['boat','boat']]){const img=await get('textures/entity/'+p+'.png');if(img)M[k]=imgToCanvas(img,64,32,0,0,img.width,img.height);}return r||1;};}
+// object creatures never count toward the creature caps and never despawn
+const isObj=e=>e&&MOB_T[e.mob]&&MOB_T[e.mob].kind==='object';
+
+// ---------- riding ----------
+const SEAT={minecart:-.35,boat:-.28};
+function riderOf(v){if(!v.riderId)return null;return ents.find(e=>e.id===v.riderId&&e.alive)||null;}
+function vehicleOf(p){return p&&p.riding&&mobs.includes(p.riding)&&p.riding.alive?p.riding:null;}
+function mount(p,v){if(v.riderId&&v.riderId!==p.id)return false;if(vehicleOf(p))dismount(p);p.riding=v;v.riderId=p.id;v.localRide=true;p.flying=false;p.sneak=false;sfx('pick',{vol:.4});
+  if(net&&!isHost())netSend(N.RIDE,{id:v.id,on:1},'host');return true;}
+function dismount(p,quiet){const v=p.riding;p.riding=null;if(!v)return;if(v.riderId===p.id)v.riderId=null;v.localRide=false;v.net=null;
+  // step off to a free side
+  const sides=[[1,0],[-1,0],[0,1],[0,-1],[0,0]];for(const [dx,dz] of sides){const x=Math.floor(v.pos[0]+dx),z=Math.floor(v.pos[2]+dz),y=Math.floor(v.pos[1]+.6);if(!getB(x,y,z)&&!getB(x,y+1,z)){p.pos=[x+.5,y,z+.5];break;}}
+  p.mot=[0,0,0];p.vel=[0,0,0];p.fallDist=0;if(net&&!isHost())netSend(N.RIDE,{id:v.id,on:0},'host');}
+// ---------- physics ----------
+function cartRail(e){const x=Math.floor(e.pos[0]),z=Math.floor(e.pos[2]);let y=Math.floor(e.pos[1]+.05);let r=railR(x,y,z);if(!r){r=railR(x,y-1,z);if(r)y--;}return r?{x,y,z,r}:null;}
+function railSeg(R){const ex=RAIL_EXITS[R.r.shape];const P=e=>[R.x+.5+e[0]*.5,R.y+e[1]+.0625,R.z+.5+e[2]*.5];const a=P(ex[0]),b=P(ex[1]);
+  // straight rails are lines through the middle of the block
+  const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];const L=Math.hypot(...d);return {a,b,d:d.map(v=>v/L),L};}
+function vehStep(e,dt,inp){if(e.mob==='minecart')cartStep(e,dt,inp);else if(e.mob==='boat')boatStep(e,dt,inp);}
+function cartStep(e,dt,inp){if(!e.v)e.v=[0,0,0];const R=cartRail(e);const rider=riderOf(e);
+  if(R){const S=railSeg(R);let s=e.v[0]*S.d[0]+e.v[1]*S.d[1]+e.v[2]*S.d[2];
+    // downhill
+    s-=S.d[1]*9.8*dt;
+    // a rider leaning forward pushes a slow cart
+    if(inp&&inp.fw>0){const ry=(rider||player).yaw;const f=[-Math.sin(ry),0,-Math.cos(ry)];const along=f[0]*S.d[0]+f[2]*S.d[2];if(Math.abs(s)<3)s+=Math.sign(along||1)*Math.abs(along)*4*dt;}
+    // furnace carts push themselves
+    if(e.cart==='furnace'&&e.fuel>0){e.fuel-=dt;const dir=e.push||1;s+=dir*Math.max(0,4-Math.abs(s))*dt*3;if(Math.random()<dt*8)spawnParticles(e.pos[0],e.pos[1]+1,e.pos[2],1,[.4,.4,.4],.5);}
+    const r=R.r;
+    if(r.type==='golden'){if(r.on){if(Math.abs(s)<.2){// start off a powered rail away from a solid block
+          const back=[[S.a,-1],[S.b,1]].find(([p])=>{const bx=Math.floor(p[0]+(p[0]-R.x-.5)*.2),bz=Math.floor(p[2]+(p[2]-R.z-.5)*.2);return rsCond(getB(bx,R.y,bz));});if(back)s=-back[1]*2;}
+        else s+=Math.sign(s)*16*dt;}else{s*=Math.pow(.5,dt*20);if(Math.abs(s)<.1)s=0;}}
+    if(r.type==='detector'&&!r.on){rsSet(R.x,R.y,R.z,RS.rail.detector[1][r.shape]);rsFlush();}
+    if(r.type==='detector')e.onDet=[R.x,R.y,R.z];
+    if(r.type==='activator'&&r.on){if(rider&&rider===player){dismount(player);}if(e.cart==='tnt')cartBoom(e);if(e.cart==='command')cmdCartRun(e);}
+    // friction and the speed limit (8 blocks a second)
+    s*=Math.pow(rider?.997:.96,dt*20);s=Math.max(-8,Math.min(8,s));if(Math.abs(s)<.005)s=0;
+    // move along the rail; past its end the cart carries on into the next block
+    const rel=[e.pos[0]-S.a[0],e.pos[1]-S.a[1],e.pos[2]-S.a[2]];const t=Math.max(0,Math.min(1,((rel[0]*S.d[0]+rel[1]*S.d[1]+rel[2]*S.d[2])/S.L)));let T=t+s*dt/S.L;
+    // stop at the end of the line
+    if(T<0||T>1){const end=T<0?0:1;const ex=RAIL_EXITS[r.shape][end];const nx=R.x+ex[0],nz=R.z+ex[2];const ny=R.y+ex[1];
+      const goes=railR(nx,ny,nz)||railR(nx,ny-1,nz)||(ex[1]===0&&railR(nx,ny+1,nz))||railR(nx,ny+1,nz);
+      if(!goes&&!rsCond(getB(nx,ny,nz))){/* off the end: leave the rail */}
+      else if(!goes){T=end;s=-s*.3;}}
+    const P=[S.a[0]+S.d[0]*S.L*T,S.a[1]+S.d[1]*S.L*T,S.a[2]+S.d[2]*S.L*T];e.pos=[P[0],P[1]-.0625+.001,P[2]];
+    e.v=[S.d[0]*s,S.d[1]*s,S.d[2]*s];e.onRail=true;
+    // which way the cart faces (yaw) and leans (on slopes)
+    if(s!==0||e.railYaw==null){const yaw=Math.atan2(S.d[0],S.d[2]);e.railYaw=yaw;}e.tiltX=Math.asin(Math.max(-1,Math.min(1,S.d[1])));
+    e.bodyYaw=e.railYaw;e.headYaw=e.railYaw;}
+  else{// off the rails: fall and slide to a stop
+    e.onRail=false;e.tiltX=0;e.mot=[e.v[0]/20,e.v[1]/20,e.v[2]/20];e.mot[1]-=.04*dt*20;e.fallDist=0;moveEntity(e,e.mot[0]*dt*20,e.mot[1]*dt*20,e.mot[2]*dt*20);
+    e.v=[e.mot[0]*20*(e.onGround?Math.pow(.5,dt*20):1),e.mot[1]*20,e.mot[2]*20*(e.onGround?Math.pow(.5,dt*20):1)];if(e.onGround)e.v[1]=0;}
+  if(e.onDet&&!(R&&R.x===e.onDet[0]&&R.y===e.onDet[1]&&R.z===e.onDet[2])){const [x,y,z]=e.onDet;e.onDet=null;const r=railR(x,y,z);
+    if(r&&r.type==='detector'&&r.on&&!mobs.some(m=>m!==e&&m.onDet&&m.onDet[0]===x&&m.onDet[1]===y&&m.onDet[2]===z))rsLater(10,x,y,z,()=>{const c=railR(x,y,z);if(c&&c.on&&!mobs.some(m=>m.onDet&&m.onDet[0]===x&&m.onDet[1]===y&&m.onDet[2]===z))rsSet(x,y,z,RS.rail.detector[0][c.shape]);},'det');}
+  // walking into an empty cart pushes it
+  if(!rider)for(const q of ents){if(!q.alive||q.kind!=='player'||vehicleOf(q))continue;const dx=e.pos[0]-q.pos[0],dz=e.pos[2]-q.pos[2];const d=Math.hypot(dx,dz);if(d<.9&&Math.abs(q.pos[1]-e.pos[1])<1.2&&d>.01){e.v[0]+=dx/d*dt*6;e.v[2]+=dz/d*dt*6;}}
+  // hopper carts collect items, TNT carts blow up in fire or on a hard landing
+  if(e.cart==='hopper'&&rsAuth()&&(e.hopT=(e.hopT||0)+dt)>.4){e.hopT=0;const c=chests.get(e.ck);if(c){for(const d of drops){if(d.dead||dist(d.pos,e.pos)>1.2)continue;if(contAdd(c.items,{id:d.id,count:1})){d.count--;if(d.count<=0)hopperEat(d);contPush(e.ck);}break;}
+      const t=takeOne(Math.floor(e.pos[0]),Math.floor(e.pos[1])+1,Math.floor(e.pos[2]));if(t&&contAdd(c.items,t.s)){t.done();contPush(e.ck);}}}
+  if(e.cart==='tnt'&&(e.fire>0||e.inLava))cartBoom(e);}
+function cartBoom(e){if(!rsAuth()||e.boomed)return;e.boomed=true;const sp=Math.hypot(...(e.v||[0,0,0]));removeMob(e);netSend(N.MOBDIE,{id:e.id,s:1});explode([e.pos[0],e.pos[1]+.5,e.pos[2]],4+Math.min(1.5,sp/8),null);}
+function cmdCartRun(e){if(!e.cmd||e.cmdT>perfT)return;e.cmdT=perfT+.2;try{serverCmd({id:null,ent:player,name:'@',local:true},e.cmd);}catch(err){}}
+// boats: float on water, go where the rider looks, and break on a hard crash
+function waterTop(x,y,z){const b=getB(x,y,z);if(!isWaterB(b))return null;let t=y;while(isWaterB(getB(x,t+1,z)))t++;return t+.9;}
+function boatStep(e,dt,inp){if(!e.v)e.v=[0,0,0];const x=Math.floor(e.pos[0]),z=Math.floor(e.pos[2]);let wt=null;for(const dy of [0,-1,1]){const w=waterTop(x,Math.floor(e.pos[1]+.2)+dy,z);if(w!=null){wt=w;break;}}
+  const rider=riderOf(e);const inWater=wt!=null&&e.pos[1]<wt+.3;
+  if(inWater){e.v[1]+=((wt-.1)-e.pos[1])*20*dt;e.v[1]*=Math.pow(.6,dt*20);}else e.v[1]-=24*dt;
+  if(inp&&rider){const yaw=rider.yaw;const want=inp.fw;const f=[-Math.sin(yaw),-Math.cos(yaw)];const acc=inWater?(want>0?7:want<0?-3:0):(want>0?1.5:0);e.v[0]+=f[0]*acc*dt;e.v[2]+=f[1]*acc*dt;}
+  const drag=inWater?.99:(e.onGround?.5:.95);e.v[0]*=Math.pow(drag,dt*20);e.v[2]*=Math.pow(drag,dt*20);const sp=Math.hypot(e.v[0],e.v[2]);if(sp>8){e.v[0]*=8/sp;e.v[2]*=8/sp;}
+  if(sp>.4)e.bodyYaw=Math.atan2(-e.v[0],-e.v[2])+Math.PI/2;e.headYaw=e.bodyYaw;
+  e.mot=[0,0,0];e.onGround=false;e.fallDist=0;moveEntity(e,e.v[0]*dt,e.v[1]*dt,e.v[2]*dt);if(e.onGround||(inWater&&Math.abs(e.v[1])<.2))e.v[1]=Math.max(e.v[1],e.onGround?0:e.v[1]);
+  // crashing into the shore at speed breaks a boat into planks and sticks
+  if(e.collidedH&&sp>5&&rsAuth()&&!e.broke){e.broke=true;removeMob(e);netSend(N.MOBDIE,{id:e.id,s:1});if(rider===player)dismount(player);hostSpawnDrop(e.pos,'b6',3);hostSpawnDrop(e.pos,'stick',2);psnd(['random/break','dig/wood1'],e.pos,.6);}}
+// the local rider drives (physics of the player is replaced while riding)
+{const p0=physics;physics=function(e,dt,wx,wz){const v=e===player&&vehicleOf(e);if(!v)return p0(e,dt,wx,wz);
+  if(e.sneak&&!e.wasSneakRide){e.wasSneakRide=true;dismount(e);return 0;}e.wasSneakRide=e.sneak;
+  const f=[-Math.sin(e.yaw),-Math.cos(e.yaw)];const fw=wx*f[0]+wz*f[1];const inp={fw:Math.abs(fw)<.05?0:Math.sign(fw),st:0,jump:e.jump};
+  if(typeof rideControl==='function'&&rideControl(e,v,dt,inp)){}else vehStep(v,dt,inp);
+  v.rpos=v.pos.slice();const seat=typeof rideSeat==='function'?rideSeat(v):(SEAT[v.mob]||0);e.pos=[v.pos[0],v.pos[1]+seat,v.pos[2]];e.rpos=e.pos.slice();e.prev=e.pos.slice();
+  e.mot=[0,0,0];e.vel=[0,0,0];e.fallDist=0;e.onGround=true;e.sprint=false;
+  // tell the host where the vehicle is
+  if(net&&!isHost()&&(v.rideSendT=(v.rideSendT||0)-dt)<=0){v.rideSendT=.05;netSend(N.RIDE,{id:v.id,p:v.pos.map(q=>+q.toFixed(3)),y:+(v.bodyYaw||0).toFixed(3),v:(v.v||[0,0,0]).map(q=>+q.toFixed(2))},'host');}
+  return 0;};}
+// guests ignore the host's idea of where their own vehicle is
+{const s0=pushSnap;pushSnap=function(e){if(e&&e.localRide)return;return s0.apply(this,arguments);};}
+// host: creatures move by themselves, unless a remote player is driving them
+{const u0=updateMob;updateMob=function(e,dt){const T=MOB_T[e.mob];
+  if(T.kind==='object'){if(!chunkReadyAt(e.pos[0],e.pos[2]))return;const r=riderOf(e);if(r&&r!==player){e.rpos=e.pos.slice();return;}if(r===player)return;
+    if(T.noAI){vehStep(e,dt,null);e.rpos=e.pos.slice();}else if(typeof objUpdate==='function')objUpdate(e,dt);return;}
+  if(e.riderId){const r=riderOf(e);if(r&&r!==player){e.rpos=e.pos.slice();return;}if(r===player)return;if(!r)e.riderId=null;}
+  return u0(e,dt);};}
+N.RIDE=72;
+NET_X[N.RIDE]=(d,from)=>{const v=mobs.find(m=>m.id===d.id);if(!v||!isHost())return;const pid='p'+from;
+  if(d.on===1){if(!v.riderId)v.riderId=pid;return;}if(d.on===0){if(v.riderId===pid)v.riderId=null;return;}
+  if(v.riderId!==pid)return;v.pos=d.p;v.bodyYaw=d.y;v.headYaw=d.y;v.v=d.v;v.rpos=v.pos.slice();};
+// ---------- creatures' extra state rides along with the creature updates ----------
+function mobExtra(e){const o={};if(e.riderId)o.r=e.riderId;if(e.cart&&e.cart!=='normal')o.c=e.cart;if(e.customName)o.n=e.customName;if(e.saddle)o.s=1;if(e.harmor)o.a=e.harmor;if(e.var!=null)o.v=e.var;
+  if(e.leash)o.l=e.leash;if(e.hchest)o.h=1;if(e.stand)o.st=e.stand;if(e.tame)o.t=1;if(e.paint!=null)o.pt=[e.paint,e.face];if(e.tiltX)o.tx=+e.tiltX.toFixed(2);if(e.fuel>0)o.f=1;if(e.hstats)o.hs=e.hstats;if(e.hck)o.hk=e.hck;if(e.maxHp&&MOB_T[e.mob]&&MOB_T[e.mob].horse)o.mh=e.maxHp;return o;}
+function mobExtraApply(e,o){o=o||{};e.riderId=o.r||null;e.cart=o.c||(e.mob==='minecart'?'normal':undefined);e.customName=o.n||null;e.saddle=!!o.s;e.harmor=o.a||null;if(o.v!=null)e.var=o.v;e.leash=o.l||null;e.hchest=!!o.h;
+  if(o.st)e.stand=o.st;e.tame=!!o.t;if(o.pt){e.paint=o.pt[0];e.face=o.pt[1];}e.tiltX=o.tx||0;e.fuelOn=!!o.f;if(o.hs)e.hstats=o.hs;if(o.hk)e.hck=o.hk;if(o.mh)e.maxHp=o.mh;
+  if(player&&e.riderId===player.id&&!vehicleOf(player)){/* the host still thinks we ride it */}}
+{const s0=sendMobs;sendMobs=function(dt){if(!net||!isHost())return;const ns0=netSend;let sent=null;netSend=function(code,d){if(code===N.MOBS&&Array.isArray(d)){for(const a of d){const e=mobs.find(m=>m.id===a[0]);if(e){const x=mobExtra(e);if(Object.keys(x).length)a[18]=x;}}}return ns0.apply(this,arguments);};
+  try{s0(dt);}finally{netSend=ns0;}};}
+{const m0=mobNet;mobNet=function(code,d,from,fromHost){m0(code,d,from,fromHost);if(code===N.MOBS&&fromHost&&!isHost())for(const a of d){const e=mobs.find(m=>m.id===a[0]);if(e)mobExtraApply(e,a[18]);}};}
+
+// ---------- breaking objects: no death animation, just the item (and anything inside) ----------
+{const d0=mobDie;mobDie=function(e,src,cause){const T=MOB_T[e.mob];if(!T||T.kind!=='object'||!e.alive)return d0(e,src,cause);
+  e.alive=false;const by=src&&src.kind==='player'?src:null;const keep=by&&by.gm==='creative';
+  if(dropAuth()&&!keep){const items=typeof objDrops==='function'?objDrops(e):[];for(const [id,n] of items)hostSpawnDrop([e.pos[0],e.pos[1]+.2,e.pos[2]],id,n);}
+  if(e.ck){const c=chests.get(e.ck);if(c&&dropAuth()&&!keep)for(const s of c.items)if(s)hostSpawnDrop(e.pos,s.id,s.count);chests.delete(e.ck);}
+  const r=riderOf(e);if(r===player)dismount(player,true);removeMob(e);netSend(N.MOBDIE,{id:e.id,s:1});psnd(['dig/wood1','random/break'],e.pos,.4);};}
+function objDrops(e){if(e.mob==='minecart')return [[CART_TYPES[e.cart||'normal'].item,1]];if(e.mob==='boat')return [['boat',1]];return typeof objDrops2==='function'?objDrops2(e):[];}
+// ---------- placing vehicles ----------
+let cartSeq=0;
+function spawnVehicle(kind,pos,yaw,extra){const e=spawnMob(kind.startsWith('cart:')?'minecart':kind,pos,{yaw});e.v=[0,0,0];e.bodyYaw=e.headYaw=yaw||0;
+  if(kind.startsWith('cart:')){e.cart=kind.slice(5);if(e.cart==='chest'||e.cart==='hopper'){e.ck=pk3(-30000000,cartSeq++%100000,-30000000-(Date.now()%100000));chests.set(e.ck,{x:-30000000,y:0,z:0,items:new Array(e.cart==='chest'?27:5).fill(null),cart:true});}}
+  Object.assign(e,extra||{});return e;}
+function dispenseVehicle(id,x,y,z,f){const k=VEHICLE_ITEMS[id];if(!k)return false;if(k==='boat'){const w=waterTop(x,y,z)!=null||waterTop(x,y-1,z)!=null;if(!w)return false;spawnVehicle('boat',[x+.5,y+.2,z+.5],0);return true;}
+  const r=railR(x,y,z)||railR(x,y-1,z);if(!r)return false;spawnVehicle(k,[x+.5,(railR(x,y,z)?y:y-1)+.07,z+.5],0);return true;}
+// using vehicles: get in, fuel furnace carts, open chest carts
+{const i0=mobInteract;mobInteract=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return i0(p,s);const m=lookMob(p,3.5);if(!m||!isObj(m))return i0(p,s);const id=s&&s.id;
+  if(m.mob==='minecart'){
+    if(m.cart==='furnace'&&(id==='coal'||id==='charcoal')){consume(p,p.sel);const f=fwd(p);m.fuel=(m.fuel||0)+180;const R=cartRail(m);if(R){const S=railSeg(R);m.push=Math.sign(f[0]*S.d[0]+f[2]*S.d[2])||1;}if(!dropAuth())netSend(N.MOBUSE,{id:m.id,a:'fuel',by:p.id},'host');p.swing=1;return true;}
+    if(m.cart==='chest'||m.cart==='hopper'){const c=chests.get(m.ck);if(c){chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();show('chestUI');const lab=$('chestSub').querySelector('.lab');if(lab)pxSet(lab,m.cart==='chest'?'Minecart with Chest':'Minecart with Hopper','#404040',false);renderChest();return true;}}
+    if(m.cart==='command'){if(p.gm==='creative')askText('Command for this minecart (runs on a powered activator rail):',m.cmd||'',v=>{m.cmd=v.replace(/^\//,'');});return true;}
+    if(m.cart==='normal'&&!p.sneak){mount(p,m);return true;}return true;}
+  if(m.mob==='boat'&&!p.sneak){mount(p,m);return true;}
+  return i0(p,s);};}
+{const a0=mobAct;mobAct=function(e,a,by){if(a==='fuel'&&e.mob==='minecart'){e.fuel=(e.fuel||0)+180;return;}return a0(e,a,by);};}
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return u0(p,s);const id=s&&s.id;const k=id&&VEHICLE_ITEMS[id];
+  if(k){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);const cre=p.gm==='creative';
+    if(k==='boat'){const r=rayFluidOrSolid(eye(p),fwd(p),5);if(r&&(isWaterB(r.b)||(BD[r.b]&&BD[r.b].solid))){const top=isWaterB(r.b)?(waterTop(r.x,r.y,r.z)||r.y+.9)-.45:r.y+1.05;const pos=[r.x+.5,top,r.z+.5];
+        const e=spawnVehicle('boat',pos,p.yaw);if(!dropAuth())netSend(N.MOBUSE,{id:'new',a:'veh:boat',p:pos,y:p.yaw,by:p.id},'host');if(!cre)consume(p,p.sel);p.swing=1;}return true;}
+    if(h){const R=railR(h.x,h.y,h.z)?{x:h.x,y:h.y,z:h.z}:null;if(!R)return true;const S=railSeg(cartRailAt(h.x,h.y,h.z));const pos=[h.x+.5,h.y+.07,h.z+.5];
+      if(dropAuth()){const e=spawnVehicle(k,pos,Math.atan2(S.d[0],S.d[2]));}else netSend(N.MOBUSE,{id:'new',a:'veh:'+k,p:pos,y:0,by:p.id},'host');if(!cre)consume(p,p.sel);p.swing=1;}return true;}
+  return u0(p,s);};}
+const cartRailAt=(x,y,z)=>({x,y,z,r:railR(x,y,z)});
+// a guest placing a vehicle: the host makes it (mobUse with id 'new')
+{const m0=mobNet;mobNet=function(code,d,from,fromHost){if(code===N.MOBUSE&&d&&d.id==='new'&&typeof d.a==='string'&&d.a.startsWith('veh:')){if(isHost()&&Array.isArray(d.p))spawnVehicle(d.a.slice(4),d.p,d.y||0);return;}return m0(code,d,from,fromHost);};}
+// ---------- drawing ----------
+function drawVehicle(e){const T=MOB_T[e.mob];const TX=MOB_TEX[e.mob];if(!TX)return;const M=mobMesh(T.model,TX.h);const rp=e.rpos||e.pos;const by=(e.bodyYaw||0);
+  // minecarts and boats are drawn like the real game: turned to their direction, tipped on slopes, shaking when hit
+  const shake=e.hurtT>0?Math.sin(e.hurtT*40)*.15:0;
+  const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by+(e.mob==='minecart'?HP2:HP2)),M4.rx(e.mob==='minecart'?-(e.tiltX||0):0),M4.rz(shake));
+  const MD=MOB_MODELS[T.model];const mat=n=>{const P=MD[n].p,r=MD[n].r||[0,0,0];return chain(base,M4.tr(-P[0]/16,(24-P[1])/16,P[2]/16),M4.rz(r[2]),M4.ry(-r[1]),M4.rx(-r[0]));};
+  gl.uniform1f(PT.u.bright,mobBright(e));gl.uniform1f(PT.u.hurt,0);for(const n in M)drawMesh(M[n],mat(n),TX.tex);
+  const blk=e.mob==='minecart'&&CART_TYPES[e.cart||'normal'].block;if(blk){const hm=heldMesh(blk);if(hm)drawMesh(hm.mesh,chain(base,M4.tr(0,.5,0),M4.sc(.75,.75,.75)),hm.tex);}}
+{const d0=drawMob;drawMob=function(e){if(isObj(e)){if(typeof drawObject==='function'&&drawObject(e))return;drawVehicle(e);return;}return d0(e);};}
+// the rider sits: legs forward
+{const h0=drawHumanoid;drawHumanoid=function(e){const sit=e===player?!!vehicleOf(player):mobs.some(m=>m.riderId===e.id&&m.alive);if(sit){e.sitPose=true;}else e.sitPose=false;return h0(e);};}
+// creature caps and despawning leave objects (and tamed or named creatures) alone
+{const d0=mobDespawn;mobDespawn=function(dt){const keep=mobs.filter(m=>MOB_T[m.mob].persist||m.customName||m.tame||m.riderId||m.leash);for(const m of keep)m._own=m.owner,m.owner=m.owner||'keep';d0(dt);for(const m of keep)if(m.owner==='keep')m.owner=m._own||null;};}
+// ---------- saving: vehicles, horses, armour stands, paintings... (per dimension) ----------
+const ENT_SAVE=e=>({t:e.mob,p:e.pos.map(v=>+v.toFixed(3)),y:+(e.bodyYaw||0).toFixed(3),hp:e.health,x:Object.assign(mobExtra(e),{r:undefined,ck:e.ck,fuel:e.fuel,push:e.push,cmd:e.cmd,owner:e.owner&&e.owner!=='keep'?e.owner:undefined,
+  hs:e.hstats,temper:e.temper,inv:e.hinv})});
+function keepEnt(e){return e.alive&&(MOB_T[e.mob].persist||e.customName||e.tame||e.leash);}
+function entLoad(s){if(!MOB_T[s.t])return;const e=spawnMob(s.t,s.p,{yaw:s.y,hp:s.hp});const x=s.x||{};mobExtraApply(e,x);e.riderId=null;e.ck=x.ck;e.fuel=x.fuel;e.push=x.push;e.cmd=x.cmd;if(x.owner)e.owner=x.owner;e.hstats=x.hs;e.temper=x.temper;e.hinv=x.inv;e.bodyYaw=e.headYaw=s.y;e.v=[0,0,0];return e;}
+XSAVE.push({save:(d,snap)=>{const all={};for(const dm of DIMS)all[dm]=(DIMDATA[dm]&&DIMDATA[dm].xents)||[];all[DIM]=mobs.filter(keepEnt).map(ENT_SAVE);d.xents=all;},
+  reset:()=>{for(const dm of DIMS)if(DIMDATA[dm])DIMDATA[dm].xents=[];},
+  load:o=>{const all=o.xents||{};for(const dm of DIMS){if(!DIMDATA[dm])DIMDATA[dm]={edits:new Map(),chests:new Map(),furn:new Map(),drops:[]};DIMDATA[dm].xents=all[dm]||[];}
+    if(net&&!isHost())return;for(const s of (DIMDATA[DIM]&&DIMDATA[DIM].xents)||[])entLoad(s);}});
+{const t0=travelTo;travelTo=function(dim,pos,opt){if(!INF||!player)return t0(dim,pos,opt);const from=DIM;if(vehicleOf(player))dismount(player,true);const list=mobs.filter(keepEnt).map(ENT_SAVE);
+  const r=t0(dim,pos,opt);if(DIMDATA[from])DIMDATA[from].xents=list;else DIMDATA[from]={xents:list};if(!net||isHost()||dimLocal())for(const s of (DIMDATA[dim]&&DIMDATA[dim].xents)||[])entLoad(s);if(DIMDATA[dim])DIMDATA[dim].xents=[];return r;};}
+{const o0=onDeath;onDeath=function(m){if(player&&m&&m.id===player.id&&vehicleOf(player))dismount(player,true);return o0(m);};}
+
+// ================= Horses, donkeys and mules; saddled pigs; leads; name tags; armour stands =================
+// Horses live on plains and savannas. Ride a wild one to tame it (it throws you off until it trusts you; feeding it helps), then
+// saddle it to steer: it goes where you look, hold Jump to charge a leap. Horse armour protects it. Donkeys and mules carry a chest.
+// Saddled pigs can be ridden and steered with a Carrot on a Stick. Leads tie animals to you or to a fence. Name a Name Tag on an
+// anvil, then use it on a creature: named creatures stay. Armour stands hold a full set of armour.
+
+// ---------- the 1.8 horse model (128x128 texture) ----------
+const MOB_TEXSZ={horse:[128,128],horse_saddle:[128,128],horse_mule:[128,128],horse_chest:[128,128],armor_stand:[64,64]};
+{const m0=mobMesh;mobMesh=function(model,th){const S=MOB_TEXSZ[model];if(!S)return m0(model,th);const k=model+':'+th;if(MOB_MESH[k])return MOB_MESH[k];const M=MOB_MODELS[model],out={};
+  for(const n in M){const o=[];for(const [x,y,z,w,h,d,u,v,inf,mir] of M[n].b)boxUV(o,-(x+w),-(y+h),z,w,h,d,u,v,S[0],S[1],inf||0,!!mir);out[n]=meshFrom(o);}return MOB_MESH[k]=out;};}
+{const HR=.5235988,h=(b)=>b;   // head parts share the head's pivot and tilt
+  MOB_MODELS.horse={
+    head:{p:[0,4,-10],r:[HR,0,0],b:[[-2.5,-10,-1.5,5,5,7,0,0],[-2,-10,-7,4,3,6,24,18],[-2,-7,-6.5,4,2,5,24,27],[-2.05,-9.8,-2,4,14,8,0,12],[-1,-11.5,5,2,16,4,58,0],[.45,-12,4,2,3,1,0,0],[-2.45,-12,4,2,3,1,0,0]]},
+    body:{p:[0,11,9],b:[[-5,-8,-19,10,10,24,0,34]]},
+    tail:{p:[0,3,14],r:[-1.134464,0,0],b:[[-1,-1,0,2,2,3,44,0],[-1.5,-2,3,3,4,7,38,7],[-1.5,-4.5,9,3,4,7,24,3]]},
+    bl:{p:[4,9,11],b:[[-2.5,-2,-2.5,4,9,5,78,29],[-2,7,-1.5,3,5,3,78,43],[-2.5,12.1,-2,4,3,4,78,51]]},
+    br:{p:[-4,9,11],b:[[-1.5,-2,-2.5,4,9,5,96,29],[-1,7,-1.5,3,5,3,96,43],[-1.5,12.1,-2,4,3,4,96,51]]},
+    fl:{p:[4,9,-8],b:[[-1.9,-1,-2.1,3,8,4,44,29],[-1.9,7,-1.6,3,5,3,44,41],[-2.4,12.1,-2.1,4,3,4,44,51]]},
+    fr:{p:[-4,9,-8],b:[[-1.1,-1,-2.1,3,8,4,60,29],[-1.1,7,-1.6,3,5,3,60,41],[-1.6,12.1,-2.1,4,3,4,60,51]]}};
+  // the mule/donkey head has long ears instead of short ones
+  MOB_MODELS.horse_mule={head:{p:[0,4,-10],r:[HR,0,0],b:[[-2.5,-10,-1.5,5,5,7,0,0],[-2,-10,-7,4,3,6,24,18],[-2,-7,-6.5,4,2,5,24,27],[-2.05,-9.8,-2,4,14,8,0,12],[-1,-11.5,5,2,16,4,58,0],[-2,-16,4,2,7,1,0,12],[0,-16,4,2,7,1,0,12]]}};
+  MOB_MODELS.horse_saddle={saddle:{p:[0,2,2],b:[[-5,0,-3,10,1,8,80,0],[-1.5,-1,-3,3,1,2,106,9],[-4,-1,3,8,1,2,80,9]]},ropeL:{p:[5,3,2],b:[[-.5,0,-.5,1,6,1,70,0],[-.5,6,-1,1,2,2,74,0]]},ropeR:{p:[-5,3,2],b:[[-.5,0,-.5,1,6,1,80,0],[-.5,6,-1,1,2,2,74,4]]},
+    face:{p:[0,4,-10],r:[HR,0,0],b:[[1.5,-8,-4,1,2,2,74,13],[-2.5,-8,-4,1,2,2,74,13]]},reins:{p:[0,4,-10],b:[[2.6,-6,-6,0,3,16,44,10],[-2.6,-6,-6,0,3,16,44,5]]}};
+  MOB_MODELS.horse_chest={cl:{p:[-7.5,3,10],r:[0,HP2,0],b:[[-3,0,0,8,8,3,0,34]]},cr:{p:[4.5,3,10],r:[0,HP2,0],b:[[-3,0,0,8,8,3,0,47]]}};}
+const HORSE_COLS=['white','creamy','chestnut','brown','black','gray','darkbrown'],HORSE_MARKS=[null,'white','whitefield','whitedots','blackdots'];
+for(const [k,t] of [['horse',{name:'Horse',col:'#8a5a2a'}],['donkey',{name:'Donkey',col:'#7a6a5a'}],['mule',{name:'Mule',col:'#5a3a2a'}]]){
+  MOB_T[k]=Object.assign({hp:22,hw:.7,eh:1.6,model:'horse',kind:'passive',spd:.35,flee:1,drops:[['leather',0,2]],snd:null,horse:true},t);MOB_TYPES.push(k);}
+PASSIVE_BY.savanna=(PASSIVE_BY.savanna||['cow','sheep','chicken']).concat(['horse','horse','horse']);PASSIVE_BY.plains.push('horse','donkey');
+// textures: the colour, its markings and any armour, layered like the real game
+let HORSE_SRC={},HORSE_TEX={};
+{const l0=packLoadMobs;packLoadMobs=async function(get){const r=await l0(get);HORSE_SRC={};const g=async n=>{const i=await get('textures/entity/horse/'+n+'.png');return i?imgToCanvas(i,128,128,0,0,i.width,i.height):null;};
+  for(const c of HORSE_COLS)HORSE_SRC['c_'+c]=await g('horse_'+c);for(const m of HORSE_MARKS)if(m)HORSE_SRC['m_'+m]=await g('horse_markings_'+m);
+  for(const a of ['iron','gold','diamond'])HORSE_SRC['a_'+a]=await g('armor/horse_armor_'+a);HORSE_SRC.donkey=await g('donkey');HORSE_SRC.mule=await g('mule');
+  const ps=await get('textures/entity/pig/pig_saddle.png');if(ps)(PACK.mobs||(PACK.mobs={})).pig_saddle=imgToCanvas(ps,64,32,0,0,ps.width,ps.height);
+  const st=await get('textures/entity/armorstand/wood.png');if(st)(PACK.mobs||(PACK.mobs={})).armor_stand=imgToCanvas(st,64,64,0,0,st.width,st.height);
+  return r||1;};}
+MOB_TEXKEYS.push('pig_saddle','armor_stand');
+{const i0=initMobTextures;initMobTextures=function(){i0();for(const k in HORSE_TEX)gl.deleteTexture(HORSE_TEX[k].tex);HORSE_TEX={};};}
+function horseTex(e){const v=e.var||0;const col=e.mob==='donkey'?'donkey':e.mob==='mule'?'mule':'c_'+HORSE_COLS[v%7];const mk=e.mob==='horse'?HORSE_MARKS[Math.floor(v/7)%5]:null;const ar=e.mob==='horse'?e.harmor:null;
+  const key=col+'|'+mk+'|'+ar;if(HORSE_TEX[key])return HORSE_TEX[key];const c=mkCanvas(128,128),g=c.getContext('2d');
+  const base=HORSE_SRC[col];if(base)g.drawImage(base,0,0);else{g.fillStyle=MOB_T[e.mob].col;g.fillRect(0,0,128,128);g.fillStyle='rgba(0,0,0,.15)';for(let i=0;i<300;i++)g.fillRect(Math.random()*128|0,Math.random()*128|0,2,2);}
+  if(mk&&HORSE_SRC['m_'+mk])g.drawImage(HORSE_SRC['m_'+mk],0,0);if(ar&&HORSE_SRC['a_'+ar])g.drawImage(HORSE_SRC['a_'+ar],0,0);
+  return HORSE_TEX[key]={tex:mkTex(c),h:128};}
+// a new horse rolls its looks, speed, jump and health
+function horseInit(e){if(e.hstats)return;const r=Math.random;e.var=e.mob==='horse'?(r()*7|0)+7*(r()*5|0):0;
+  e.hstats={spd:(.1125+r()*.1125+r()*.1125)*0.9,jump:.4+r()*.2+r()*.2+r()*.2,hp:15+(r()*8|0)+(r()*9|0)};if(e.mob!=='horse'){e.hstats.spd=.175;e.hstats.jump=.5;}e.maxHp=e.hstats.hp;e.health=Math.min(e.health,e.maxHp);e.temper=0;}
+{const s0=spawnMob;spawnMob=function(type,pos,o){const e=s0(type,pos,o);if(MOB_T[type]&&MOB_T[type].horse&&!(o&&o.id))horseInit(e);if(type==='armor_stand'&&!e.stand)e.stand={a:[null,null,null,null]};return e;};}
+// drawing a horse: legs walk, the head bobs, tack and chests when it has them
+function drawHorse(e){const tx=horseTex(e);limbTick(e);const rp=e.rpos||e.pos;const by=e.bodyYaw==null?e.yaw:e.bodyYaw;const S=(e.mob==='donkey'?.87:e.mob==='mule'?.92:1)*(e.baby?.5:1);
+  const tilt=e.deathT!=null?Math.min(1,Math.sqrt(e.deathT*1.8))*HP2:0;const rear=e.rearT>0?Math.sin(Math.min(1,e.rearT)*Math.PI)*.8:0;
+  const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by),M4.rz(tilt),M4.tr(0,0,-.5),M4.rx(rear),M4.tr(0,0,.5),M4.sc(S,S,S));
+  const ls=(e.limbSwing||0)*.6662,la=Math.min(1,e.limbAmt||0),C=Math.cos;const run=vehicleRider(e)?1.4:1;
+  const R={head:[-(e.pitch||0)*.5+(la>.1?Math.sin(ls)*.05:0),-((e.headYaw==null?e.yaw:e.headYaw)-by)*.5,0],fl:[C(ls)*run*la,0,0],fr:[C(ls+Math.PI)*run*la,0,0],bl:[C(ls+Math.PI)*run*la,0,0],br:[C(ls)*run*la,0,0],tail:[la*.3,Math.sin(perfT*1.5)*.1,0]};
+  const draw=(model)=>{const M=mobMesh(model,128),MD=MOB_MODELS[model];for(const n in M){const P=MD[n].p,r0=MD[n].r||[0,0,0],r=R[n]||(n==='face'||n==='reins'?R.head:[0,0,0]);
+      const mm=chain(base,M4.tr(-P[0]/16,(24-P[1])/16,P[2]/16),M4.rz(r0[2]+r[2]),M4.ry(-(r0[1]+r[1])),M4.rx(-(r0[0]+r[0])));drawMesh(M[n],mm,tx.tex);}};
+  gl.uniform1f(PT.u.bright,mobBright(e));gl.uniform1f(PT.u.hurt,(e.hurtT>0||e.deathT!=null)?1:0);
+  const M=mobMesh('horse',128),MD=MOB_MODELS.horse;for(const n in M){if(n==='head'&&e.mob!=='horse')continue;const P=MD[n].p,r0=MD[n].r||[0,0,0],r=R[n]||[0,0,0];drawMesh(M[n],chain(base,M4.tr(-P[0]/16,(24-P[1])/16,P[2]/16),M4.rz(r0[2]+r[2]),M4.ry(-(r0[1]+r[1])),M4.rx(-(r0[0]+r[0]))),tx.tex);}
+  if(e.mob!=='horse')draw('horse_mule');if(e.saddle)draw('horse_saddle');if(e.hchest)draw('horse_chest');}
+const vehicleRider=e=>!!e.riderId;
+{const d0=drawMob;drawMob=function(e){const T=MOB_T[e.mob];if(T&&T.horse){drawHorse(e);return;}d0(e);
+  // a saddle on a pig
+  if(e.mob==='pig'&&e.saddle&&MOB_TEX.pig_saddle&&PACK.mobs&&PACK.mobs.pig_saddle){const M=mobMesh('pig',MOB_TEX.pig_saddle.h);const rp=e.rpos||e.pos;const by=e.bodyYaw==null?e.yaw:e.bodyYaw;const S=e.baby?.5:1;
+    const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by),M4.sc(S*1.01,S*1.01,S*1.01));const MD=MOB_MODELS.pig;for(const n of ['body']){const P=MD[n].p,r=MD[n].r||[0,0,0];drawMesh(M[n],chain(base,M4.tr(-P[0]/16,(24-P[1])/16,P[2]/16),M4.rz(r[2]),M4.ry(-r[1]),M4.rx(-r[0])),MOB_TEX.pig_saddle.tex);}}};}
+
+// ---------- riding creatures ----------
+function rideSeat(v){if(MOB_T[v.mob]&&MOB_T[v.mob].horse)return .62*(v.mob==='donkey'?.87:v.mob==='mule'?.92:1);if(v.mob==='pig')return -.12;return SEAT[v.mob]||0;}
+const JUMPBAR={v:0,on:false};
+function rideControl(p,v,dt,inp){const T=MOB_T[v.mob];if(!T||(!T.horse&&v.mob!=='pig'))return false;
+  if(!v.mot)v.mot=[0,0,0];let wx=0,wz=0;const yaw=p.yaw;const f=[-Math.sin(yaw),-Math.cos(yaw)],rgt=[Math.cos(yaw),-Math.sin(yaw)];
+  if(T.horse){if(!v.tame){// a wild horse wanders and soon throws its rider
+      v.buckT=(v.buckT||0)+dt;if(v.buckT>2+Math.random()*2){v.buckT=0;if(Math.random()*100<(v.temper||0)){v.tame=true;v.tameBy=p.id;spawnParticles(v.pos[0],v.pos[1]+1.6,v.pos[2],10,[1,.3,.4],1.5);chatMsg('The '+T.name+' trusts you now. Put a saddle on it to ride it.','#88ddff',false);if(net&&!isHost())netSend(N.MOBUSE,{id:v.id,a:'tamed',by:p.id},'host');}
+        else{v.temper=Math.min(100,(v.temper||0)+5);v.rearT=1;dismount(p);if(net&&!isHost())netSend(N.MOBUSE,{id:v.id,a:'temper',by:p.id},'host');return true;}}
+      v.rearT=Math.max(0,(v.rearT||0)-dt);}
+    else if(v.saddle){const fw=inp.fw,st=(keyDown('KeyD')?1:0)-(keyDown('KeyA')?1:0)+(touchActive?touchIn.st:0);const k=fw<0?.25:1;wx=(f[0]*fw*k+rgt[0]*st*.5);wz=(f[1]*fw*k+rgt[1]*st*.5);v.bodyYaw=yaw;v.headYaw=yaw;v.yaw=yaw;v.pitch=p.pitch;
+      // hold Jump to charge, let go to leap
+      if(p.jump&&v.onGround){JUMPBAR.on=true;JUMPBAR.v=Math.min(1,JUMPBAR.v+dt*1.1);}
+      else if(JUMPBAR.on){JUMPBAR.on=false;if(v.onGround&&JUMPBAR.v>.1){const pw=JUMPBAR.v>=.9?1:.4+JUMPBAR.v*.6;v.mot[1]=(v.hstats?v.hstats.jump:.7)*pw;v.mot[0]+=f[0]*.4*pw;v.mot[2]+=f[1]*.4*pw;}JUMPBAR.v=0;}}
+  }else{// a saddled pig goes where you look while you hold a carrot on a stick
+    const s=p.inv[p.sel];if(s&&s.id==='carrot_on_a_stick'){wx=f[0];wz=f[1];v.bodyYaw=yaw;v.headYaw=yaw;v.yaw=yaw;if(v.boostT>0){v.boostT-=dt;}}}
+  // the creature's own legs (Minecraft's walking physics, at its speed)
+  const spd=T.horse?(v.hstats?v.hstats.spd:.2):.2*(v.boostT>0?2:1);const L=Math.hypot(wx,wz);if(L>1){wx/=L;wz/=L;}
+  v.in={wx:wx*.98,wz:wz*.98,jump:false,attr:spd};v.spdK=1;v.acc=(v.acc||0)+dt;let n=0;while(v.acc>=TICK&&n<5){v.acc-=TICK;mcTick(v);n++;}if(n===5)v.acc=0;
+  v.limbAmt=Math.min(1,Math.hypot(v.mot[0],v.mot[2])*4);v.limbSwing=(v.limbSwing||0)+v.limbAmt*dt*20*.6;
+  if(net&&!isHost()&&(v.rideSendT=(v.rideSendT||0)-dt)<=0){v.rideSendT=.05;netSend(N.RIDE,{id:v.id,p:v.pos.map(q=>+q.toFixed(3)),y:+(v.bodyYaw||0).toFixed(3),v:[0,0,0]},'host');}
+  return true;}
+const keyDown=k=>!!keys[k]&&(locked||padActive);
+// the jump bar replaces the experience bar while riding a horse
+{const x0=drawXPBar;drawXPBar=function(){const v=vehicleOf(player);if(!v||!MOB_T[v.mob].horse||!v.saddle)return x0();const G=hudGeom(),S=G.S;const w=S*9-S*.1,x=G.hx+S*.05,h=Math.max(4,Math.round(S*.1)),y=G.hy-h-Math.round(S*.12);
+  hc.save();hc.fillStyle='#0a0a0a';hc.fillRect(x-1,y-1,w+2,h+2);hc.fillStyle='#2a2a40';hc.fillRect(x,y,w,h);hc.fillStyle=JUMPBAR.v>=.9?'#ff8040':'#6080ff';hc.fillRect(x,y,w*JUMPBAR.v,h);hc.restore();
+  // the horse's health over the food bar
+  const hp=Math.ceil(v.health/2),mx=Math.ceil(v.maxHp/2);hc.save();hc.font=`${Math.round(S*.3)}px monospace`;hc.textAlign='right';hc.fillStyle='#ff6060';hc.fillText('♥'.repeat(Math.min(10,hp))+'♡'.repeat(Math.max(0,Math.min(10,mx)-Math.min(10,hp))),G.hx+S*9,y-S*.9);hc.restore();};}
+
+// ---------- using creatures: ride, tame, saddle, armour, chests, feed, leads, name tags ----------
+const HORSE_FOOD={wheat:[2,3],sugar:[1,3],apple:[3,3],golden_carrot:[4,5],golden_apple:[10,10],['b'+B.HAY]:[20,0]};
+function namedTag(s){return s&&s.id==='name_tag'&&s.tag&&s.tag.name?s.tag.name:null;}
+{const i0=mobInteract;mobInteract=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return i0(p,s);const m=lookMob(p,3.5);if(!m)return i0(p,s);const id=s&&s.id;const T=MOB_T[m.mob];
+  const act=(a)=>{if(isHost()||dimLocal()||!net)mobAct(m,a,p);else netSend(N.MOBUSE,{id:m.id,a,by:p.id},'host');};
+  // name tags (named on an anvil)
+  if(id==='name_tag'){const n=namedTag(s);if(!n){chatMsg('Name the Name Tag on an Anvil first.','#aaaaaa',false);return true;}if(T.kind==='object'&&m.mob!=='armor_stand')return true;act('name:'+n);consume(p,p.sel);p.swing=1;return true;}
+  // leads
+  if(id==='lead'&&!m.leash&&(T.kind==='passive'||m.mob==='ice_wolf')&&!m.riderId){act('leash');consume(p,p.sel);p.swing=1;sfx('pick',{vol:.4});return true;}
+  if(m.leash===p.id&&!id){act('unleash');giveOrDrop(p,'lead',1);return true;}
+  if(T.horse){const food=HORSE_FOOD[id];
+    if(food&&(m.health<m.maxHp||!m.tame)){act('feed:'+id);consume(p,p.sel);p.swing=1;sfx('eat');return true;}
+    if(m.tame&&id==='saddle'&&!m.saddle){act('saddle');consume(p,p.sel);p.swing=1;sfx('pick',{vol:.5});return true;}
+    if(m.tame&&m.mob==='horse'&&/_horse_armor$/.test(id||'')&&!m.harmor){act('harmor:'+id);consume(p,p.sel);p.swing=1;sfx('pick',{vol:.5});return true;}
+    if(m.tame&&m.mob!=='horse'&&id==='b8'&&!m.hchest){act('hchest');consume(p,p.sel);p.swing=1;return true;}
+    if(p.sneak&&m.tame){// take things back off: the chest's contents (donkeys and mules), then armour, then the saddle
+      if(m.hchest&&m.hck){const c=chests.get(m.hck);if(c){chestOpen=c;sfx('chest');document.exitPointerLock&&document.exitPointerLock();show('chestUI');const lab=$('chestSub').querySelector('.lab');if(lab)pxSet(lab,T.name,'#404040',false);renderChest();return true;}}
+      if(m.harmor){giveOrDrop(p,m.harmor==='gold'?'golden_horse_armor':m.harmor+'_horse_armor',1);act('harmor:');return true;}
+      if(m.saddle){giveOrDrop(p,'saddle',1);act('unsaddle');return true;}return true;}
+    if(!m.baby&&!m.riderId){mount(p,m);return true;}
+    return true;}
+  if(m.mob==='pig'){if(id==='saddle'&&!m.saddle&&!m.baby){act('saddle');consume(p,p.sel);p.swing=1;return true;}
+    if(m.saddle&&!m.riderId&&!p.sneak){mount(p,m);return true;}}
+  if(m.mob==='armor_stand')return standUse(p,m,s);
+  return i0(p,s);};}
+{const a0=mobAct;mobAct=function(e,a,by){
+  if(a.startsWith('name:')){e.customName=a.slice(5).slice(0,32);e.name=e.customName;return;}
+  if(a==='leash'){e.leash=by?by.id:null;return;}if(a==='unleash'){e.leash=null;return;}
+  if(a==='saddle'){e.saddle=true;return;}if(a==='unsaddle'){e.saddle=false;return;}
+  if(a.startsWith('harmor:')){const id=a.slice(7);e.harmor=id?(id.startsWith('golden')?'gold':id.split('_')[0]):null;return;}
+  if(a==='hchest'){e.hchest=true;e.hck=pk3(-30000001,cartSeq++%100000,-30000001-(Date.now()%100000));chests.set(e.hck,{x:-30000001,y:0,z:0,items:new Array(15).fill(null),cart:true});return;}
+  if(a==='tamed'){e.tame=true;e.tameBy=by&&by.id;return;}if(a==='temper'){e.temper=Math.min(100,(e.temper||0)+5);e.rearT=1;return;}
+  if(a.startsWith('feed:')){const f=HORSE_FOOD[a.slice(5)]||[1,0];e.health=Math.min(e.maxHp,e.health+f[0]);e.temper=Math.min(100,(e.temper||0)+f[1]);spawnParticles(e.pos[0],e.pos[1]+1.6,e.pos[2],5,[.4,1,.4],1);return;}
+  if(a.startsWith('stand:')){standSet(e,a.slice(6));return;}
+  return a0(e,a,by);};}
+// pigs: a right click with the carrot on a stick while riding is a burst of speed
+{const u0=useSpecial;useSpecial=function(p,s){const v=vehicleOf(p);if(v&&v.mob==='pig'&&s&&s.id==='carrot_on_a_stick'){if(!(v.boostT>0)){v.boostT=2;wearHeld(p,7);p.swing=1;}return true;}return u0(p,s);};}
+// creatures with something on them drop it
+{const d0=mobDie;mobDie=function(e,src,cause){if(e.alive&&dropAuth()&&!isObj(e)){const at=[e.pos[0],e.pos[1]-.4,e.pos[2]];if(e.saddle)hostSpawnDrop(at,'saddle',1);if(e.harmor)hostSpawnDrop(at,e.harmor==='gold'?'golden_horse_armor':e.harmor+'_horse_armor',1);
+    if(e.hchest){hostSpawnDrop(at,'b8',1);const c=chests.get(e.hck);if(c)for(const s of c.items)if(s)hostSpawnDrop(at,s.id,s.count,undefined,undefined,undefined,s.tag);chests.delete(e.hck);}if(e.leash)hostSpawnDrop(at,'lead',1);}
+  const r=e.riderId&&player&&e.riderId===player.id;if(r)dismount(player,true);return d0(e,src,cause);};}
+// horse armour protects the horse
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ii){if(e&&e.harmor&&amt>0){const k={iron:5,gold:7,diamond:11}[e.harmor]||0;amt*=1-k*.04;}return h0(e,amt,src,cause,kb,raw,ii);};}
+// leads: animals follow their holder (or stay by the fence they are tied to); too far and the lead snaps
+function leashPos(e){if(!e.leash)return null;if(e.leash.startsWith('f:'))return e.leash.slice(2).split(',').map(Number).map((v,i)=>i===1?v+.5:v+.5);const h=ents.find(q=>q.id===e.leash&&q.alive);return h?[h.pos[0],h.pos[1]+1,h.pos[2]]:null;}
+{const u0=updateMob;updateMob=function(e,dt){e.leashTempt=null;if(e.leash&&e.alive){const hp=leashPos(e);if(!hp){if(dropAuth())hostSpawnDrop(e.pos,'lead',1);e.leash=null;}else{const d=dist(hp,e.pos);
+      if(d>10){if(dropAuth())hostSpawnDrop(e.pos,'lead',1);e.leash=null;sfx('pick',{pos:e.pos,vol:.4});}
+      else if(d>4){e.leashTempt={pos:[hp[0],hp[1]-1,hp[2]],alive:true};if(d>6&&e.mot){const k=.02*(d-6);e.mot[0]+=(hp[0]-e.pos[0])/d*k;e.mot[2]+=(hp[2]-e.pos[2])/d*k;}}}}
+  const r=u0(e,dt);return r;};}
+// tying to a fence: right click a fence while animals are on your lead
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return u0(p,s);const h=raycastBlock(eye(p),fwd(p),4.5);
+  if(h&&BD[h.b]&&BD[h.b].fence&&!p.sneak){const mine=mobs.filter(m=>m.leash===p.id);if(mine.length){for(const m of mine){const a='leashf:'+h.x+','+h.y+','+h.z;if(isHost()||dimLocal()||!net)m.leash='f:'+h.x+','+h.y+','+h.z;else netSend(N.MOBUSE,{id:m.id,a,by:p.id},'host');}sfx('pick',{vol:.4});return true;}
+    const tied=mobs.filter(m=>m.leash==='f:'+h.x+','+h.y+','+h.z);if(tied.length){for(const m of tied){if(isHost()||dimLocal()||!net)m.leash=p.id;else netSend(N.MOBUSE,{id:m.id,a:'leash',by:p.id},'host');}return true;}}
+  return u0(p,s);};}
+{const a0=mobAct;mobAct=function(e,a,by){if(a.startsWith('leashf:')){e.leash='f:'+a.slice(7);return;}return a0(e,a,by);};}
+// a fence that goes drops the leads tied to it
+{const c0=blockChanged;blockChanged=function(x,y,z,was,b){c0(x,y,z,was,b);if(was&&BD[was]&&BD[was].fence&&!(b&&BD[b].fence)){const k='f:'+x+','+y+','+z;for(const m of mobs)if(m.leash===k){m.leash=null;if(dropAuth())hostSpawnDrop([x+.5,y,z+.5],'lead',1);}}};}
+// drawing leads: a sagging rope from the animal to the hand or the fence knot
+function drawLeads(){const list=mobs.filter(m=>m.alive&&m.leash);if(!list.length)return;useBox(VP,camPos);
+  for(const m of list){const rp=m.rpos||m.pos;const a=[rp[0],rp[1]+(m.eh||1)*.8,rp[2]];let b;if(m.leash.startsWith('f:')){const [x,y,z]=m.leash.slice(2).split(',').map(Number);b=[x+.5,y+.6,z+.5];box(chain(M4.tr(x+.5,y+.6,z+.5),M4.sc(.2,.25,.2)),[.45,.3,.15],1);}
+    else{const h=ents.find(q=>q.id===m.leash&&q.alive);if(!h)continue;const hp=h.rpos||h.pos;b=h===player&&!thirdPerson()?[hp[0]-Math.sin(h.yaw)*.4+Math.cos(h.yaw)*.25,hp[1]+1.2,hp[2]-Math.cos(h.yaw)*.4-Math.sin(h.yaw)*.25]:[hp[0],hp[1]+1.1,hp[2]];}
+    const n=16,L=dist(a,b);for(let i=0;i<=n;i++){const t=i/n;const sag=Math.sin(t*Math.PI)*Math.min(.8,L*.08);box(chain(M4.tr(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t-sag,a[2]+(b[2]-a[2])*t),M4.sc(.06,.06,.06)),[.4,.28,.15],1);}}
+  useTex(VP,camPos);}
+const thirdPerson=()=>typeof camMode!=='undefined'&&camMode>0;
+{const d0=drawXPOrbs;drawXPOrbs=function(){d0();drawLeads();};}
+// named creatures show their name when you look at them
+{const h0=drawHUD;drawHUD=function(){h0();if(!INF||!player||hideGui)return;const m=lookMob(player,8);if(m&&m.customName){const rp=m.rpos||m.pos;nameTagMC({pos:[rp[0],rp[1]+(m.eh||1)-1.8+.1,rp[2]],name:m.customName,sneak:false,bat:false},'#ffffff');}};}
+// the anvil names Name Tags (and anything else) for a level
+{const a0=useAnvil;useAnvil=function(p,h){const s=p.inv[p.sel];if(s&&s.id==='name_tag'){const cre=p.gm==='creative';if(!cre&&XP.level<1){chatMsg('You need 1 experience level to rename.','#ff5555',false);return;}
+    askText('New name for the '+ITEMS[s.id].name+':',(s.tag&&s.tag.name)||'',v=>{const cur=p.inv[p.sel];if(!cur||cur!==s)return;if(v){cur.tag=Object.assign({},cur.tag||{},{name:v.slice(0,32)});}else if(cur.tag){delete cur.tag.name;if(!Object.keys(cur.tag).length)delete cur.tag;}
+      if(!cre)xpSpend(1);psnd(['random/anvil_use','block/anvil/use'],[h.x,h.y,h.z],.6,1);});return;}return a0(p,h);};}
+
+// ---------- armour stands ----------
+MOB_MODELS.armor_stand={head:{p:[0,0,0],b:[[-1,-7,-1,2,7,2,0,0]]},body:{p:[0,0,0],b:[[-6,0,-1.5,12,3,3,0,26],[-3,3,-1,2,7,2,16,0],[1,3,-1,2,7,2,48,16],[-4,10,-1,8,2,2,0,48]]},
+  rarm:{p:[-5,2,0],r:[-.26,0,.17],b:[[-2,-2,-1,2,12,2,24,0]]},larm:{p:[5,2,0],r:[-.17,0,-.17],b:[[0,-2,-1,2,12,2,32,16,0,true]]},
+  rleg:{p:[-1.9,12,0],b:[[-1,0,-1,2,11,2,8,0]]},lleg:{p:[1.9,12,0],b:[[-1,0,-1,2,11,2,40,16,0,true]]},base:{p:[0,12,0],b:[[-6,11,-6,12,1,12,0,32]]}};
+MOB_T.armor_stand={name:'Armor Stand',hp:2,hw:.25,eh:1.975,model:'armor_stand',kind:'object',spd:0,drops:[],persist:true,col:'#a2824e'};MOB_TYPES.push('armor_stand');
+function objDrops2(e){if(e.mob==='armor_stand'){const o=[['armor_stand',1]];for(const a of (e.stand&&e.stand.a)||[])if(a)o.push([a,1]);return o;}if(e.mob==='painting')return [['painting',1]];return [];}
+function objUpdate(e,dt){if(e.mob==='armor_stand'){// it falls if nothing holds it up
+    if(!e.mot)e.mot=[0,0,0];e.mot[1]-=.08*dt*20;e.mot[0]=e.mot[2]=0;e.fallDist=0;moveEntity(e,0,e.mot[1]*dt*20,0);if(e.onGround)e.mot[1]=0;e.rpos=e.pos.slice();}}
+function standSet(e,code){// code: "slot:id" (id empty = take off)
+  const [i,id]=code.split(':');if(!e.stand)e.stand={a:[null,null,null,null]};e.stand.a[+i]=id||null;}
+function standUse(p,m,s){const it=s&&ITEMS[s.id];const send=a=>{if(isHost()||dimLocal()||!net)standSet(m,a);else netSend(N.MOBUSE,{id:m.id,a:'stand:'+a,by:p.id},'host');};
+  if(!m.stand)m.stand={a:[null,null,null,null]};
+  if(it&&it.type==='armor'){const i=it.slot;const old=m.stand.a[i];send(i+':'+s.id);consume(p,p.sel);if(old)giveOrDrop(p,old,1);p.swing=1;sfx('pick',{vol:.5});return true;}
+  // empty hand: take the piece at the height you clicked
+  const o=eye(p),d=fwd(p);const t=rayBox(o,d,...entBox(m,.1));const hy=t>=0?o[1]+d[1]*t-m.pos[1]:1;const want=hy>1.6?0:hy>.95?1:hy>.45?2:3;
+  let i=m.stand.a[want]?want:m.stand.a.findIndex(a=>!!a);if(i<0)return true;const old=m.stand.a[i];send(i+':');giveOrDrop(p,old,1);sfx('pick',{vol:.5});return true;}
+function drawStand(e){const TX=MOB_TEX.armor_stand;const rp=e.rpos||e.pos;const by=e.bodyYaw||0;const shake=e.hurtT>0?Math.sin(e.hurtT*30)*.2:0;const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by+shake));
+  const MD=MOB_MODELS.armor_stand;const mat=n=>{const P=MD[n].p,r=MD[n].r||[0,0,0];return chain(base,M4.tr(-P[0]/16,(24-P[1])/16,P[2]/16),M4.rz(r[2]),M4.ry(-r[1]),M4.rx(-r[0]));};
+  gl.uniform1f(PT.u.bright,mobBright(e));gl.uniform1f(PT.u.hurt,0);if(TX){const M=mobMesh('armor_stand',64);for(const n in M)drawMesh(M[n],mat(n),TX.tex);}
+  // armour, placed like it is on a player
+  const A=MODELS.armor;const P=(x,y,z,X,Y,Z)=>[M4.tr(x/16,y/16,z/16),M4.rz(Z),M4.ry(-Y),M4.rx(-X)];
+  const parts={head:chain(base,...P(0,24,0,0,0,0)),body:chain(base,M4.tr(0,24/16,0)),rarm:chain(base,...P(5,22,0,-.26,0,.17)),larm:chain(base,...P(-5,22,0,-.17,0,-.17)),rleg:chain(base,...P(1.9,12,0,0,0,0)),lleg:chain(base,...P(-1.9,12,0,0,0,0))};
+  (e.stand&&e.stand.a||[]).forEach((a,i)=>{if(!a||!ITEMS[a])return;const it=ITEMS[a];const T=ARMOR_TEX[it.tier];if(!T)return;if(T.tint)gl.uniform4f(PT.u.tint,...T.tint,1);
+    if(i===0)drawMesh(A.head,parts.head,T.l1);if(i===1){drawMesh(A.body,parts.body,T.l1);drawMesh(A.rarm,parts.rarm,T.l1);drawMesh(A.larm,parts.larm,T.l1);}
+    if(i===2){drawMesh(A.body2,parts.body,T.l2);drawMesh(A.rleg2,parts.rleg,T.l2);drawMesh(A.lleg2,parts.lleg,T.l2);}if(i===3){drawMesh(A.rleg,parts.rleg,T.l1);drawMesh(A.lleg,parts.lleg,T.l1);}
+    gl.uniform4f(PT.u.tint,1,1,1,1);});}
+function drawObject(e){if(e.mob==='armor_stand'){drawStand(e);return true;}if(e.mob==='painting'&&typeof drawPainting==='function'){drawPainting(e);return true;}return false;}
+// placing an armour stand: on top of a block, turned to face you (in 45 degree steps, like the real game)
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return u0(p,s);if(s&&s.id==='armor_stand'){const h=raycastBlock(eye(p),fwd(p),4.5,true,true);
+    if(h&&h.py-h.y===1&&!getB(h.px,h.py,h.pz)&&!getB(h.px,h.py+1,h.pz)){const yaw=Math.round((p.yaw+Math.PI)/(Math.PI/4))*(Math.PI/4);const pos=[h.px+.5,h.py,h.pz+.5];
+      if(dropAuth()){const e=spawnMob('armor_stand',pos,{yaw});e.bodyYaw=e.headYaw=yaw;e.stand={a:[null,null,null,null]};}else netSend(N.MOBUSE,{id:'new',a:'veh:armor_stand',p:pos,y:yaw,by:p.id},'host');
+      if(p.gm!=='creative')consume(p,p.sel);p.swing=1;}return true;}return u0(p,s);};}
+for(const k of ['saddle','lead','name_tag','iron_horse_armor','golden_horse_armor','diamond_horse_armor','armor_stand','minecart','chest_minecart','furnace_minecart','tnt_minecart','hopper_minecart','command_block_minecart','boat'])if(ITEMS[k])delete ITEMS[k].tip;
+ITEMS.name_tag.tip=['Name it on an Anvil, then use it on a creature'];ITEMS.lead.tip=['Use it on an animal to lead it; on a fence to tie it'];ITEMS.saddle.tip=['Put it on a tamed horse or a pig to ride it'];
+ITEMS.carrot_on_a_stick.tip=['Steers a saddled pig you ride; right click for a burst of speed'];
+for(const k of ['iron','golden','diamond'])ITEMS[k+'_horse_armor'].tip=['Protects a tamed horse'];
+ITEMS.boat.tip=['Place it on water and ride it'];for(const k in CART_TYPES)if(ITEMS[CART_TYPES[k].item])ITEMS[CART_TYPES[k].item].tip=['Place it on a rail'];
+
+// ================= Banners and paintings =================
+// Banners: 16 colours (6 wool + a stick), patterns added in a 3x3 crafting grid with dyes (open the grid by using a crafting table
+// while holding a banner), up to 6 layers; a cauldron of water washes off the last layer. They stand on the ground (16 turns) or
+// hang on walls, drawn with the resource pack's banner art. Paintings hang on walls in the largest size that fits there, chosen
+// at random; their art comes from the resource pack (an original stand-in set is drawn when no pack is loaded).
+
+// ---------- banner blocks: 16 standing turns + 4 walls; the colour and pattern live in BANNERS ----------
+{let id=VB.lastId+1;const t=BD[B.PLANKS].side;RS.banner={stand:[],wall:[]};
+  for(let r=0;r<16;r++){def(id,t,t,t,{render:false,solid:false,opaque:false,pick:true,banner:{r},sup:[0,-1,0],shape:[[.4,0,.4,.6,1,.6]]});BLOCK_COL[id]='#e0e0e0';RS.banner.stand.push(id++);}
+  for(let a=0;a<4;a++){def(id,t,t,t,{render:false,solid:false,opaque:false,pick:true,banner:{a},sup:DIRS4[a].slice(),shape:[turnBox([0,0,0,1,1,.1],a)]});BLOCK_COL[id]='#e0e0e0';RS.banner.wall.push(id++);}
+  VB.lastId=id-1;for(const b of RS.banner.stand.concat(RS.banner.wall)){MINE_T_X[b]=1;AXE_BLOCKS.add(b);MINE_DROP[b]=null;}}
+const BANNER_PATTERNS=[// [texture name, 3x3 dye mask]
+  ['border','###|# #|###'],['circle','   | # |   '],['cross','# #| # |# #'],['diagonal_left','## |#  |   '],['diagonal_right',' ##|  #|   '],['diagonal_up_left','   |#  |## '],['diagonal_up_right','   |  #| ##'],
+  ['gradient','# #| # | # '],['gradient_up',' # | # |# #'],['half_horizontal','###|###|   '],['half_horizontal_bottom','   |###|###'],['half_vertical','## |## |## '],['half_vertical_right',' ##| ##| ##'],
+  ['rhombus',' # |# #| # '],['square_bottom_left','   |   |#  '],['square_bottom_right','   |   |  #'],['square_top_left','#  |   |   '],['square_top_right','  #|   |   '],['straight_cross',' # |###| # '],
+  ['stripe_bottom','   |   |###'],['stripe_center',' # | # | # '],['stripe_downleft','  #| # |#  '],['stripe_downright','#  | # |  #'],['stripe_left','#  |#  |#  '],['stripe_middle','   |###|   '],
+  ['stripe_right','  #|  #|  #'],['small_stripes','# #|# #|   '],['stripe_top','###|   |   '],['triangle_bottom','   | # |# #'],['triangle_top','# #| # |   ']];
+const DYE_OF=i=>{const k=COLORS16[i][0];return k==='white'?'bone_meal':k==='silver'?'light_gray_dye':k+'_dye';};
+for(let i=0;i<16;i++){item('banner_'+i,{name:COLORS16[i][1]+' Banner',type:'mat',stack:16,color:COLORS16[i][2],banner:i,tip:['Place it on the ground or a wall','Add patterns with dyes in a 3x3 crafting grid']});}
+const WOOLS16=[WOOL_IDS[0]].concat(WOOL_IDS.slice(1));
+{const n0=RECIPES.length;for(let i=0;i<16;i++)if(WOOLS16[i])shaped(['WWW','WWW',' S '],{W:WOOLS16[i],S:'stick'},'banner_'+i);for(let i=n0;i<RECIPES.length;i++)LC_REC.push(lcRecipe(RECIPES[i]));
+  LC_TABS.find(t=>t.name==='Decoration').entries.push(['Banners',[...Array(16).keys()].map(i=>'banner_'+i)]);}
+// patterns: one banner plus dyes of one colour laid out in a pattern's shape
+{const m0=matchRecipe;matchRecipe=function(grid,n){const r=m0(grid,n);if(r||n!==3)return r;const ban=[];const dyes=[];
+  grid.forEach((s,i)=>{if(!s)return;const it=ITEMS[s.id];if(it&&it.banner!=null)ban.push([i,s]);else dyes.push([i,s]);});
+  if(ban.length!==1||!dyes.length)return null;const dyeCol=dyes.map(([,s])=>[...Array(16).keys()].find(c=>DYE_OF(c)===s.id));if(dyeCol.some(c=>c==null)||new Set(dyeCol).size!==1)return null;
+  const mask=[...Array(9)].map((_,i)=>dyes.some(([j])=>j===i)?'#':' ');const m=mask.slice(0,3).join('')+'|'+mask.slice(3,6).join('')+'|'+mask.slice(6).join('');
+  const P=BANNER_PATTERNS.find(p=>p[1]===m);if(!P)return null;const b=ban[0][1];const layers=(b.tag&&b.tag.p)||[];if(layers.length>=6)return null;
+  return {out:b.id,n:1,tag:{p:layers.concat([[P[0],dyeCol[0]]])}};};}
+// the crafting screen keeps the result's tag
+{const s=document;const sc0=slotClick;slotClick=function(kind,i,right,shift){if(kind==='o'){const r=craftResult();if(r&&r.tag){const p=player;if(CR.cur)return;
+      for(let k=0;k<CR.grid.length;k++){const g=CR.grid[k];if(!g)continue;g.count--;if(!g.count)CR.grid[k]=null;}CR.cur={id:r.out,count:1,tag:r.tag};sfx('pick');craftRender();return;}}return sc0(kind,i,right,shift);};}
+// holding a banner at a crafting table opens the 3x3 grid instead of the recipe book
+{const t0=tryOpenChest;tryOpenChest=function(){const p=player;if(p&&p.alive&&MATCH.mode==='survival'&&!p.sneak){const s=p.inv[p.sel];if(s&&ITEMS[s.id]&&ITEMS[s.id].banner!=null){const h=raycastBlock(eye(p),fwd(p),4.5);if(h&&h.b===B.CRAFTING)return craftOpen('table');}}return t0();};}
+// ---------- placed banners ----------
+const BANNERS=new Map();   // "x,y,z" -> {c, p:[[pattern,colour]...]}  (per dimension: kept in DIMDATA on travel)
+N.BANNER=73;
+function bannerSet(k,v,send){if(v)BANNERS.set(k,v);else BANNERS.delete(k);if(send&&net)netSend(N.BANNER,{k,v:v||null});}
+NET_X[N.BANNER]=d=>bannerSet(d.k,d.v,false);
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival')return u0(p,s);const it=s&&ITEMS[s.id];if(!it||it.banner==null)return u0(p,s);
+  const h=raycastBlock(eye(p),fwd(p),4.5,true,true);if(!h||!canBuild())return true;const pl=!!h.plant;const nx=pl?0:h.px-h.x,ny=pl?1:h.py-h.y,nz=pl?0:h.pz-h.z;const X=h.px,Y=h.py,Z=h.pz;
+  if(!replaceable(getB(X,Y,Z)))return true;let id;
+  if(ny===1){if(getB(X,Y+1,Z)&&!replaceable(getB(X,Y+1,Z)))return true;const r=((Math.round(-(p.yaw)/(Math.PI/8))%16)+16+8)%16;id=RS.banner.stand[r];}
+  else if(ny===0){const a=nz===1?0:nx===-1?1:nz===-1?2:3;id=RS.banner.wall[a];}else return true;
+  if(placeBlock(X,Y,Z,id)){bannerSet(pk3(X,Y,Z),{c:it.banner,p:(s.tag&&s.tag.p)||[]},true);consume(p,p.sel);p.swing=1;}return true;};}
+// breaking one gives the banner back with its patterns
+{const c0=rsChanged;rsChanged=function(x,y,z,was,b){c0(x,y,z,was,b);if(was&&BD[was]&&BD[was].banner&&!(b&&BD[b]&&BD[b].banner)){const k=pk3(x,y,z);const v=BANNERS.get(k);
+  if(v){if(MATCH.mode==='survival'&&(!net||isHost()||dimLocal())&&!(player&&player.gm==='creative'&&dist(player.pos,[x,y,z])<6&&!net))requestDrop([x+.5,y,z+.5],'banner_'+v.c,1,undefined,v.p.length?{p:v.p}:undefined);BANNERS.delete(k);}}};}
+// a cauldron of water washes off the top pattern
+{const u0=useSpecial;useSpecial=function(p,s){if(INF&&p.alive&&s&&ITEMS[s.id]&&ITEMS[s.id].banner!=null&&s.tag&&s.tag.p&&s.tag.p.length){const h=raycastBlock(eye(p),fwd(p),4.5);
+    if(h&&h.b===B.CAULDRON_W){const one=Object.assign({},s,{count:1,tag:{p:s.tag.p.slice(0,-1)}});if(!one.tag.p.length)delete one.tag;s.count--;if(s.count<=0)p.inv[p.sel]=null;if(addItem(p,one.id,1,one.tag))requestDrop(p.pos,one.id,1,undefined,one.tag);
+      setBlockNet(h.x,h.y,h.z,B.CAULDRON);psnd(['liquid/splash'],[h.x,h.y,h.z],.4);return true;}}return u0(p,s);};}
+// ---------- banner art: the pack's banner pictures layered and tinted (cached per design) ----------
+let BAN_SRC={},BAN_TEX={};
+{const l0=packLoadMobs;packLoadMobs=async function(get){const r=await l0(get);BAN_SRC={};const g=async n=>{const i=await get('textures/entity/'+n+'.png');return i?imgToCanvas(i,64,64,0,0,i.width,i.height):null;};
+  BAN_SRC.base=await g('banner_base');BAN_SRC.cloth=await g('banner/base');for(const [k] of BANNER_PATTERNS)BAN_SRC[k]=await g('banner/'+k);
+  const ps=await get('textures/painting/paintings_kristoffer_zetterstrand.png');PAINT_SRC=ps?imgToCanvas(ps,256,256,0,0,ps.width,ps.height):null;return r||1;};}
+{const i0=initMobTextures;initMobTextures=function(){i0();for(const k in BAN_TEX)gl.deleteTexture(BAN_TEX[k].tex);BAN_TEX={};if(PAINT_TEX){gl.deleteTexture(PAINT_TEX);PAINT_TEX=null;}};}
+function tintMask(src,hex){const c=mkCanvas(64,64),g=c.getContext('2d');g.drawImage(src,0,0);const d=g.getImageData(0,0,64,64);const t=hexRGB(hex);
+  for(let i=0;i<d.data.length;i+=4){const L=(d.data[i]+d.data[i+1]+d.data[i+2])/765;d.data[i]=255*t[0];d.data[i+1]=255*t[1];d.data[i+2]=255*t[2];d.data[i+3]*=L;}/* old packs keep the shape in brightness, new ones in alpha */g.putImageData(d,0,0);return c;}
+function bannerTex(v){const key=v.c+'|'+v.p.map(q=>q.join(':')).join(',');if(BAN_TEX[key])return BAN_TEX[key];const c=mkCanvas(64,64),g=c.getContext('2d');
+  if(BAN_SRC.base)g.drawImage(BAN_SRC.base,0,0);else{g.fillStyle='#8a6a3a';g.fillRect(44,0,20,64);g.fillRect(0,42,44,6);}
+  const lay=(src,col)=>{if(src)g.drawImage(tintMask(src,col),0,0);else{g.fillStyle=col;g.fillRect(1,1,20,40);g.fillRect(22,1,20,40);}};
+  lay(BAN_SRC.cloth,COLORS16[v.c][2]);for(const [pn,col] of v.p){if(BAN_SRC[pn])lay(BAN_SRC[pn],COLORS16[col][2]);}
+  return BAN_TEX[key]={tex:mkTex(c)};}
+let BAN_MESH=null;
+function bannerMeshes(){if(BAN_MESH)return BAN_MESH;const mk=(x,y,z,w,h,d,u,v)=>{const o=[];boxUV(o,x,y,z,w,h,d,u,v,64,64,0,false);for(let i=0;i<o.length;i+=8){o[i]*=16;o[i+1]*=16;o[i+2]*=16;}return meshFrom(o);};// boxUV works in blocks; these meshes stay in pixels
+  // model units: pixels; the real game draws banners at 2/3 size
+  BAN_MESH={cloth:mk(-10,-40,-1,20,40,1,0,0),pole:mk(-1,-42,-1,2,42,2,44,0),bar:mk(-10,-2,-1,20,2,2,0,42)};return BAN_MESH;}
+function drawBanners(fogF){if(!BANNERS.size||!INF)return;useTex(VP,camPos);const M=bannerMeshes();const f=2/3;gl.uniform1f(PT.u.hurt,0);
+  for(const [k,v] of BANNERS){const [x,y,z]=k.split(',').map(Number);if(Math.hypot(x+.5-camPos[0],z+.5-camPos[2])>Math.min(fogF+8,96))continue;const b=getB(x,y,z);const D=BD[b];if(!D||!D.banner)continue;
+    const T=bannerTex(v);gl.uniform1f(PT.u.bright,mobBright({pos:[x+.5,y,z+.5]}));const sway=Math.sin(perfT*1.6+x*.7+z*.3)*.05;
+    let base,clothTop;
+    if(D.banner.r!=null){base=chain(M4.tr(x+.5,y,z+.5),M4.ry(-D.banner.r*Math.PI/8),M4.sc(f/16,f/16,f/16));drawMesh(M.pole,chain(base,M4.tr(0,42,0)),T.tex);drawMesh(M.bar,chain(base,M4.tr(0,44,0)),T.tex);clothTop=chain(base,M4.tr(0,42,-1.5));}
+    else{const a=D.banner.a;const ang=[0,-HP2,Math.PI,HP2][a];base=chain(M4.tr(x+.5,y,z+.5),M4.ry(ang),M4.tr(0,0,-.5+.1),M4.sc(f/16,f/16,f/16));drawMesh(M.bar,chain(base,M4.tr(0,2*16*.75/1,1.5)),T.tex);clothTop=chain(base,M4.tr(0,2*16*.75-2,1.5));}
+    drawMesh(M.cloth,chain(clothTop,M4.rx(sway)),T.tex);}}
+{const d0=drawMobs;drawMobs=function(fogF){d0(fogF);drawBanners(fogF);};}
+// banners per dimension, saved with the world
+XSAVE.push({save:(d)=>{const all={};for(const dm of DIMS)all[dm]=(DIMDATA[dm]&&DIMDATA[dm].banners)||[];all[DIM]=[...BANNERS];d.banners=all;},reset:()=>{BANNERS.clear();for(const dm of DIMS)if(DIMDATA[dm])DIMDATA[dm].banners=[];},
+  load:o=>{const all=o.banners||{};for(const dm of DIMS){if(!DIMDATA[dm])DIMDATA[dm]={edits:new Map(),chests:new Map(),furn:new Map(),drops:[]};DIMDATA[dm].banners=all[dm]||[];}BANNERS.clear();for(const [k,v] of (all[DIM]||[]))BANNERS.set(k,v);}});
+{const t0=travelTo;travelTo=function(dim,pos,opt){if(!INF||!player)return t0(dim,pos,opt);const from=DIM;const keep=[...BANNERS];const r=t0(dim,pos,opt);if(DIMDATA[from])DIMDATA[from].banners=keep;BANNERS.clear();for(const [k,v] of ((DIMDATA[dim]&&DIMDATA[dim].banners)||[]))BANNERS.set(k,v);return r;};}
+// banner item icons: a little banner in its colour
+{const p0=procIcon;procIcon=function(id){const it=ITEMS[id];if(it&&it.banner!=null){const c=mkCanvas(32,32),g=c.getContext('2d');g.fillStyle='#6a4a2a';g.fillRect(15,2,2,28);g.fillRect(7,3,18,2);
+    g.fillStyle=COLORS16[it.banner][2];g.fillRect(8,5,16,20);g.fillStyle='rgba(0,0,0,.25)';g.fillRect(8,24,16,1);g.fillRect(23,5,1,20);return c;}return p0(id);};}
+
+// ---------- paintings ----------
+// the 26 pictures of the real game, by their place on the pack's painting sheet [width, height, u, v] (pixels; 16 = one block)
+const PAINTINGS=[[16,16,0,0],[16,16,16,0],[16,16,32,0],[16,16,48,0],[16,16,64,0],[16,16,80,0],[16,16,96,0],[32,16,0,32],[32,16,32,32],[32,16,64,32],[32,16,96,32],[32,16,128,32],
+  [16,32,0,64],[16,32,16,64],[32,32,0,128],[32,32,32,128],[32,32,64,128],[32,32,96,128],[32,32,128,128],[32,32,160,128],[64,32,0,96],[64,64,0,192],[64,64,64,192],[64,64,128,192],[64,48,192,64],[64,48,192,112]];
+let PAINT_SRC=null,PAINT_TEX=null;const PAINT_MESH={};
+item('painting',{name:'Painting',type:'mat',stack:64,color:'#a07a50',tex:'item/painting',tip:['Hang it on a wall: it takes the biggest picture that fits']});
+{const n0=RECIPES.length;shaped(['SSS','SWS','SSS'],{S:'stick',W:WOOLS16},'painting');for(let i=n0;i<RECIPES.length;i++)LC_REC.push(lcRecipe(RECIPES[i]));LC_TABS.find(t=>t.name==='Decoration').entries.push(['Painting',['painting']]);}
+MOB_T.painting={name:'Painting',hp:1,hw:.5,eh:1,model:'painting',kind:'object',spd:0,drops:[],persist:true,col:'#a07a50'};MOB_TYPES.push('painting');
+// a stand-in painting sheet (original pictures) for when no pack is loaded
+function procPaintSheet(){const c=mkCanvas(256,256),g=c.getContext('2d');g.fillStyle='#6a4a2a';g.fillRect(192,0,16,16);const rnd=(a)=>{let s=a*9301+49297;return ()=>((s=(s*9301+49297)%233280)/233280);};
+  PAINTINGS.forEach(([w,h,u,v],i)=>{const r=rnd(i+1);const hue=r()*360;const sky=g.createLinearGradient(0,v,0,v+h);sky.addColorStop(0,`hsl(${hue},55%,${55+r()*20}%)`);sky.addColorStop(1,`hsl(${(hue+40)%360},45%,${30+r()*20}%)`);
+    g.fillStyle=sky;g.fillRect(u,v,w,h);g.fillStyle=`hsl(${(hue+180)%360},40%,30%)`;let y=v+h*.6;for(let x=u;x<u+w;x++){y+=(r()-.5)*2;y=Math.max(v+h*.3,Math.min(v+h-1,y));g.fillRect(x,Math.round(y),1,v+h-Math.round(y));}
+    if(r()<.6){g.fillStyle=`hsl(${(hue+60)%360},80%,75%)`;const s=2+Math.round(r()*w/6);g.fillRect(u+Math.round(r()*(w-s)),v+2,s,s);}
+    g.strokeStyle='#3a2a1a';g.lineWidth=1;g.strokeRect(u+.5,v+.5,w-1,h-1);});return c;}
+function paintMesh(i){if(PAINT_MESH[i])return PAINT_MESH[i];const [w,h,u,v]=PAINTINGS[i];const W=w/16,H=h/16,D=1/16,o=[];const tw=256;
+  const q=(P,n,u0,v0,u1,v1)=>{const U=[u0,u1,u1,u0],V=[v0,v0,v1,v1];for(const k of [0,1,2,0,2,3])o.push(P[k][0],P[k][1],P[k][2],n[0],n[1],n[2],U[k]/tw,V[k]/tw);};
+  const x0=-W/2,x1=W/2,y0=-H/2,y1=H/2;
+  q([[x0,y1,D],[x1,y1,D],[x1,y0,D],[x0,y0,D]],[0,0,1],u,v,u+w,v+h);                     // the picture, facing out (+z)
+  const bu=192,bv=0;q([[x1,y1,0],[x0,y1,0],[x0,y0,0],[x1,y0,0]],[0,0,-1],bu,bv,bu+16,bv+16); // the back
+  q([[x0,y1,0],[x1,y1,0],[x1,y1,D],[x0,y1,D]],[0,1,0],bu,bv,bu+16,bv+1);q([[x0,y0,D],[x1,y0,D],[x1,y0,0],[x0,y0,0]],[0,-1,0],bu,bv,bu+16,bv+1);
+  q([[x0,y1,0],[x0,y1,D],[x0,y0,D],[x0,y0,0]],[-1,0,0],bu,bv,bu+1,bv+16);q([[x1,y1,D],[x1,y1,0],[x1,y0,0],[x1,y0,D]],[1,0,0],bu,bv,bu+1,bv+16);
+  return PAINT_MESH[i]=meshFrom(o);}
+function drawPainting(e){if(!PAINT_TEX)PAINT_TEX=mkTex(PAINT_SRC||procPaintSheet());const rp=e.pos;const a=e.face||0;const ang=[Math.PI,HP2,0,-HP2][a];
+  gl.uniform1f(PT.u.bright,mobBright({pos:[rp[0]+DIRS4[a][0]*.5,rp[1],rp[2]+DIRS4[a][2]*.5]}));gl.uniform1f(PT.u.hurt,0);drawMesh(paintMesh(e.paint||0),chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(ang)),PAINT_TEX);}
+// where a w x h painting would sit on the wall behind (x,y,z) facing DIRS4[a]: the cells it covers, or null
+function paintCells(x,y,z,a,w,h){const [nx,,nz]=DIRS4[a];const rx=-nz,rz=nx;   // along the wall
+  const ox=-Math.floor((w-1)/2),oy=-Math.floor((h-1)/2);const cells=[];
+  for(let i=0;i<w;i++)for(let j=0;j<h;j++){const cx=x+rx*(i+ox),cy=y+j+oy,cz=z+rz*(i+ox);if(getB(cx,cy,cz))return null;if(!rsCond(getB(cx-nx,cy,cz-nz))&&!(BD[getB(cx-nx,cy,cz-nz)]||{}).solid)return null;cells.push([cx,cy,cz]);}
+  const center=[x+rx*(ox+(w-1)/2)+.5-nx*.5+nx*0,y+oy+(h-1)/2+.5,z+rz*(ox+(w-1)/2)+.5-nz*.5];
+  // not on top of another painting
+  for(const m of mobs){if(m.mob!=='painting'||!m.alive)continue;const [mw,mh]=PAINTINGS[m.paint||0];if(m.face!==a)continue;if(Math.abs(m.pos[0]-center[0])*16<(mw+w*16)/2-.01&&Math.abs(m.pos[2]-center[2])*16<(mw+w*16)/2-.01&&Math.abs(m.pos[1]-center[1])*16<(mh+h*16)/2-.01)return null;}
+  return {cells,center};}
+{const u0=useSpecial;useSpecial=function(p,s){if(!INF||!p.alive||MATCH.mode!=='survival'||!s||s.id!=='painting')return u0(p,s);const h=raycastBlock(eye(p),fwd(p),4.5);if(!h||h.py!==h.y)return true;
+  const nx=h.px-h.x,nz=h.pz-h.z;const a=DIRS4.findIndex(d=>d[0]===nx&&d[2]===nz);if(a<0)return true;
+  // the biggest pictures that fit, one of them at random
+  const fits=[];PAINTINGS.forEach(([w,hh],i)=>{const r=paintCells(h.px,h.py,h.pz,a,w/16,hh/16);if(r)fits.push([w*hh,i,r]);});if(!fits.length){chatMsg('There is no room for a painting there.','#aaaaaa',false);return true;}
+  const big=Math.max(...fits.map(f=>f[0]));const pick=fits.filter(f=>f[0]===big);const [,i,r]=pick[Math.random()*pick.length|0];const pos=r.center;
+  if(dropAuth()){const e=spawnMob('painting',pos,{yaw:0});e.paint=i;e.face=a;}else netSend(N.MOBUSE,{id:'new',a:'paint:'+i+':'+a,p:pos,by:p.id},'host');
+  if(p.gm!=='creative')consume(p,p.sel);p.swing=1;psnd(['dig/wood1'],pos,.4);return true;};}
+{const m0=mobNet;mobNet=function(code,d,from,fromHost){if(code===N.MOBUSE&&d&&d.id==='new'&&typeof d.a==='string'&&d.a.startsWith('paint:')){if(isHost()&&Array.isArray(d.p)){const [,i,a]=d.a.split(':').map(Number);const e=spawnMob('painting',d.p,{yaw:0});e.paint=i;e.face=a;}return;}return m0(code,d,from,fromHost);};}
+// a painting falls off when its wall goes
+{const c0=rsChanged;rsChanged=function(x,y,z,was,b){c0(x,y,z,was,b);if(!was||(b&&BD[b]&&BD[b].solid)||!(!net||isHost()||dimLocal()))return;
+  for(const m of mobs){if(m.mob!=='painting'||!m.alive)continue;const [w,h]=PAINTINGS[m.paint||0];const a=m.face||0;const [nx,,nz]=DIRS4[a];
+    const wx=m.pos[0]-nx*.5,wz=m.pos[2]-nz*.5;if(Math.abs(x+.5-wx)<=w/32+.01&&Math.abs(z+.5-wz)<=w/32+.01&&Math.abs(y+.5-m.pos[1])<=h/32+.01&&(nx?Math.abs(x+.5-(m.pos[0]-nx*.5))<.6:Math.abs(z+.5-(m.pos[2]-nz*.5))<.6))mobDie(m,null,'wall');}};}
+// paintings are thin: their hit box follows the wall
+{const b0=entBox;entBox=function(e,pad){if(e&&e.mob==='painting'){const [w,h]=PAINTINGS[e.paint||0];const a=e.face||0;const [nx,,nz]=DIRS4[a];const hw=w/32,hh=h/32;const ax=nx?.05:hw,az=nz?.05:hw;
+    return [[e.pos[0]-ax,e.pos[1]-hh,e.pos[2]-az],[e.pos[0]+ax,e.pos[1]+hh,e.pos[2]+az]];}return b0(e,pad);};}
+
+// items added by the later files need their icons too
+rebuildIcons();rebuildItemAtlas();
+// two kinds of network message must never share a number
+{const seen={};for(const k in N){if(seen[N[k]])console.error("network code clash: N."+k+" and N."+seen[N[k]]+" are both "+N[k]);seen[N[k]]=k;}}
+
+// ---------- item names when you point at a slot in any menu ----------
+// The tooltip used to live inside the chest screen, so it stayed invisible in the inventory, crafting and furnace screens.
+// It now sits on the page itself, follows the mouse in every menu, and on touch screens a tap on a slot shows the name for a moment.
+{const tip=$('invTip');document.body.appendChild(tip);tip.style.zIndex='400';
+  let tapUntil=0,shown=null;
+  const MENUS='#chestUI,#craftUI,#lceCraft';
+  const menuOpen=()=>[...document.querySelectorAll(MENUS)].some(m=>!m.classList.contains('hidden'));
+  function fill(d){const n=d.dataset.n,en=d.dataset.e||'';const k=n+'|'+en+'|'+d.dataset.a;if(shown===k)return;shown=k;
+    pxSet(tip,n,d.dataset.a==='1'?'#55ffff':'#ffffff');
+    if(en)for(const l of en.split('|'))tip.appendChild(l[0]==='~'?pxCanvas(l.slice(1),GS,'#7f9fff'):l[0]==='!'?pxCanvas(l.slice(1),GS,'#ff6060'):pxCanvas(l,GS,'#aaaaaa'));}
+  function place(x,y,above){tip.classList.remove('hidden');const w=tip.offsetWidth,h=tip.offsetHeight;
+    let L=above?x-w/2:x+14,T=above?y-h-10:y-h-4;L=Math.max(4,Math.min(innerWidth-w-4,L));if(T<4)T=above?y+12:y+16;T=Math.min(innerHeight-h-4,T);
+    tip.style.left=L+'px';tip.style.top=T+'px';}
+  function hide(){tip.classList.add('hidden');shown=null;}
+  // runs after the menus' own handlers, so it has the last word
+  document.addEventListener('mousemove',e=>{if(performance.now()<tapUntil){if(shown)tip.classList.remove('hidden');return;}if(!menuOpen()){if(!tip.classList.contains('hidden'))hide();return;}
+    const d=e.target.closest&&e.target.closest('.slot');if(d&&d.dataset.n){fill(d);place(e.clientX,e.clientY,false);}else hide();});
+  document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!menuOpen())return;const d=e.target.closest&&e.target.closest('.slot');
+    if(!d||!d.dataset.n){hide();return;}fill(d);const r=d.getBoundingClientRect();place(r.left+r.width/2,r.top,true);tapUntil=performance.now()+1600;
+    clearTimeout(tip._t);tip._t=setTimeout(()=>{if(performance.now()>=tapUntil)hide();},1650);},true);
+  {const r0=renderChest;renderChest=function(){const r=r0.apply(this,arguments);if(performance.now()<tapUntil&&shown)tip.classList.remove('hidden');return r;};}   // a tap that moves an item redraws the chest
+  setInterval(()=>{if(!tip.classList.contains('hidden')&&!menuOpen())hide();},250);}
+
+// ---------- mystical forests: greener grass and leaves, misty green fog, drifting motes and weeping willow trees ----------
+const LUSH_BIOMES=new Set([BIO.forest,BIO.birch,BIO.dark]);
+Object.assign(BIOMES[BIO.forest],{fog:[.55,.76,.62],fogK:.42,part:'mote',sky:[.34,.62,.74]});
+Object.assign(BIOMES[BIO.birch],{fog:[.62,.8,.7],fogK:.5,part:'mote',sky:[.4,.66,.82]});
+Object.assign(BIOMES[BIO.dark],{fog:[.36,.52,.42],fogK:.34,part:'mote',sky:[.28,.5,.56]});
+// which columns are forest: worked out once per chunk and kept
+{const C=new Map();let seed=null,lk=-1,la=null;
+  lushAt=function(x,z){if(!INF||DIM!=='overworld')return false;if(seed!==WSEED){C.clear();seed=WSEED;lk=-1;}
+    const cx=x>>4,cz=z>>4,k=(cx+32768)*65536+(cz+32768);
+    if(k!==lk){la=C.get(k);if(!la){la=new Uint8Array(256);for(let i=0;i<256;i++)la[i]=LUSH_BIOMES.has(colInfo((cx<<4)+(i&15),(cz<<4)+(i>>4)).b)?1:0;if(C.size>6000)C.clear();C.set(k,la);}lk=k;}
+    return la[(x&15)|((z&15)<<4)]===1;};}
+// some of the forest's trees become weeping willows: a round crown of bright leaves with long curtains of leaves and vines hanging down
+{const c0=chunkFeatures2;chunkFeatures2=function(cx,cz){const f=c0(cx,cz);if(f._lush)return f;f._lush=1;
+  for(const o of f){if(o.t!=='oak'&&o.t!=='birch'&&o.t!=='darkoak')continue;const b=colInfo2(o.x,o.z).b;if(!LUSH_BIOMES.has(b))continue;
+    const r=hash3(o.x,o.z,7,WSEED+97);if((o.t==='oak'&&r<.34)||(o.t!=='oak'&&r<.12))o.t='willow';}
+  return f;};}
+function buildWillow(f){const {x,y,z,r}=f;const R=i=>hash3(x,z,i,WSEED+90+(r*1000|0));
+  const h=6+(R(1)*3|0),top=y+h;
+  const LAY=[[-1,3.9],[0,4.4],[1,3.7],[2,2.5]];
+  const inC=(dx,dy,dz)=>{const L=LAY[dy+1];if(!L)return false;return Math.hypot(dx,dz)<=L[1]-R(dx*7+dz*13+dy*31+100)*.8;};
+  for(let i=0;i<h+1;i++)gput(x,y+i,z,B.LOG);
+  for(const [dx,dz,k] of [[1,0,1],[-1,0,2],[0,1,3],[0,-1,4]])if(R(40+k)<.45)gput(x+dx,y,z+dz,B.LOG);   // roots
+  for(let dy=-1;dy<=2;dy++)for(let dz=-5;dz<=5;dz++)for(let dx=-5;dx<=5;dx++)if(inC(dx,dy,dz))gsoft(x+dx,top+dy,z+dz,B.JLEAVES);
+  // the curtains hang from the lowest leaf of each column near the crown's edge
+  for(let dz=-5;dz<=5;dz++)for(let dx=-5;dx<=5;dx++){const d=Math.hypot(dx,dz);if(d<1.8||R(dx*17+dz*29+300)>.6)continue;
+    let low=null;for(let dy=-1;dy<=2;dy++)if(inC(dx,dy,dz)){low=dy;break;}if(low==null)continue;
+    const L=2+(R(dx*5+dz*11+500)*(d>3?7:4)|0);
+    for(let i=1;i<=L;i++){const yy=top+low-i;if(yy<=y)break;gsoft(x+dx,yy,z+dz,i<=1&&R(dx+dz*3+700)<.55?B.JLEAVES:B.VINE);}}}
+{const b0=buildFeature2;buildFeature2=function(f){if(f.t==='willow'){buildWillow(f);return;}return b0(f);};}
+
+// ---------- the enchanted golden apple ----------
+food('enchanted_golden_apple','Enchanted Golden Apple',4,9.6,'#f5c518','golden_apple',{fx:[['regen',20,1],['absorption',120,3],['resistance',300,0],['fireres',300,0]],always:true,ench:{},rare:true});
+ITEM_ALT.enchanted_golden_apple=['apple_golden','golden_apple'];
+EFFECT_NAMES.resistance='Resistance';
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ig){const r=e&&e.effects&&e.effects.resistance;if(r&&cause!=='void'&&cause!=='starve')amt*=Math.max(0,1-.2*(r.amp+1));return h0.call(this,e,amt,src,cause,kb,raw,ig);};}
+
+// ---------- the chest buried under every ruin: 4 times in 5 plain supplies, 1 time in 5 a treasure ----------
+LOOT_TABLES.ruin_common=[['bread',1,4,.75],['apple',1,3,.5],['wheat',2,6,.45],['seeds_wheat',2,6,.4],['coal',2,8,.6],['iron_ingot',1,3,.45],['gold_nugget',2,8,.4],['bone',1,5,.5],
+  ['rotten_flesh',1,5,.5],['string',1,4,.4],['b'+B.TORCH,2,8,.5],['stone_sword',1,1,.2],['leather',1,3,.3],['carrot',1,3,.3],['potato',1,3,.3],['arrow',2,8,.35],['iron_pickaxe',1,1,.08]];
+LOOT_TABLES.ruin_god=[['enchanted_golden_apple',1,2,1],['diamond',3,9,.95],['b'+B.DIAMONDB,1,2,.35],['emerald',3,8,.5],['golden_apple',1,3,.65],['gold_ingot',4,12,.6],
+  ['diamond_sword_e_sharpness3_fire_aspect1',1,1,.45],['diamond_pickaxe_e_efficiency3',1,1,.4],['diamond_chestplate_e_protection3',1,1,.35],['diamond_helmet_e_protection3',1,1,.25],
+  ['bow_e_power3_flame1',1,1,.3],['totem',1,1,.3],['nether_star',1,1,.12],['experience_bottle',4,12,.6],['ender_pearl',2,6,.4],['diamond_horse_armor',1,1,.2],['name_tag',1,1,.3],['mythril_sword_e_sharpness3',1,1,.2]];
+{const f0=lootFill;lootFill=function(t){if(t==='ruin')t=Math.random()<.2?'ruin_god':'ruin_common';return f0(t);};}
+
+// ---------- skinwalkers ----------
+// Stay awake two whole days (no bed) and they start coming at night. A skinwalker takes the skin and the name of one of the
+// players and stands at a distance, watching, looking exactly like them. When it sees you looking at it (or you come close, or hit it)
+// it twists and stretches into its true shape, screams, and hunts you with a boss bar. Daylight drives it away.
+MOB_T.skinwalker={name:'Skinwalker',hp:80,hw:.3,eh:1.8,model:'skinwalker',kind:'hostile',spd:.6,chase:1.25,dmg:6,drops:[['bone',2,5]],rare:[['golden_apple',.3],['ender_pearl',.4],['totem',.06]],col:'#6a645a',fireproof:true,noEgg:true};
+MOB_TYPES.push('skinwalker');
+MOB_SND.skinwalker={hurt:['mob/endermen/hit','mob/enderman/hit'],death:['mob/endermen/death','mob/enderman/death']};
+const SW={slept:0,warned:-1,spawnT:20};
+const SW_T=2.6,SW_FLIP=1.6;   // transformation length, moment the true shape bursts out
+const swAwake=()=>GZ.day-SW.slept;
+XSAVE.push({save:d=>{d.swSlept=SW.slept;},reset:()=>{SW.slept=0;SW.warned=-1;},load:o=>{SW.slept=o.swSlept!=null?o.swSlept:(GZ.day||0);SW.warned=-1;}});
+// sleeping through a night resets the count
+{const t0=survTick;survTick=function(dt){const was=SLEEP.on;t0(dt);if(was&&!SLEEP.on)SW.slept=GZ.day;
+  if(MATCH.mode==='survival'&&DIM==='overworld'&&swAwake()>=2&&dayAmt()<.3&&SW.warned!==GZ.day&&isHost()){SW.warned=GZ.day;
+    chatMsg(swAwake()>=3?'You have not slept in '+swAwake()+' days. They know your face now.':'You have not slept in two days. Something is out there, watching.','#b04040');}};}
+
+// ---------- spawning (host) ----------
+function swSpawnTick(dt){if(DIM!=='overworld'||sDiff()===0||swAwake()<2||dayAmt()>.25)return;SW.spawnT-=dt;if(SW.spawnT>0)return;SW.spawnT=12+Math.random()*10;
+  const have=mobs.filter(m=>m.alive&&m.mob==='skinwalker').length;if(have>=(swAwake()>=4?2:1)||Math.random()>.45)return;
+  const players=ents.filter(e=>e.kind==='player'&&e.alive&&!e.spectator&&e.gm!=='creative'&&!e.bat);if(!players.length)return;
+  const prey=players[Math.random()*players.length|0];const copy=ents.filter(e=>e.kind==='player'&&!e.bat);const who=copy[Math.random()*copy.length|0]||prey;
+  for(let k=0;k<12;k++){const a=Math.random()*6.283,r=22+Math.random()*14;const x=Math.floor(prey.pos[0]+Math.cos(a)*r),z=Math.floor(prey.pos[2]+Math.sin(a)*r);if(!chunkReadyAt(x,z))continue;
+    const y=surfY(x,z)+1;if(y<2||!floorOk(x,y,z)||!openAt(x,y+2,z))continue;if(players.some(q=>Math.hypot(q.pos[0]-x,q.pos[2]-z)<18))continue;
+    const e=spawnMob('skinwalker',[x+.5,y,z+.5]);e.sw={st:'d',skin:who.skin||('gen:'+who.name),name:who.name,t:0,target:prey.id};e.eh=1.8;return e;}}
+{const s0=mobSpawnTick;mobSpawnTick=function(dt){s0(dt);if(MATCH.mode==='survival')swSpawnTick(dt);};}
+// /summon skinwalker (and spawn eggs) start out disguised as the nearest player
+function swInit(e){if(e.sw)return e.sw;const q=nearestPlayer(e,200)||player;e.sw={st:'d',skin:(q&&q.skin)||'pack:steve',name:(q&&q.name)||'Steve',t:0,target:q&&q.id};e.eh=1.8;return e.sw;}
+
+// ---------- behaviour (host) ----------
+function swLooksAt(p,e){const o=eye(p),f=fwd(p);const c=[e.pos[0]-o[0],e.pos[1]+1.2-o[1],e.pos[2]-o[2]];const L=Math.hypot(...c)||1;return (f[0]*c[0]+f[1]*c[1]+f[2]*c[2])/L>.965;}
+function swFace(e,t,dt){const fx=t.pos[0]-e.pos[0],fz=t.pos[2]-e.pos[2];const want=Math.atan2(-fx,-fz);e.bodyYaw+=angTo(e.bodyYaw,want)*Math.min(1,dt*3);
+  e.headYaw=e.bodyYaw+clamp(angTo(e.bodyYaw,want),-1.2,1.2);e.yaw=e.headYaw;const fy=(t.pos[1]+1.5)-(e.pos[1]+e.eh*.85);e.pitch=clamp(Math.atan2(fy,Math.hypot(fx,fz)),-1,1);}
+function swVanish(e){spawnParticles(e.pos[0],e.pos[1]+1,e.pos[2],30,[.08,.07,.07],1.6,'poof');e.alive=false;e.gone=true;}
+function swUpdate(e,dt){const S=swInit(e);if(!chunkReadyAt(e.pos[0],e.pos[2])){e.rpos=e.pos;return;}
+  e.fire=0;if(S.st!=='h'){tickEffects(e,dt);if(!e.alive)return;}
+  // daylight drives it off
+  if(dayAmt()>.5&&(lightAt(Math.floor(e.pos[0]),Math.floor(e.pos[1]+1.5),Math.floor(e.pos[2]))>>4)>=12){swVanish(e);return;}
+  let T=entById(S.target);if(!T||!T.alive||T.gm==='creative'||T.spectator||T.bat||dist(T.pos,e.pos)>96){T=nearestPlayer(e,64);S.target=T?T.id:null;}
+  if(S.st==='d'){let wx=0,wz=0,spd=.5;e.sneak=false;
+    if(T){const dx=T.pos[0]-e.pos[0],dz=T.pos[2]-e.pos[2],hd=Math.hypot(dx,dz);
+      if(hd>26){wx=dx;wz=dz;spd=.8;}else if(hd<11){wx=-dx;wz=-dz;spd=.55;}   // keeps its distance, watching
+      e.sneak=hd<20&&Math.sin(perfT*.7+e.pos[0])>.7;   // now and then it crouches, like a player would
+      if(hd<7||(hd<30&&swLooksAt(T,e)&&canSee(e,T))){S.st='t';S.t=0;swCry(e,0);}}
+    else{e.ai.wt=(e.ai.wt||0)-dt;if(!e.ai.goal||e.ai.wt<=0){e.ai.wt=4+Math.random()*5;e.ai.goal=[e.pos[0]+(Math.random()-.5)*12,0,e.pos[2]+(Math.random()-.5)*12];}wx=e.ai.goal[0]-e.pos[0];wz=e.ai.goal[2]-e.pos[2];if(Math.hypot(wx,wz)<.8)wx=wz=0;}
+    const L=Math.hypot(wx,wz);if(L>.01){wx/=L;wz/=L;}if((wx||wz)&&e.collidedH&&e.onGround)e.jump=true;else e.jump=false;
+    e.spdK=spd*(e.sneak?.4:1);physics(e,dt,wx,wz);
+    if(T)swFace(e,T,dt);else if(wx||wz){e.bodyYaw+=angTo(e.bodyYaw,Math.atan2(-wx,-wz))*Math.min(1,dt*6);e.headYaw=e.yaw=e.bodyYaw;}
+    return;}
+  if(S.st==='t'){const was=S.t;S.t+=dt;e.sneak=false;e.jump=false;e.spdK=0;physics(e,dt,0,0);if(T)swFace(e,T,dt*.5);
+    if(was<SW_FLIP&&S.t>=SW_FLIP){e.eh=2.7;swCry(e,1);}
+    if(S.t>=SW_T){S.st='h';S.t=0;e.target=T||null;}
+    return;}
+  // hunting: the normal monster chase, locked onto its prey, with long leaps
+  e.eh=2.7;e.target=T||null;e.ai.t=1;
+  if(T&&e.onGround){const dx=T.pos[0]-e.pos[0],dz=T.pos[2]-e.pos[2],hd=Math.hypot(dx,dz);if(hd>3.5&&hd<10&&Math.random()<dt*.7){e.mot[1]=.55;e.mot[0]+=dx/hd*.45;e.mot[2]+=dz/hd*.45;swCry(e,2);}}
+  S.growl=(S.growl||4)-dt;if(S.growl<=0){S.growl=4+Math.random()*5;swCry(e,2);}
+  return swU0(e,dt);}
+const swU0=updateMob;
+updateMob=function(e,dt){if(e.mob==='skinwalker')return swUpdate(e,dt);return swU0(e,dt);};
+// hitting it gives it away; it takes less damage while it changes
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ig){if(e&&e.mob==='skinwalker'&&e.alive){const S=swInit(e);if(S.st==='d'){S.st='t';S.t=0;swCry(e,0);amt*=.5;}else if(S.st==='t')amt*=.3;}return h0.call(this,e,amt,src,cause,kb,raw,ig);};}
+
+// sounds: a made-up shriek (oscillators) on top of the pack's enderman stare / scream, pitched down
+function swCry(e,kind){if(typeof netSend==='function'&&net&&isHost())netSend(N.SWCRY,{id:e.id,k:kind});swCryLocal(e,kind);}
+function swCryLocal(e,kind){if(!actx||!camPos)return;const d=dist(e.pos,camPos);if(d>48)return;const v=Math.max(0,1-d/48);
+  if(kind===0)psnd(['mob/endermen/stare','mob/enderman/stare'],e.pos,.9,.6);
+  if(kind===1)psnd(['mob/endermen/scream','mob/enderman/scream'],e.pos,1,.45);
+  if(kind===2){psnd(['mob/endermen/idle','mob/enderman/idle','mob/zombie/say'],e.pos,.8,.5);return;}
+  const t=actx.currentTime,out=masterOut||actx.destination;const len=kind===0?SW_FLIP:1.2;
+  const o=actx.createOscillator(),o2=actx.createOscillator(),g=actx.createGain(),f=actx.createBiquadFilter();o.type='sawtooth';o2.type='square';
+  if(kind===0){o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(38,t+len);o2.frequency.setValueAtTime(220,t);o2.frequency.exponentialRampToValueAtTime(660,t+len);}
+  else{o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+len);o2.frequency.setValueAtTime(900,t);o2.frequency.exponentialRampToValueAtTime(300,t+len);}
+  f.type='lowpass';f.frequency.value=1400;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.22*v,t+.15);g.gain.exponentialRampToValueAtTime(.0001,t+len);
+  o.connect(f);o2.connect(f);f.connect(g);g.connect(out);o.start(t);o2.start(t);o.stop(t+len+.05);o2.stop(t+len+.05);}
+N.SWCRY=74;NET_X[N.SWCRY]=(d,from,fromHost)=>{if(!fromHost)return;const e=mobs.find(m=>m.id===d.id);if(e)swCryLocal(e,d.k);};
+
+// ---------- network: guests learn its disguise and state ----------
+{const x0=mobExtra;mobExtra=function(e){const o=x0(e);if(e.mob==='skinwalker'&&e.sw)o.sw=[e.sw.st,e.sw.skin,e.sw.name,+e.sw.t.toFixed(2)];return o;};}
+{const a0=mobExtraApply;mobExtraApply=function(e,o){a0(e,o);if(e.mob!=='skinwalker'||!o||!o.sw)return;const [st,skin,name,t]=o.sw;
+  if(!e.sw)e.sw={};const S=e.sw;if(S.st!==st||Math.abs((S.t||0)-t)>.3)e.swAt=perfT;else if(S.st==='t')e.swAt=perfT;S.st=st;S.skin=skin;S.name=name;S.t=t;e.eh=st==='d'||(st==='t'&&t<SW_FLIP)?1.8:2.7;};}
+// how far through the change it is, smooth on every screen
+function swPhase(e){const S=e.sw;if(!S)return 0;if(S.st==='d')return 0;if(S.st==='h')return SW_T;if(isHost()||dimLocal())return S.t;return Math.min(SW_T,S.t+(perfT-(e.swAt||perfT)));}
+
+// ---------- the true shape: a gaunt, stooped thing, far too tall, with arms down to its knees ----------
+let SW_MESH=null;
+function swTexture(){const c=mkCanvas(64,64),g=c.getContext('2d');const h=hash2;const img=g.createImageData(64,64);
+  for(let y=0;y<64;y++)for(let x=0;x<64;x++){const n=h(x,y,331)*.5+h(x>>1,y>>1,332)*.3+h(x>>2,y>>3,333)*.2;let r=120+n*40,gg=112+n*36,b=100+n*30;if(h(x,y,334)>.9){r*=.6;gg*=.58;b*=.55;}
+    const i=(y*64+x)*4;img.data[i]=r;img.data[i+1]=gg;img.data[i+2]=b;img.data[i+3]=255;}
+  g.putImageData(img,0,0);const R=(x,y,w,hh,c2)=>{g.fillStyle=c2;g.fillRect(x,y,w,hh);};
+  // head (uv 0,0; 6x9x6): sunken black eyes with red pupils, a long split mouth with teeth
+  R(6+0,6+2,6,1,'rgba(40,30,25,.6)');R(6+1,6+3,2,2,'#140c0c');R(6+3+0,6+3,2,2,'#140c0c');R(6+1,6+3,1,1,'#ff2a1a');R(6+4,6+3,1,1,'#ff2a1a');
+  R(6+1,6+6,4,3,'#100808');for(let i=0;i<4;i++){R(6+1+i,6+6,1,1,'#e8e0c8');R(6+1+i,6+8,1,1,i%2?'#e8e0c8':'#100808');}
+  R(0,0,24,6,'rgba(20,14,12,.35)');   // darker scalp
+  // body (uv 0,16; 8x14x4): ribs on the chest
+  for(let i=0;i<5;i++)R(4+1,16+4+3+i*2,6,1,'rgba(45,32,28,.75)');R(4+3,16+4+2,2,12,'rgba(60,45,40,.5)');
+  // arms (uv 32,0; 3x26x3) and legs (uv 48,0; 3x22x3): blackened claws and feet
+  R(32,3+21,12,5,'#1a1210');R(32,3+22,12,1,'#d8d0c0');R(48,3+18,12,4,'#2a201a');
+  R(60,60,4,4,'#ff3020');   // eye glow pixels
+  return c;}
+function swMeshes(){if(SW_MESH)return SW_MESH;const A=f=>{const o=[];f(o);return meshFrom(o);};
+  SW_MESH={tex:mkTex(swTexture()),
+    head:A(o=>boxUV(o,-3,0,-4,6,9,6,0,0,64,64)),body:A(o=>boxUV(o,-4,0,-2,8,14,4,0,16,64,64)),
+    rarm:A(o=>boxUV(o,-1.5,-25,-1.5,3,26,3,32,0,64,64)),larm:A(o=>boxUV(o,-1.5,-25,-1.5,3,26,3,32,0,64,64,0,true)),
+    rleg:A(o=>boxUV(o,-1.5,-22,-1.5,3,22,3,48,0,64,64)),lleg:A(o=>boxUV(o,-1.5,-22,-1.5,3,22,3,48,0,64,64,0,true)),
+    eyes:A(o=>{boxUV(o,-2,3,-4.25,1,1,.3,60,60,64,64);boxUV(o,1,3,-4.25,1,1,.3,60,60,64,64);})};
+  return SW_MESH;}
+// its stolen shape: the player model with the copied skin, which can be stretched while it changes
+function swDrawFake(e,ph){const S=skinTex(e.sw.skin||'pack:steve'),M=S.slim?MODELS.slim:MODELS.wide;limbTick(e);
+  const rp=e.rpos||e.pos,by=e.bodyYaw==null?e.yaw:e.bodyYaw;const k=ph<=.5?0:Math.min(1,(ph-.5)/(SW_FLIP-.5));const tilt=ph>0?Math.min(1,ph/.5)*.9:0;
+  const j=k>0?()=>(Math.random()-.5)*.06*k:()=>0;const sx=1-.25*k,sy=1+.5*k;
+  const base=chain(M4.tr(rp[0]+j(),rp[1]-(e.sneak?.125:0),rp[2]+j()),M4.ry(by+j()*4),M4.sc(.9375*sx,.9375*sy,.9375*sx));
+  const headYaw=(e.headYaw==null?e.yaw:e.headYaw)-by,headPitch=-(e.pitch||0);const ls=(e.limbSwing||0)*.6662,la=ph>0?0:(e.limbAmt||0);
+  let rX=Math.cos(ls+Math.PI)*la*.5*2,lX=Math.cos(ls)*la*.5*2;const rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
+  if(k>0){rX=-.3*k+j()*6;lX=-.3*k+j()*6;}
+  const sk=e.sneak;const P=(x,y,z,X,Y,Z)=>[M4.tr(x/16,y/16,z/16),M4.rz(Z),M4.ry(-Y),M4.rx(-X)];const arm=M4.sc(1,1+.8*k,1);
+  const parts={head:chain(base,...P(0,24-(sk?1:0),0,headPitch+j()*8,-headYaw,tilt+j()*8),M4.sc(1+.2*k,1+.3*k,1+.2*k)),body:chain(base,M4.tr(0,24/16,0),M4.rx(sk?-.5:0)),
+    rarm:chain(base,...P(5,22,0,rX,0,.05+.25*k),arm),larm:chain(base,...P(-5,22,0,lX,0,-.05-.25*k),arm),
+    rleg:chain(base,...P(1.9,12+(sk?3:0),sk?4:.1,rlX,0,0)),lleg:chain(base,...P(-1.9,12+(sk?3:0),sk?4:.1,llX,0,0))};
+  setEntLight(e.pos);gl.uniform1f(PT.u.hurt,e.hurtT>0?1:0);if(k>0)gl.uniform4f(PT.u.tint,1-.55*k,1-.62*k,1-.62*k,1);
+  for(const [m,ov] of [['head','hat'],['body','jacket'],['rarm','rsleeve'],['larm','lsleeve'],['rleg','rpants'],['lleg','lpants']]){drawMesh(M[m],parts[m],S.tex);drawMesh(M[ov],parts[m],S.tex);}
+  gl.uniform4f(PT.u.tint,1,1,1,1);gl.uniform1f(PT.u.hurt,0);
+  if(k>0&&Math.random()<k*.6)spawnParticles(rp[0],rp[1]+.6+Math.random()*1.4,rp[2],1,[.06,.05,.05],.8,'poof');}
+function swDrawTrue(e,ph){const SM=swMeshes();limbTick(e);const rp=e.rpos||e.pos,by=e.bodyYaw==null?e.yaw:e.bodyYaw;
+  const rise=ph<SW_T?Math.min(1,.55+(ph-SW_FLIP)/(SW_T-SW_FLIP)*.45):1;const tilt=e.deathT!=null?Math.min(1,Math.sqrt(e.deathT*1.8))*HP2:0;
+  const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by),M4.rz(tilt),M4.sc(1,rise,1));
+  const ls=(e.limbSwing||0)*.6662,la=Math.min(1,e.limbAmt||0);const hY=-((e.headYaw==null?e.yaw:e.headYaw)-by),hX=-(e.pitch||0);
+  const sw=e.swing>0?Math.sin((1-e.swing)*Math.PI):0;const twitch=Math.sin(perfT*23)*.05+(Math.random()<.02?(Math.random()-.5)*.5:0);
+  const hunch=.38;const body=chain(base,M4.tr(0,22/16,0),M4.rx(-hunch));
+  const reach=ph<SW_T?(1-(ph-SW_FLIP)/(SW_T-SW_FLIP))*1.2:0;   // arms flung out as it rises
+  const P=(x,y,z,X,Y,Z)=>[M4.tr(x/16,y/16,z/16),M4.rz(Z),M4.ry(-Y),M4.rx(-X)];
+  const parts={body,head:chain(body,...P(0,14,-1,hX+hunch*.6,hY,twitch)),
+    rarm:chain(body,...P(5.5,13,0,Math.cos(ls+Math.PI)*1.1*la-sw*1.6-hunch*.5,0,.12+reach)),larm:chain(body,...P(-5.5,13,0,Math.cos(ls)*1.1*la-sw*1.6-hunch*.5,0,-.12-reach)),
+    rleg:chain(base,...P(2.2,22,0,Math.cos(ls)*1.2*la,0,0)),lleg:chain(base,...P(-2.2,22,0,Math.cos(ls+Math.PI)*1.2*la,0,0))};
+  setEntLight(e.pos);gl.uniform1f(PT.u.hurt,e.hurtT>0||e.deathT!=null?1:0);
+  for(const k of ['body','head','rarm','larm','rleg','lleg'])drawMesh(SM[k],parts[k],SM.tex);
+  gl.uniform1f(PT.u.bright,1.6);drawMesh(SM.eyes,parts.head,SM.tex);gl.uniform1f(PT.u.hurt,0);}
+{const d0=drawMob;drawMob=function(e){if(e.mob!=='skinwalker')return d0(e);if(e.gone)return;const S=e.sw||swInit(e);const ph=swPhase(e);
+  if(S.st==='d'||(S.st==='t'&&ph<SW_FLIP)){swDrawFake(e,ph);return;}
+  if(S.st==='t'&&!e._swBurst){e._swBurst=true;const rp=e.rpos||e.pos;spawnParticles(rp[0],rp[1]+1.2,rp[2],40,[.05,.04,.04],2,'poof');spawnParticles(rp[0],rp[1]+1.4,rp[2],16,[.8,.05,.05],1.5,'magic');}
+  swDrawTrue(e,ph);};}
+// while disguised it carries the stolen name over its head, like a real player
+{const h0=drawHUD;drawHUD=function(){h0();if(!INF||!player||hideGui||MATCH.mode!=='survival')return;
+  for(const m of mobs){if(m.mob!=='skinwalker'||!m.alive||!m.sw)continue;if(!(m.sw.st==='d'||(m.sw.st==='t'&&swPhase(m)<SW_FLIP)))continue;if(dist(m.pos,camPos)>48)continue;
+    const rp=m.rpos||m.pos;nameTagMC({pos:[rp[0],rp[1],rp[2]],name:m.sw.name,sneak:m.sneak,bat:false},'#ffffff');}};}
+// boss bars for every skinwalker that has shown itself nearby (under the Ender Dragon's, if that is up too)
+{const b0=drawBossBar;drawBossBar=function(){b0();if(!INF||!player||hideGui)return;let y=22+(DIM==='end'&&mobs.some(m=>m.mob==='dragon'&&m.alive)?30:0);
+  for(const m of mobs){if(m.mob!=='skinwalker'||!m.alive||!m.sw||m.sw.st==='d'||swPhase(m)<SW_FLIP*.8||dist(m.pos,camPos)>64)continue;
+    const w=Math.min(420,W*.6),x=(W-w)/2;hc.save();txt('Skinwalker',W/2,y-6,16,'#ff5050','center');
+    hc.fillStyle='rgba(30,0,0,.85)';hc.fillRect(x,y,w,8);const f=Math.max(0,m.health/m.maxHp);const gr=hc.createLinearGradient(0,y,0,y+8);gr.addColorStop(0,'#ff4a3a');gr.addColorStop(1,'#9a0d0d');hc.fillStyle=gr;hc.fillRect(x,y,w*f,8);
+    hc.strokeStyle='#000';hc.lineWidth=1;hc.strokeRect(x+.5,y+.5,w-1,7);for(let i=1;i<20;i++){hc.fillStyle='rgba(0,0,0,.35)';hc.fillRect(x+w*i/20,y,1,8);}hc.restore();y+=30;}};}
+
+// /summon <creature> (host or Creative): handy for meeting a skinwalker without staying up two days
+{const c0=serverCmd;serverCmd=function(S,text){const a=text.replace(/^\//,'').trim().split(/\s+/);if((a[0]||'').toLowerCase()!=='summon')return c0(S,text);
+  const reply=(t,col='#aaaaaa')=>{if(S.local)chatMsg(t,col,false);else netSend(N.CHAT,{t,c:col},S.id);};
+  if(!S.local&&!(S.ent&&S.ent.gm==='creative'))return reply('Only the host or a player in Creative can summon.','#ff5555');
+  if(MATCH.mode!=='survival'||!INF)return reply('Summoning only works in Survival worlds.','#ff5555');
+  const type=(a[1]||'').toLowerCase().replace('minecraft:','');if(!MOB_T[type]||MOB_T[type].kind==='object')return reply('Usage: /summon <creature>, for example /summon skinwalker','#ff5555');
+  const p=S.ent||player;const yaw=p.yaw||0;const pos=[p.pos[0]-Math.sin(yaw)*4,p.pos[1],p.pos[2]-Math.cos(yaw)*4];const e=spawnMob(type,pos);if(type==='skinwalker')swInit(e);reply('Summoned '+MOB_T[type].name);};}
+
+// the new items need icons, and no two network messages may share a number
+rebuildIcons();rebuildItemAtlas();
+{const seen={};for(const k in N){if(seen[N[k]])console.error('network code clash: N.'+k+' and N.'+seen[N[k]]+' are both '+N[k]);seen[N[k]]=k;}}
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.
