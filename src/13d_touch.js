@@ -65,7 +65,7 @@ tBtn('tInv',()=>{if(!player)return;if(chestOpen){chestClose(false);return;}if(!p
 // drop: a tap drops one, holding drops the whole stack
 let dropHold=null;
 tBtn('tDrop',()=>{if(player&&!player.alive){spectate.mode='bat';return;}fakeKey('KeyQ');dropHold=setTimeout(()=>{const p=player;if(!p||!p.alive||MATCH.state==='lobby')return;const s=p.inv[p.sel];if(!s||s.count<=0)return;
-  const d=fwd(p);requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],s.id,s.count,[d[0]*6,d[1]*6+2,d[2]*6]);p.inv[p.sel]=null;if(navigator.vibrate)try{navigator.vibrate(20);}catch(_){}},500);},()=>clearTimeout(dropHold));
+  const d=fwd(p);requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],s.id,s.count,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);p.inv[p.sel]=null;if(navigator.vibrate)try{navigator.vibrate(20);}catch(_){}},500);},()=>clearTimeout(dropHold));
 tBtn('tChat',()=>{if(typeof openChat==='function'&&player&&!chatUI)openChat('');});
 tBtn('tReady',()=>fakeKey('KeyR'));tBtn('tList',()=>fakeKey('Tab'));
 tBtn('tPause',()=>{if(!online)paused=true;show('pause');});

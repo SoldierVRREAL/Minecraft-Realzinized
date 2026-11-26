@@ -199,7 +199,8 @@ function drawHumanoid(e){
     :chain(M4.tr(rp[0],rp[1]-(e.sneak?.125:0),rp[2]),M4.ry(by),M4.sc(.9375,.9375,.9375));
   const headYaw=e.yaw-by,headPitch=-e.pitch;  // vanilla: positive pitch looks down
   const ls=(e.limbSwing||0)*.6662,la=e.limbAmt||0;const age=perfT*20+(e.color||0)*7;
-  let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;const rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
+  let rX=Math.cos(ls+Math.PI)*2*la*.5,lX=Math.cos(ls)*2*la*.5,rY=0,lY=0,rZ=0,lZ=0;let rlX=Math.cos(ls)*1.4*la,llX=Math.cos(ls+Math.PI)*1.4*la;
+  if(e.sitPose){rlX=-1.4;llX=-1.4;rX=-.62;lX=-.62;}   // riding: legs out in front, hands forward
   const held=e.inv[e.sel];if(held)rX=rX*.5-Math.PI/10;
   if(e.using==='block'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}
   if(e.using==='shield'){if(held&&ITEMS[held.id]&&ITEMS[held.id].type==='shield'){rX=rX*.5-Math.PI*.3;rY=-Math.PI/6;}else{lX=lX*.5-Math.PI*.3;lY=Math.PI/6;}}

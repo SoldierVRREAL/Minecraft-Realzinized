@@ -10,13 +10,18 @@ const TILE_TINT={leaves_birch:'#80a755',leaves_spruce:'#619961',leaves_acacia:'#
       g.fillStyle='#05060c';g.fillRect(0,0,s,s);g.globalCompositeOperation='lighter';g.globalAlpha=.9;g.drawImage(img,0,0,64,64,0,0,s,s);g.globalAlpha=.5;g.drawImage(img,64,64,64,64,0,0,s,s);tiles[t]=c;n++;}}
     for(const name in TILE_TINT){const ti=TILE_PACK.indexOf(name);if(ti>=0&&tiles[ti]&&isGray(tiles[ti]))tiles[ti]=tintCanvas(dvCanvas(tiles[ti]),TILE_TINT[name]);}
     return n;};}
-// hearts are violet: the pack's red heart sprites are turned purple (same shading, new hue)
+// hearts are blue (#3938e5): the pack's red heart sprites get a new hue, same shading
 function violetCanvas(img){const w=img.width,h=img.height,c=mkCanvas(w,h),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,0);const d=g.getImageData(0,0,w,h);const D=d.data;
-  for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const r=D[i]/255,gg=D[i+1]/255,b=D[i+2]/255;const mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),l=(mx+mn)/2,dd=mx-mn;if(dd<.06||mx!==r)continue;   // only the reddish pixels
-    const s=l>.5?dd/(2-mx-mn):dd/(mx+mn);const H=280/360;const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
+  // the most common heart colour is brought to exactly #3938e5; lighter and darker shades keep their difference
+  const cnt={};for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const mx=Math.max(D[i],D[i+1],D[i+2]),mn=Math.min(D[i],D[i+1],D[i+2]);if(mx-mn<16||mx===D[i+1])continue;const k=mx+mn;cnt[k]=(cnt[k]||0)+1;}
+  let mainL=.5,best=0;for(const k in cnt)if(cnt[k]>best){best=cnt[k];mainL=k/510;}const gain=.559/Math.max(.1,mainL);
+  for(let i=0;i<D.length;i+=4){if(D[i+3]<10)continue;const r=D[i]/255,gg=D[i+1]/255,b=D[i+2]/255;const mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),dd=mx-mn;let l=(mx+mn)/2;if(dd<.06||mx===gg)continue;   // the coloured pixels, not the white shine or the outline
+    let hue=mx===r?((gg-b)/dd+6)%6:(r-gg)/dd+4;hue*=60;if(hue>40&&hue<200)continue;   // reds and purples only
+    const s=(l>.5?dd/(2-mx-mn):dd/(mx+mn))*.78;l=Math.min(.92,l*gain);const H=240.3/360;const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
     D[i]=f(H+1/3)*255;D[i+1]=f(H)*255;D[i+2]=f(H-1/3)*255;}
   g.putImageData(d,0,0);return c;}
-{const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half'])if(G[k]&&!G[k]._violet){G[k]=violetCanvas(G[k]);G[k]._violet=true;}return r;};}
+function blueHearts(){const G=PACK.gui;if(G)for(const k of ['heart_full','heart_half','heart_hc_full','heart_hc_half'])if(G[k]&&!G[k]._blue){G[k]=violetCanvas(G[k]);G[k]._blue=true;}}
+{const l0=loadPackBuffer;loadPackBuffer=async function(buf,label){const r=await l0(buf,label);blueHearts();return r;};}
 
 // animated tiles: fire and the Nether portal play their pack animation (the frames are stacked in one tall image)
 const ANIM_TILES={fire_layer_0:{fps:20},fire_layer_1:{fps:20},portal:{fps:12}};let animT=0;

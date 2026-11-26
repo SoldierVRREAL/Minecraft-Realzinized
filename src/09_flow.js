@@ -215,7 +215,7 @@ function onNetEvent(code,d,from){
     if(!drops.some(x=>x.did===d.did))drops.push(Object.assign({},d,{pos:d.pos.slice(),vel:d.vel.slice()}));break;
   case N.DROPUPD:{const x=drops.find(x=>x.did===d.did);if(x){x.count=d.count;if(x.count<=0)x.dead=true;}break;}
   case N.DROPDEL:{const x=drops.find(x=>x.did===d.did);if(x)x.dead=true;break;}
-  case N.DROPREQ:if(isHost()&&ITEMS[d.id]&&d.c>0)hostSpawnDrop(d.p,d.id,d.c,d.v,'p'+from,d.rid);break;
+  case N.DROPREQ:if(isHost()&&ITEMS[d.id]&&d.c>0)hostSpawnDrop(d.p,d.id,d.c,d.v,'p'+from,d.rid,d.t);break;
   case N.PICK:{if(!isHost())return;const x=drops.find(x=>x.did===d.did&&!x.dead);
     if(d.n>0){const id=d.id;if(!x||x.id!==id){netSend(N.GIVE,{to:'p'+from,items:[],revoke:[[id,d.n]]},from);break;}   // already gone: take back what they picked up
       const t=Math.min(d.n,x.count);x.count-=t;if(x.count<=0){x.dead=true;netSend(N.DROPDEL,{did:x.did});}else netSend(N.DROPUPD,{did:x.did,count:x.count});if(t<d.n)netSend(N.GIVE,{to:'p'+from,items:[],revoke:[[id,d.n-t]]},from);break;}

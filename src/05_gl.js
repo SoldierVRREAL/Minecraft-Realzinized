@@ -62,17 +62,22 @@ function meshRegion(x0,z0,y0,y1){
   const pxMax=INF?16:Math.min(16,WX-x0),pzMax=INF?16:Math.min(16,WZ-z0);const smoothOn=OPT.smooth;
   for(let ly=1;ly<NY-1;ly++){const y=ymn+ly-1;for(let pz=1;pz<=pzMax;pz++)for(let px=1;px<=pxMax;px++){const k=(ly*18+pz)*18+px;
     const b=PB_[k];if(!b)continue;const D=BD[b];if(!D.render)continue;const lx=px-1,lz=pz-1,x=x0+lx,z=z0+lz;const em=D.light>=7?8:0;
-    if(D.cross){const tx=(D.side%ACOLS)*TILE,ty=Math.floor(D.side/ACOLS)*TILE;const L=PL_[k];const sl=LB[(L>>4)&15],bl=Math.min(1,LB[L&15]*1.05);const j=(hash2(x,z,5)-.5)*.3;
+    if(D.cross){const ct=b===B.TGRASS&&lushAt(x,z)?LUSH.tall:D.side;const tx=(ct%ACOLS)*TILE,ty=Math.floor(ct/ACOLS)*TILE;const L=PL_[k];const sl=LB[(L>>4)&15],bl=Math.min(1,LB[L&15]*1.05);const j=(hash2(x,z,5)-.5)*.3;
       const u0=(tx+.02)/AS,u1=(tx+TILE-.02)/AS,v0=(ty+.02)/AS,v1=(ty+TILE-.02)/AS;const sh=em?1:.9,s1=em?1:sl,b1=em?1:bl;
       for(let q=0;q<2;q++){const ax=.15,az=q?.85:.15,bx=.85,bz=q?.15:.85;
         pv(o,lx+ax+j,y+1,lz+az,u0,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y+1,lz+bz,u1,v0,s1,b1,sh,32+em+2);pv(o,lx+bx+j,y,lz+bz,u1,v1,s1,b1,sh,32+em+2);pv(o,lx+ax+j,y,lz+az,u0,v1,s1,b1,sh,32+em+2);}continue;}
-    if(D.shape){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
-      const tw=D.trans?w:o;for(const bx of (D.fence?fenceBoxes(x,y,z,false):D.pane?paneBoxes(x,y,z):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
+    if(D.quads){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
+      // free quads (sloped rails...): [[x,y,z]*4, tile], drawn from both sides, texture corners in order (0,0) (1,0) (1,1) (0,1)
+      for(const qd of D.quads){const tile=qd[4];const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;for(const back of [0,1]){for(let c=0;c<4;c++){const P=qd[back?3-c:c];const cu=back?[0,1,1,0][3-c]:[0,1,1,0][c],cv2=back?[0,0,1,1][3-c]:[0,0,1,1][c];
+        const q=QV[c];q[0]=lx+P[0];q[1]=y+P[1];q[2]=lz+P[2];q[3]=(tx+.02+cu*(TILE-.04))/AS;q[4]=(ty+.02+cv2*(TILE-.04))/AS;q[5]=em?1:sl;q[6]=em?1:bl;q[7]=1;q[8]=4*16+em;}emitQuad(o,false,0);}}
+      if(!D.shape&&!D.dyn)continue;}
+    if(D.shape||D.dyn){const Lo=PL_[k],Lu=PL_[k+324];const sl=LB[Math.max(Lo>>4,Lu>>4)&15],bl=Math.min(1,LB[Math.max(Lo&15,Lu&15)]);
+      const tw=D.trans?w:o;for(const bx of (D.dyn?D.dyn(x,y,z,b):D.fence?fenceBoxes(x,y,z,false):D.pane?paneBoxes(x,y,z):D.shape))for(let f=0;f<6;f++){const d=f>>1,s=(f&1)?-1:1;const u=(d+1)%3,v=(d+2)%3;const lo=bx,hi=[bx[3],bx[4],bx[5]];
         const plane2=s>0?hi[d]:lo[d];
         if((s>0&&plane2>=1)||(s<0&&plane2<=0)){const nb=PB_[k+s*AXO[d]];if(nb&&BD[nb].opaque&&!BD[nb].shape)continue;}
         const tile=bx[6]!=null?bx[6]:D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
         for(let c=0;c<4;c++){const cu=CORN[c][0],cv2=CORN[c][1];_l[d]=plane2;_l[u]=cu?hi[u]:lo[u];_l[v]=cv2?hi[v]:lo[v];
-          let tu,tv;if(d==1){tu=_l[0];tv=_l[2];}else if(d==0){tu=_l[2];tv=1-_l[1];}else{tu=_l[0];tv=1-_l[1];}
+          let tu,tv;const OF=bx[7];const X0=_l[0]+(OF?OF[0]:0),Y0=_l[1]+(OF?OF[1]:0),Z0=_l[2]+(OF?OF[2]:0);if(d==1){tu=X0;tv=Z0;}else if(d==0){tu=Z0;tv=1-Y0;}else{tu=X0;tv=1-Y0;}
           const q=QV[c];q[0]=lx+_l[0];q[1]=y+_l[1];q[2]=lz+_l[2];q[3]=(tx+.02+tu*(TILE-.04))/AS;q[4]=(ty+.02+tv*(TILE-.04))/AS;q[5]=em?1:sl;q[6]=em?1:bl;q[7]=em?1:FSHADE[f];q[8]=f*16+em;}
         emitQuad(tw,false,0);}
       continue;}
@@ -83,7 +88,8 @@ function meshRegion(x0,z0,y0,y1){
       if(liq){const NB=nb&&BD[nb];if(NB&&NB.liquid===liq){if(d===1||(NB.lh||1)>=(D.lh||1)-.001)continue;}else if(nb&&OPQ[nb])continue;if(liq==='water'&&nb&&BD[nb].solid&&OPQ[nb])continue;}
       else if(nb){if(CULLS[nb])continue;if(nb===b){const N=BD[nb];if(!N.cross&&!N.shape&&N.render)continue;}}
       if(opq&&PO_[Fi])continue;
-      const tile=D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
+      let tile=D.faces?D.faces[f]:d==1?(s>0?D.top:D.bottom):(f==4?D.front:D.side);
+      if((b===B.GRASS||b===B.LEAVES)&&lushAt(x,z)){if(b===B.LEAVES)tile=LUSH.leaves;else if(d!==1)tile=LUSH.side;else if(s>0)tile=LUSH.top;}   // mystical forests
       const tx=(tile%ACOLS)*TILE,ty=Math.floor(tile/ACOLS)*TILE;
       const u=(d+1)%3,v=(d+2)%3,AU=AXO[u],AV=AXO[v];
       const L=PL_[Fi];const sl=em?1:LB[(L>>4)&15],bl=em?1:Math.max(D.glow||0,Math.min(1,LB[L&15]*1.05));
@@ -164,7 +170,7 @@ const MODELS={wide:makePlayerModel(false),slim:makePlayerModel(true),armor:makeA
 const ITEM_CELL=32,ITEM_COLS=16,ITEM_ROWS=64;let itemAtlas=mkCanvas(ITEM_CELL*ITEM_COLS,ITEM_CELL*ITEM_ROWS),itemTex=null,itemMesh={},itemSlot={};
 function rebuildItemAtlas(){
   const g=itemAtlas.getContext('2d');g.clearRect(0,0,itemAtlas.width,itemAtlas.height);g.imageSmoothingEnabled=false;let i=0;itemSlot={};
-  for(const k in ITEMS){if(ITEMS[k].base&&ITEMS[ITEMS[k].base])continue;const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;g.drawImage(ICON_RAW[k]||ICONS[k],cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
+  for(const k in ITEMS){if(ITEMS[k].base&&ITEMS[ITEMS[k].base])continue;const cx=(i%ITEM_COLS)*ITEM_CELL,cy=Math.floor(i/ITEM_COLS)*ITEM_CELL;const ic=ICON_RAW[k]||ICONS[k];if(ic)g.drawImage(ic,cx,cy,ITEM_CELL,ITEM_CELL);itemSlot[k]=[cx,cy];i++;}
   for(const k in ITEMS)if(!itemSlot[k]&&itemSlot[ITEMS[k].base])itemSlot[k]=itemSlot[ITEMS[k].base];
   if(itemTex)gl.deleteTexture(itemTex);itemTex=mkTex(itemAtlas);for(const k in itemMesh)gl.deleteBuffer(itemMesh[k].buf);itemMesh={};
 }
@@ -182,7 +188,7 @@ function heldMesh(id){const it=ITEMS[id];const b=it&&it.type==='block'?it.block:
     blockItemMesh[b]=meshFrom(o);}
   return {mesh:blockItemMesh[b],tex:atlasTex,block:true};}
 function getItemMesh(id){
-  if(itemMesh[id])return itemMesh[id];const [cx,cy]=itemSlot[id];const data=itemAtlas.getContext('2d').getImageData(cx,cy,ITEM_CELL,ITEM_CELL).data;
+  if(itemMesh[id])return itemMesh[id];if(!itemSlot[id]){rebuildItemAtlas();if(!itemSlot[id])return getItemMesh('stick');}const [cx,cy]=itemSlot[id];const data=itemAtlas.getContext('2d').getImageData(cx,cy,ITEM_CELL,ITEM_CELL).data;
   const N=ITEM_CELL,A=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&data[(y*N+x)*4+3]>40;const o=[];const W=itemAtlas.width,H=itemAtlas.height;const th=1/N;const S=1/N;
   const push=(p,n,uv)=>o.push(p[0],p[1],p[2],n[0],n[1],n[2],uv[0],uv[1]);
   const q=(a,b,c,d,n,ua,ub,uc,ud)=>{for(const [p,uv] of [[a,ua],[b,ub],[c,uc],[a,ua],[c,uc],[d,ud]])push(p,n,uv);};

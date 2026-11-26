@@ -31,7 +31,7 @@ function pollPad(dt){
     if(E('rt')){lmb=true;lmbEdge=true;}if(!B.rt&&padPrev.rt)lmb=false;
     if(E('lt')){rmb=true;rmbEdge=true;}if(!B.lt&&padPrev.lt)rmb=false;
     if(player.alive){if(E('lb')){player.sel=(player.sel+8)%9;player.using=null;selShow=2;sfx('click');}if(E('rb')){player.sel=(player.sel+1)%9;player.using=null;selShow=2;sfx('click');}
-      if(E('b')&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6]);consume(player,player.sel);}}
+      if(E('b')&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);consume(player,player.sel);}}
       if(E('y')&&MATCH.state==='play'){if(!tryOpenChest())openInv();}}
     else{if(E('lb')){spectate.mode='follow';spectate.idx--;}if(E('rb')){spectate.mode='follow';spectate.idx++;}if(E('x'))spectate.mode='bat';if(E('rt')){sfx('squeak');netSend(N.SQUEAK,{id:player.id});}}
     if(E('start')){if(online){show('pause');}else{paused=true;show('pause');}}

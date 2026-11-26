@@ -81,7 +81,7 @@ const CR={open:false,mode:'inv',n:2,grid:[],cur:null,fk:null,hover:null};
 function craftOpen(mode,fk){if(!player||!player.alive)return false;CR.open=true;CR.mode=mode;CR.n=mode==='table'?3:2;CR.grid=new Array(CR.n*CR.n).fill(null);CR.fk=fk||null;CR.cur=null;
   chestOpen={inv:true,craft:true};sfx(mode==='inv'?'click':'chest');document.exitPointerLock&&document.exitPointerLock();show('craftUI');craftRender();return true;}
 function giveBack(s){if(!s)return;if(stackMax(s.id)===1&&ITEMS[s.id].type!=='armor'){const f=player.inv.findIndex(x=>!x);if(f>=0){player.inv[f]=s;return;}requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1);return;}
-  const left=addItem(player,s.id,s.count);if(left)requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,left);}
+  const left=addItem(player,s.id,s.count,s.tag);if(left)requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,left,undefined,s.tag);}
 function craftClose(){if(!CR.open)return;CR.open=false;for(const s of CR.grid)giveBack(s);CR.grid=[];giveBack(CR.cur);CR.cur=null;hide('craftUI');$('cursorItem').textContent='';}
 function craftResult(){if(CR.mode==='furnace')return null;return matchRecipe(CR.grid,CR.n);}
 function stackCanvas(s){const c=slotCanvas(s.id,s.count);const m=maxDur(s.id);if(s.dmg&&m){const g=c.getContext('2d'),S=GS,f=1-s.dmg/m;g.fillStyle='#000';g.fillRect(3*S,15*S,13*S,2*S);
@@ -118,7 +118,7 @@ function slotRef(kind,i){const p=player,f=CR.fk?furnAt(CR.fk):null;
   if(kind==='a')return [()=>p.armor[i]?{id:p.armor[i],count:1}:null,v=>{p.armor[i]=v?v.id:null;},1,s=>ITEMS[s.id].type==='armor'&&ITEMS[s.id].slot===i];
   return null;}
 const stackMax=id=>Math.max(1,ITEMS[id].stack||1);
-const sameStack=(a,b)=>a&&b&&a.id===b.id&&!a.dmg&&!b.dmg;
+const sameStack=(a,b)=>a&&b&&a.id===b.id&&!a.dmg&&!b.dmg&&tagEq(a,b);
 function slotClick(kind,i,right,shift){const p=player;
   if(kind==='o'){const r=craftResult();if(!r)return;const take=()=>{for(let k=0;k<CR.grid.length;k++){const s=CR.grid[k];if(!s)continue;s.count--;if(!s.count)CR.grid[k]=null;}};
     if(shift){let guard=64;while(guard--){const r2=craftResult();if(!r2||r2.out!==r.out)break;if(!invRoom(p,r2.out))break;take();const left=addItem(p,r2.out,r2.n);if(left)requestDrop([p.pos[0],p.pos[1]+.4,p.pos[2]],r2.out,left);}}

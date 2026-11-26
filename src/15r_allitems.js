@@ -256,9 +256,9 @@ function slabMerge(p,h,id){const R=ROT[id];if(!R||R.kind!=='slab')return false;c
   const hb=h&&h.b,HD=hb&&BD[hb],cre=p.gm==='creative';
   // ---- using blocks (sneak to place against them instead) ----
   if(h&&!p.sneak&&HD){
-    if(HD.door){const d=HD.door;const lo=d.u?h.y-1:h.y;const lb=getB(h.x,lo,h.z),L=BD[lb];if(L&&L.door){const nb=d.first+L.door.f*4+(L.door.open?0:2);setMany([h.x,lo,h.z,nb,h.x,lo+1,h.z,nb+1]);
+    if(HD.door&&HD.door.first!==B.DOOR_IRON){const d=HD.door;const lo=d.u?h.y-1:h.y;const lb=getB(h.x,lo,h.z),L=BD[lb];if(L&&L.door){const nb=d.first+L.door.f*4+(L.door.open?0:2);setMany([h.x,lo,h.z,nb,h.x,lo+1,h.z,nb+1]);
         psnd(L.door.open?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.6,1);p.swing=1;return true;}}
-    if(HD.trap){const t=HD.trap;const ns=t.s>=2?t.s-2:t.s+2;setBlockNet(h.x,h.y,h.z,t.first+t.f*4+ns);psnd(t.s>=2?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.5,1.2);p.swing=1;return true;}
+    if(HD.trap&&HD.trap.first!==B.TRAPDOOR_IRON){const t=HD.trap;const ns=t.s>=2?t.s-2:t.s+2;setBlockNet(h.x,h.y,h.z,t.first+t.f*4+ns);psnd(t.s>=2?DOOR_SND.close:DOOR_SND.open,[h.x,h.y,h.z],.5,1.2);p.swing=1;return true;}
     if(HD.cake!=null&&(p.food<20||cre)){p.food=Math.min(20,p.food+2);p.sat=Math.min(p.food,(p.sat||0)+.4);sfx('eat');setBlockNet(h.x,h.y,h.z,HD.cake>=6?0:XB.cake[HD.cake+1]);p.swing=1;return true;}
     if(HD.lever!=null){setBlockNet(h.x,h.y,h.z,XB.lever[HD.lever?0:1]);psnd(['random/click','block/lever/click'],[h.x,h.y,h.z],.5,HD.lever?.5:.6);p.swing=1;return true;}
     if(hb===B.ENCHANT_TABLE){useEnchantTable(p,h);return true;}
@@ -322,7 +322,7 @@ Object.assign(ORE_XP,{[B.EMERALD_ORE]:[3,7],[B.LAPIS_ORE]:[2,5],[B.REDSTONE_ORE]
 // eating stew gives the bowl back; drinking a potion gives the bottle back (13_ui)
 // ---------- creatures follow the food they like ----------
 const TEMPT={cow:['wheat'],sheep:['wheat'],pig:['carrot','potato','carrot_on_a_stick'],chicken:['seeds_wheat','seeds_melon','seeds_pumpkin','nether_wart_item'],deer:['carrot','golden_carrot']};
-{const u0=updateMob;updateMob=function(e,dt){const L=TEMPT[e.mob];e.tempt=null;if(L&&!(e.panic>0)&&!e.owner){let bd=10;for(const q of ents){if(q.kind!=='player'||!q.alive)continue;const s=q.inv&&q.inv[q.sel];if(!s||!L.includes(s.id))continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;e.tempt=q;}}}return u0(e,dt);};}
+{const u0=updateMob;updateMob=function(e,dt){const L=TEMPT[e.mob];e.tempt=e.leashTempt||null;if(L&&!(e.panic>0)&&!e.owner){let bd=10;for(const q of ents){if(q.kind!=='player'||!q.alive)continue;const s=q.inv&&q.inv[q.sel];if(!s||!L.includes(s.id))continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;e.tempt=q;}}}return u0(e,dt);};}
 {const a0=applyPack;applyPack=function(){const r=a0.apply(this,arguments);CRE.cats=null;return r;};}
 // ---------- the tick ----------
 {const t0=survTick;survTick=function(dt){t0(dt);if(!INF)return;cropTick(dt);fishTick(dt);rocketTick(dt);jukeTick();};}

@@ -92,7 +92,7 @@ function floorOk(x,y,z){const b=getB(x,y-1,z);return b&&BD[b].solid&&!BD[b].liqu
 function effLight(x,y,z){const L=lightAt(x,y,z);const sky=L>>4,blk=L&15;return Math.max(blk,sky-Math.round((1-dayAmt())*11));}
 function mobSpawnTick(dt){mobSpawnT-=dt;if(mobSpawnT>0)return;mobSpawnT=1.2;if(mobs.length>=44)return;
   const players=ents.filter(e=>e.kind==='player'&&e.alive&&!e.spectator);if(!players.length)return;
-  const p=players[Math.random()*players.length|0];let pas=0,hos=0;for(const m of mobs){if(!m.alive||hdist(m.pos,p.pos)>64)continue;if(MOB_T[m.mob].kind==='passive'||m.owner)pas++;else hos++;}
+  const p=players[Math.random()*players.length|0];let pas=0,hos=0;for(const m of mobs){if(!m.alive||hdist(m.pos,p.pos)>64||MOB_T[m.mob].kind==='object')continue;if(MOB_T[m.mob].kind==='passive'||m.owner)pas++;else hos++;}
   const farFromAll=(x,z,r)=>players.every(q=>Math.hypot(q.pos[0]-x,q.pos[2]-z)>=r);
   // animals: on the surface, in daylight-reachable spots, in small groups
   if(pas<9&&Math.random()<.45){const a=Math.random()*6.283,r=24+Math.random()*26;const x=Math.floor(p.pos[0]+Math.cos(a)*r),z=Math.floor(p.pos[2]+Math.sin(a)*r);
@@ -295,7 +295,7 @@ function mobsUpdate(dt){
   const host=isHost()||dimLocal();
   for(const e of mobs){e.invuln=Math.max(0,e.invuln-dt);e.hurtT=Math.max(0,e.hurtT-dt);e.atkCD-=dt;e.swing=Math.max(0,e.swing-dt*4);
     if(e.deathT!=null){e.deathT+=dt;if(e.deathT>.9){e.gone=true;spawnParticles(e.pos[0],e.pos[1]+e.eh*.5,e.pos[2],14,[.85,.85,.85],1.2,'poof');}continue;}
-    if(host)updateMob(e,dt);else{interpRemote(e,dt);if(e.bodyYawNet!=null)e.bodyYaw+=angTo(e.bodyYaw,e.bodyYawNet)*Math.min(1,dt*12);e.headYaw=e.yaw;}
+    if(host)updateMob(e,dt);else if(!e.localRide){interpRemote(e,dt);if(e.bodyYawNet!=null)e.bodyYaw+=angTo(e.bodyYaw,e.bodyYawNet)*Math.min(1,dt*12);e.headYaw=e.yaw;}
     // idle noises (every player makes their own)
     e.sayT-=dt;if(e.sayT<=0){e.sayT=8+Math.random()*16;if(e.alive)mobSnd(e,'say');}}
   if(mobs.some(m=>m.gone))mobs=mobs.filter(m=>!m.gone);

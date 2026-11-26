@@ -294,4 +294,4 @@ function glideHud(){const G=mapInfo.glide;if(!G)return;const p=player,laps=SET.g
   if(p.alive){const hs=Math.round(S*.7);for(let i=0;i<3;i++)drawHeartPx(Math.round(W/2-hs*1.6+i*hs*1.1),by-hs-10,hs,i<(p.hearts==null?3:p.hearts));}
   for(const e of ents){if(e===p||!e.alive||e.kind!=='player')continue;if(dist(camPos,e.pos)<90)nameTagMC(e,'#ffffff');}}
 function drawHeartPx(x,y,s,full){const H5=['.##.##.','#######','#######','.#####.','..###..','...#...'];const k=s/7;
-  H5.forEach((r,j)=>[...r].forEach((c,i)=>{if(c!=='#')return;hc.fillStyle=full?(j<2&&i>0&&i<3?'#d9a0ff':'#9b2de2'):'#3a3a3a';hc.fillRect(Math.round(x+i*k),Math.round(y+j*k),Math.ceil(k),Math.ceil(k));}));}
+  H5.forEach((r,j)=>[...r].forEach((c,i)=>{if(c!=='#')return;hc.fillStyle=full?(j<2&&i>0&&i<3?'#a8a8ff':'#3938e5'):'#3a3a3a';hc.fillRect(Math.round(x+i*k),Math.round(y+j*k),Math.ceil(k),Math.ceil(k));}));}

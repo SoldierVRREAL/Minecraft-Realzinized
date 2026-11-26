@@ -1,5 +1,6 @@
 // ================= UI, input, local player =================
 let sprintTap=false,lastWUp=-1;const keys={};let lmb=false,rmb=false,rmbEdge=false,lmbEdge=false,locked=false,selShow=0,paused=false;
+let ASKOPEN=false;   // a text box is open (sign, name tag, command block)
 const OVERLAYS=['newsPanel','lceCraft','craftUI','worldPanel','mpPanel','srvDlg','discPanel','deathPanel','jOpt','lbPanel','dressPanel','menu','optPanel','packPanel','chestUI','pause','lobbyPanel','results','clickResume'];
 function show(id){$(id).classList.remove('hidden');}function hide(id){$(id).classList.add('hidden');}
 function hideOverlays(){for(const id of OVERLAYS)hide(id);}
@@ -13,8 +14,8 @@ function lookDelta(dx,dy){const f=SENS*.6+.2,k=f*f*f*8*.15*Math.PI/180;player.ya
 function setNetStatus(s){const el=$('status');if(el)el.textContent=s;}
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;
   if(locked){hide('clickResume');hide('pause');paused=false;}
-  else if((MATCH.state==='play'||MATCH.state==='lobby')&&!chestOpen&&!chatUI&&$('lobbyPanel').classList.contains('hidden')&&$('results').classList.contains('hidden')){if(!online)paused=true;show('pause');}});
-cv.addEventListener('click',()=>{if((MATCH.state==='play'||MATCH.state==='lobby')&&!locked&&!chestOpen)lockPointer();});
+  else if((MATCH.state==='play'||MATCH.state==='lobby')&&!chestOpen&&!chatUI&&!ASKOPEN&&$('lobbyPanel').classList.contains('hidden')&&$('results').classList.contains('hidden')){if(!online)paused=true;show('pause');}});
+cv.addEventListener('click',()=>{if((MATCH.state==='play'||MATCH.state==='lobby')&&!locked&&!chestOpen&&!ASKOPEN)lockPointer();});
 $('clickResume').addEventListener('click',()=>lockPointer());
 // ---- mouse look, with a fix for Mac browsers that over-report movement while a mouse button is held ----
 // Depending on the browser this shows up as duplicated drag events or as bigger deltas. Repeats while held are dropped, and the
@@ -45,7 +46,7 @@ document.addEventListener('keydown',e=>{
   if(!player||MATCH.state==='menu')return;
   if(e.code.startsWith('Digit')){const n=+e.code.slice(5);if(n>=1&&n<=9&&player.alive){player.sel=n-1;player.using=null;selShow=2;if(chestOpen)renderChest();}}
   if(e.code==='KeyE'){if(chestOpen)chestClose(true);else if(player.alive&&MATCH.state==='play'){if(!tryOpenChest())openInv();}else if(!player.alive){spectate.mode='follow';spectate.idx++;}}
-  if(e.code==='KeyQ'){if(!player.alive){spectate.mode='follow';spectate.idx--;}else if((locked||touchActive||padActive)&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6]);consume(player,player.sel);}}}
+  if(e.code==='KeyQ'){if(!player.alive){spectate.mode='follow';spectate.idx--;}else if((locked||touchActive||padActive)&&MATCH.state!=='lobby'){const s=player.inv[player.sel];if(s){const d=fwd(player);requestDrop([player.pos[0],player.pos[1]+.4,player.pos[2]],s.id,1,[d[0]*6,d[1]*6+2,d[2]*6],s.tag);consume(player,player.sel);}}}
   if(e.code==='KeyF'&&!player.alive)spectate.mode='bat';
   if(e.code==='Space'&&chestOpen&&SET.takeAll)chestOp('all');
   if(e.code==='KeyR'&&MATCH.state==='lobby'){toggleReady();}
@@ -117,7 +118,8 @@ function tryOpenChest(){if(!player.alive||MATCH.state!=='play')return false;
 function chestClose(relock){if(!chestOpen)return;if(chestOpen.craft)craftClose();if(chestOpen.lce)lcClose();if(!chestOpen.inv)sfx('chestclose');else sfx('click');chestOpen.selfClose=true;chestOpen=null;hide('chestUI');if(relock&&player&&player.alive)lockPointer();}
 const INV_SCREEN={inv:true,items:[]};let invHover=null;
 function openInv(){if(!player||!player.alive||MATCH.state!=='play'||chestOpen)return false;if(MATCH.mode==='survival')return craftOpen(player.gm==='creative'?'creative':'inv');chestOpen=INV_SCREEN;chestCursor=CHEST_SLOTS+player.sel;sfx('click');document.exitPointerLock&&document.exitPointerLock();show('chestUI');renderChest();return true;}
-function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?ITEMS[id].name:''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
+const stackName=s=>{const id=typeof s==='string'?s:s.id;return (s&&s.tag&&s.tag.name)||(s&&s.tag&&s.tag.title)||ITEMS[id].name;};
+function slotHTML(s,i,kind,sel){const id=s?(typeof s==='string'?s:s.id):null;return `<div class="slot${sel?' sel':''}" data-k="${kind}" data-i="${i}" data-n="${id&&ITEMS[id]?stackName(s):''}" data-e="${id&&ITEMS[id]?itemTipLines(id).join('|'):''}" data-a="${id&&ITEMS[id]&&ITEMS[id].ench?1:0}" title="${id&&ITEMS[id]?ITEMS[id].name:''}"></div>`;}
 function slotCanvas(id,count){const S=GS,px=18*S,c=mkCanvas(px,px),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(ICONS[id],S,S,16*S,16*S);
   if(count>1){const t=pxCanvas(String(count),S,'#ffffff');g.drawImage(t,px-t.width,px-t.height+S);}return c;}
 function fillIcons(el,list){[...el.children].forEach((d,i)=>{const s=list[i];if(!s)return;const id=typeof s==='string'?s:s.id;if(!ICONS[id])return;d.prepend(slotCanvas(id,typeof s==='string'?1:s.count));});}
@@ -250,7 +252,7 @@ function showResults(m){
     $('sbAward').replaceChildren(iconCanvas(aw[1]),document.createTextNode(aw[0]));
     $('sbFav').replaceChildren(iconCanvas(r.fw&&ICONS[r.fw]?r.fw:null),document.createTextNode(r.fw&&ITEMS[r.fw]?'Favorite weapon':'No favorite weapon'));
     if(r.fw&&ITEMS[r.fw])$('sbFav').title=ITEMS[r.fw].name;
-    $('sbDealt').replaceChildren(heartPic('#9b2de2','#5a0f8a'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
+    $('sbDealt').replaceChildren(heartPic('#3938e5','#1f1e9c'),document.createTextNode(Math.round(r.d||0)+' inflicted'));
     $('sbTaken').replaceChildren(heartPic('#3e3e3e','#1e1e1e'),document.createTextNode(Math.round(r.r||0)+' received'));
     $('sbWinner').textContent=r.id===m.w?'Winner':ordinal(r.p||rows.length)+' place';};
   rows.forEach((r,i)=>{const e=entById(r.id);const d=document.createElement('div');d.className='sbRow'+(r.id===me?' me':'');

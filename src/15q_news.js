@@ -1,6 +1,22 @@
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='2.6';
+const GAME_VER='2.8';
 const NEWS=[
+ ['2.8','November 25, 2026',[
+   'Point at any item in a menu (inventory, crafting, chests, furnaces, creative) to see its name. On phones and tablets, tap the item.',
+   'Forests, birch forests and dark forests are now mystical: deeper green grass and leaves, green mist, drifting motes and weeping willows with long curtains of leaves and vines. The grass there has a new texture made from your pack\'s own grass, so it still looks like Minecraft.',
+   'Hearts are blue.',
+   'Every ruin has a chest buried under the chiseled stone in the middle of its floor. Most hold plain supplies, but 1 in 5 is a treasure chest with an Enchanted Golden Apple, diamonds and enchanted diamond gear.',
+   'New: the Enchanted Golden Apple. It gives Regeneration II, Absorption IV, Resistance and Fire Resistance.',
+   'Skinwalkers: go two days without sleeping and they come at night. One copies a player\'s skin and name and watches from a distance. When you look at it, it twists into its true shape and hunts you, with a boss bar. Daylight drives it away, and sleeping in a bed keeps them away.']],
+ ['2.7','November 25, 2026',[
+   'Redstone works: levers, buttons, pressure plates, redstone torches, daylight sensors and blocks of redstone give power. Dust carries it up to 15 blocks and gets dimmer as it goes. Repeaters delay and lock, comparators compare and subtract and read how full a chest is. Lamps light up, iron doors and trapdoors open only with power, TNT goes off and note blocks play.',
+   'Pistons and sticky pistons push up to 12 blocks and move you too. Sticky pistons pull back the block in front, and slime blocks drag their neighbours along.',
+   'Hoppers move items between chests, furnaces and other hoppers, and pick up items dropped on top. Dispensers fire arrows, potions, fire charges and fireworks, pour buckets, place TNT, boats and minecarts, and use bone meal. Droppers pass items on. Command blocks run chat commands when powered.',
+   'Rails join up, curve and climb slopes. Ride minecarts (W to push, Sneak to get off). Golden rails boost or brake, detector rails give power when a cart passes and activator rails empty carts. Chest, hopper, furnace and TNT minecarts work too.',
+   'Boats float. Steer them with the look direction and W. Crashing hard into land breaks them.',
+   'Horses, donkeys and mules live on plains and savannas. Climb on to tame them, then add a saddle to ride: hold Jump to charge a leap. Horse armour protects them and donkeys and mules carry a chest. Saddled pigs can be ridden and steered with a carrot on a stick.',
+   'Leads take animals with you or tie them to a fence. Name a name tag on an anvil and give a creature a name. Armour stands hold any armour you put on them.',
+   'Banners in 16 colours stand or hang on walls. Add patterns with dyes in a 3x3 crafting grid; a cauldron washes off the last one. Paintings take the biggest picture that fits the wall.']],
  ['2.6','November 25, 2026',[
    'Turning blocks: logs, hay, bone blocks and quartz pillars lie along the side you click. Furnaces, pumpkins, dispensers and droppers face you. Stairs and slabs go upside down or to the top half when you click high on a side or under a block. Ladders and item frames hang on the wall you click. Rails, anvils and signs follow the way you look.',
    'Slabs stack: put a slab on a slab of the same kind to make a double slab.',

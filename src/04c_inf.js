@@ -200,7 +200,11 @@ function buildFeature(f){const {x,y,z,r}=f;const R=(i)=>hash3(x,z,i,WSEED+90+(r*
   case 'ruin':{const w=5+(R(1)*4|0),d=5+(R(2)*4|0);for(let dz=0;dz<d;dz++)for(let dx=0;dx<w;dx++){const edge=dx===0||dz===0||dx===w-1||dz===d-1;const yy=y-1;
       gput(x+dx,yy,z+dz,R(dx*11+dz)<.4?B.MSBRICK:R(dx+dz*13)<.2?B.CRACKED:B.SBRICK);if(!edge)continue;const hh=Math.floor(R(dx*5+dz*7+3)*4);
       for(let i=0;i<hh;i++)gput(x+dx,y+i,z+dz,R(dx*3+dz*5+i)<.45?B.MSBRICK:R(i+dx)<.3?B.CRACKED:B.SBRICK);if(hh>0&&R(dx+dz+40)<.3)gsoft(x+dx,y+hh,z+dz,B.VINE);}
-    if(R(9)<.6){gput(x+(w>>1),y,z+(d>>1),B.CHISELED);}break;}
+    if(R(9)<.6){gput(x+(w>>1),y,z+(d>>1),B.CHISELED);}
+    // a small buried vault under the middle of the floor (a chiseled tile marks the spot) with a chest in it
+    {const mx=x+(w>>1),mz=z+(d>>1);gput(mx,y-1,mz,B.CHISELED);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){gput(mx+a,y-3,mz+b,B.SBRICK);if(a||b)gput(mx+a,y-2,mz+b,R(a*3+b*7+60)<.5?B.MSBRICK:B.SBRICK);}
+      gput(mx,y-2,mz,B.CHEST);if(typeof lootAdd==='function')lootAdd(mx,y-2,mz,'ruin');}
+    break;}
   }}
 function buildSpire(x,y,z,R,len){const ax=(R(5)-.5)*.7,az=(R(6)-.5)*.7;const r0=1.6+R(7)*1.2;
   for(let i=-2;i<len;i++){const t=Math.max(0,i)/len;const rr=r0*(1-t)+.35;const px=x+ax*i,pz=z+az*i;const ri=Math.ceil(rr);
@@ -208,7 +212,7 @@ function buildSpire(x,y,z,R,len){const ax=(R(5)-.5)*.7,az=(R(6)-.5)*.7;const r0=
   for(let k=0;k<3;k++){const a=R(30+k)*6.283,l=3+(R(40+k)*4|0);for(let i=0;i<l;i++)gput(Math.round(x+Math.cos(a)*(1+i*.6)),y+i,Math.round(z+Math.sin(a)*(1+i*.6)),B.CRYSTAL);}}
 
 // ---------- lighting (sky + block light, 4 bits each) recomputed for a box of columns ----------
-const NBLK=1024;const OPQ=new Uint8Array(NBLK),ATT=new Uint8Array(NBLK),EMIT=new Uint8Array(NBLK);
+const NBLK=2048;const OPQ=new Uint8Array(NBLK),ATT=new Uint8Array(NBLK),EMIT=new Uint8Array(NBLK);
 function refreshLightTables(){for(let b=0;b<NBLK;b++){const D=BD[b];OPQ[b]=D&&D.opaque?1:0;ATT[b]=D&&(D.leaves||D.liquid==='water'||b===B.ICE)?1:0;EMIT[b]=D?D.light|0:0;}}
 let LQ=new Int32Array(1<<20),LOLD=new Uint8Array(1<<16),LTOP=new Int16Array(4096);
 // recompute light in columns x0..x1, z0..z1 (inclusive); light flowing in from the ring of columns just outside is kept.

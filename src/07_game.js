@@ -31,16 +31,17 @@ function raycastBlock(o,d,maxD,ignoreFluid=true,plants=false){
 }
 function los(a,b){const d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],L=Math.hypot(...d);if(L<.01)return true;return !raycastBlock(a,[d[0]/L,d[1]/L,d[2]/L],L);}
 function rayBox(o,d,mn,mx){let t0=0,t1=1e9;for(let i=0;i<3;i++){if(Math.abs(d[i])<1e-9){if(o[i]<mn[i]||o[i]>mx[i])return -1;continue;}let a=(mn[i]-o[i])/d[i],b=(mx[i]-o[i])/d[i];if(a>b)[a,b]=[b,a];t0=Math.max(t0,a);t1=Math.min(t1,b);if(t0>t1)return -1;}return t0;}
-const entBox=(e,p=.1)=>{const w=e.hw||HW,h=e.eh||EH;return [[e.pos[0]-w-p,e.pos[1]-p,e.pos[2]-w-p],[e.pos[0]+w+p,e.pos[1]+h+p,e.pos[2]+w+p]];};
+let entBox=(e,p=.1)=>{const w=e.hw||HW,h=e.eh||EH;return [[e.pos[0]-w-p,e.pos[1]-p,e.pos[2]-w-p],[e.pos[0]+w+p,e.pos[1]+h+p,e.pos[2]+w+p]];};
 
 // ---------- inventory ----------
 const armorPts=e=>e.armor.reduce((s,a)=>s+(a?ITEMS[a].pts:0),0);
 const enchProt=e=>e.armor.reduce((s,a)=>s+enchLvl(a,'protection'),0);
-function addItem(e,id,count){
+const tagKey=t=>t?JSON.stringify(t):'';const tagEq=(a,b)=>tagKey(a&&a.tag)===tagKey(b&&b.tag);
+function addItem(e,id,count,tag){
   const it=ITEMS[id];if(!it)return 0;
-  if(it.type==='armor'){const cur=e.armor[it.slot];if(!cur||ITEMS[cur].pts<it.pts||(ITEMS[cur].pts===it.pts&&enchScore(id)>enchScore(cur))){e.armor[it.slot]=id;if(cur)addItem(e,cur,1);return 0;}} // auto-equip from chests
-  if(it.stack>1)for(const s of e.inv){if(s&&s.id===id&&s.count<it.stack){const m=Math.min(count,it.stack-s.count);s.count+=m;count-=m;if(!count)return 0;}}
-  for(let i=0;i<e.inv.length;i++)if(!e.inv[i]){const m=Math.min(count,it.stack);e.inv[i]={id,count:m};count-=m;if(!count)return 0;}
+  if(it.type==='armor'&&!tag){const cur=e.armor[it.slot];if(!cur||ITEMS[cur].pts<it.pts||(ITEMS[cur].pts===it.pts&&enchScore(id)>enchScore(cur))){e.armor[it.slot]=id;if(cur)addItem(e,cur,1);return 0;}} // auto-equip from chests
+  if(it.stack>1)for(const s of e.inv){if(s&&s.id===id&&s.count<it.stack&&tagKey(s.tag)===tagKey(tag)){const m=Math.min(count,it.stack-s.count);s.count+=m;count-=m;if(!count)return 0;}}
+  for(let i=0;i<e.inv.length;i++)if(!e.inv[i]){const m=Math.min(count,it.stack);e.inv[i]=tag?{id,count:m,tag}:{id,count:m};count-=m;if(!count)return 0;}
   return count;
 }
 const hasItem=(e,id)=>e.inv.findIndex(s=>s&&s.id===id);
@@ -138,7 +139,7 @@ function onDeath(m){
   e.place=ents.filter(x=>x.alive&&!x.spectator).length+1;if(e!==player)sfx('death',{pos:e.pos});
   if(killer)killer.kills++;
   feed.unshift({t:7,txt:deathText(e,killer,m.c)});if(feed.length>6)feed.pop();
-  if(isHost()){for(const s of m.inv)hostSpawnDrop(m.pos,s.id,s.count);for(const a of m.armor)hostSpawnDrop(m.pos,a,1);}
+  if(isHost()){for(const s of m.inv)hostSpawnDrop(m.pos,s.id,s.count,undefined,undefined,undefined,s.tag);for(const a of m.armor)hostSpawnDrop(m.pos,a,1);}
   e.inv=new Array(e.inv.length||9).fill(null);e.armor=[null,null,null,null];e.off=null;
   spawnParticles(e.pos[0],e.pos[1]+.8,e.pos[2],20,[.85,.85,.85],1.2,'poof');
   if(e===player){sfx('death');chestClose(false);player.bat=true;player.pos[1]+=2.2;player.vel=[0,0,0];spectate.mode='bat';showDeathPanel(killer);}
@@ -206,11 +207,11 @@ function updateProjs(dt){
 }
 // ---------- dropped items (host is authoritative) ----------
 var dropSeq=1;
-function hostSpawnDrop(p,id,count,vel,by,rid){const d={did:dropSeq++,by,rid,pos:[p[0],p[1]+1,p[2]],vel:vel||[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6};drops.push(d);netSend(N.DROPADD,d);return d;}
+function hostSpawnDrop(p,id,count,vel,by,rid,tag){const d={did:dropSeq++,by,rid,pos:[p[0],p[1]+1,p[2]],vel:vel||[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6};if(tag)d.tag=tag;drops.push(d);netSend(N.DROPADD,d);return d;}
 let dropRid=0;
-function requestDrop(p,id,count,vel){if(dropAuth()){hostSpawnDrop(p,id,count,vel);return;}const rid=++dropRid;
-  drops.push({did:-rid,ghost:4,pos:[p[0],p[1]+1,p[2]],vel:vel?vel.slice():[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,age:0,spin:Math.random()*6,pending:99});   // stand-in until the host's copy arrives
-  netSend(N.DROPREQ,{p,id,c:count,v:vel,rid},'host');}
+function requestDrop(p,id,count,vel,tag){if(dropAuth()){hostSpawnDrop(p,id,count,vel,undefined,undefined,tag);return;}const rid=++dropRid;
+  drops.push({did:-rid,ghost:4,pos:[p[0],p[1]+1,p[2]],vel:vel?vel.slice():[(Math.random()-.5)*4,4+Math.random()*2,(Math.random()-.5)*4],id,count,tag,age:0,spin:Math.random()*6,pending:99});   // stand-in until the host's copy arrives
+  netSend(N.DROPREQ,{p,id,c:count,v:vel,rid,t:tag},'host');}
 function updateDrops(dt){
   for(const d of drops){
     if(INF&&!chunkReadyAt(d.pos[0],d.pos[2]))continue;
@@ -219,8 +220,8 @@ function updateDrops(dt){
     if(fluidAt(d.pos[0],d.pos[1],d.pos[2])==='lava'&&dropAuth()){d.dead=true;netSend(N.DROPDEL,{did:d.did});}
     for(const k of [0,2]){const nx=d.pos[k]+d.vel[k]*dt;const t=d.pos.slice();t[k]=nx;if(!solid(Math.floor(t[0]),Math.floor(t[1]),Math.floor(t[2])))d.pos[k]=nx;else d.vel[k]=0;d.vel[k]*=Math.exp(-2*dt);}
     if(d.age>.6&&!d.pending&&!d.dead)for(const e of ents){if(!e.alive||!owned(e))continue;if(hdist(e.pos,d.pos)<1.3&&Math.abs(e.pos[1]+.8-d.pos[1])<1.6){
-      if(dropAuth()){const left=addItem(e,d.id,d.count);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
-      else if(e===player&&d.did>0&&invRoom(e,d.id)){const left=addItem(e,d.id,d.count),took=d.count-left;if(took>0){sfx('pick');netSend(N.PICK,{did:d.did,id:d.id,n:took},'host');d.count=left;if(!left)d.dead=true;else d.pending=1;}}}}   // picked up at once; the host confirms or takes it back
+      if(dropAuth()){const left=addItem(e,d.id,d.count,d.tag);if(left<d.count){if(e===player)sfx('pick');d.count=left;if(!left){d.dead=true;netSend(N.DROPDEL,{did:d.did});break;}}}
+      else if(e===player&&d.did>0&&invRoom(e,d.id)){const left=addItem(e,d.id,d.count,d.tag),took=d.count-left;if(took>0){sfx('pick');netSend(N.PICK,{did:d.did,id:d.id,n:took},'host');d.count=left;if(!left)d.dead=true;else d.pending=1;}}}}   // picked up at once; the host confirms or takes it back
     if(d.pending){d.pending-=dt;if(d.pending<=0)d.pending=0;}
     if(d.ghost){d.ghost-=dt;if(d.ghost<=0)d.dead=true;}
   }
