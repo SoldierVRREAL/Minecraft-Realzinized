@@ -227,6 +227,60 @@ The engine runs at 20 ticks a second on the host (or in single player), in `15s_
 - **Paintings:** hang one on a wall and it picks the biggest picture that fits. Uses the pictures from your resource pack.
 - **The jukebox** still plays original tunes made for this game. The real music discs are copyrighted, so they are not included.
 
+## 100 more items (version 3.0)
+
+- **From Minecraft:**
+  - Copper tools and armour (from raw copper: mine stone below sea level or iron ore, then smelt) and copper and iron nuggets.
+  - Netherite (4 netherite scrap and 4 gold make an ingot; netherite scrap comes from mining netherrack or from chests). Put any diamond tool or armour piece with an ingot to upgrade it.
+  - Turtle shell (5 turtle scutes), amethyst shards, echo shards and phantom membranes (skinwalkers), the Heart of the Sea, nautilus shells, goat horns, honeycomb and honey bottles.
+  - Sweet berries, glow berries, beetroot (with seeds and soup), cocoa beans, chorus fruit (it teleports you), popped chorus fruit and suspicious stew.
+- **New food:** cheese, pizza, burger, hot dog, fries, sushi, donut, chocolate bar, ice cream, pancakes, waffle, popcorn, apple and berry pie, muffin, candy apple, toast and honey toast, omelette, sandwich, salad, fruit salad, hot cocoa, apple juice, berry smoothie, energy drink, cotton candy, trail mix and cookie dough. Some give short effects.
+- **New gadgets:**
+
+  | Item | What it does |
+  |---|---|
+  | Magnet | Pulls items to you while it's in your hotbar |
+  | Grappling Hook | Pulls you to a block up to 28 away |
+  | Dynamite | Throw it; it explodes after 2 seconds |
+  | Smoke Bomb | Smoke and 8 s of invisibility |
+  | Bandage and Med Kit | Healing |
+  | Pocket Watch | Shows the time and day |
+  | Depth Meter | Shows your height and biome |
+  | Feather Charm | No fall damage |
+  | Recall Scroll | Takes you home |
+  | Night Vision Goggles | See in the dark |
+  | Scuba Mask | Never run out of air |
+  | Winged Boots | Faster, with half fall damage |
+
+- **Crafting parts:** flour, rope, cloth, gear, battery, lens, steel ingot, glue, iron plate, circuit.
+- **Emerald tools.**
+- **Icons:** most new icons are made from the pack's own item pictures, recoloured, so they keep the Minecraft look. The code is in `15zd_items100.js`. Since version 3.1 the rest have Minecraft-style pixel art (see below).
+
+## Minecraft-style textures (version 3.1)
+
+Every block, item, mob and armour texture now comes from the resource pack or is made from it, so the whole game has the Minecraft look.
+
+- **Items the pack has no picture of** (40 of the new foods, gadgets and materials, plus the shield and banners) have pixel art drawn on a 16x16 grid of materials. A small shading engine colours it the way the game's own items are coloured: a dark outline in the material's own colour, light from the top left, shade on the bottom right, five shades per material and a little speckle. The art and the engine are in `15ze_mcart.js`.
+- **Made from the pack's art:** the candy apple (the apple with a stick), the pocket watch (the clock with a crown), the depth meter (the compass in blue), the feather charm (the feather with a gold nugget), the smoke bomb (the firework star with a fuse) and the winged boots (the golden boots with wings).
+- **Blocks:** pink petals and crystal clusters have new tiles. Every other block was already from the pack or recoloured from it.
+- **Screens:** the furnace flame and the arrows in the furnace and the crafting table come from the pack's furnace screen.
+- If you load a newer resource pack that has its own picture for one of these items, the pack's picture is used.
+
+## Same version for everyone
+
+Every player builds the world from the seed on their own computer, so players on two different versions of the game see different terrain and biomes. Servers now let in only players on their own version (`15zb_versync.js`). Someone with an older page is told to reload. If the host is the one behind, the player is told to ask the host to reload. The server list shows a server's version when it differs from yours. A page that has been open for a while checks every 10 minutes for a new version and offers to reload.
+
+## Accounts
+
+Sign in with a name and a password: **Options > Profile > Sign In**. You need to be signed in to join a server (you can host without one).
+
+- **How it works:** there is no account server (the game runs from GitHub Pages and Photon), so your account is worked out from your name and password. PBKDF2-SHA-256 with 200,000 rounds turns them into a P-256 key pair. The same name and password give the same account on any device. Upper and lower case in the name don't matter.
+- **Servers remember you:** the first time you join a server, it stores your name with your public key in its world save. Every later join must carry a fresh signature from the matching private key. That signature is tied to that server's room, its host and the time, and can only be used once. Someone joining with your name but a different password is turned away: *"The name ... is already registered on this server with a different password."* They can't get your inventory, items, position or operator powers there.
+- **Hosts never see your password or private key**, only your public key, so a host can't sign in as you anywhere else.
+- **Forgotten password:** it can't be reset. An operator on a server can free your name there with `/account reset <name>`, and the next person to join with it registers it. `/account list` shows the registered names.
+- **Signing out:** the account is remembered on the device until you press Sign Out. While you're signed in, your name can only be changed by signing out.
+- **Limits:** a name is protected on each server from the first time its owner joins it. On a server you have never joined, whoever joins first with a name registers it there.
+
 ## Keeping servers open
 
 - **Big messages:** Photon Cloud disconnects a client that pushes about 500 KB through it in a short time. The data a joining player gets (every changed block in the world) grows past that in a well-played world. Messages over 24 KB are now compressed (deflate), cut into 24 KB parts and sent about 9 a second. Everything sent after a big message waits for it, so events always arrive in order. Messages meant for one player are only sent to that player.
@@ -406,6 +460,10 @@ python3 build.py
 | `15w_tips.js` | Item names when pointing at or tapping a slot in any menu |
 | `15x_forest.js` | Forest fog and willows, which columns are forest, the Enchanted Golden Apple, the ruin loot |
 | `15y_skinwalker.js` | Skinwalkers: spawning, disguise, transformation, hunting, boss bar |
+| `15za_accounts.js` | Accounts: sign in, key derivation (PBKDF2 + P-256), signed joins, the host's checks, `/account` |
+| `15zb_versync.js` | Version check on joining, version in the server list, "new version" notice |
+| `15zd_items100.js` | The 100 new items: definitions, icons, recipes, drops and what they do |
+| `15ze_mcart.js` | Minecraft-style pixel art for items and tiles the pack has no picture of, and the shading engine that draws it |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
