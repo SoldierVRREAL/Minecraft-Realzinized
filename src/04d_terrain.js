@@ -211,9 +211,9 @@ function buildRuinedPortal(f,R){const {x,z}=f;const y=f.y+1;const ax=R(1)<.5;con
 
 // ---------- structures: block lists built once and handed out chunk by chunk ----------
 // STRUCTS[dim] = list of {x0,z0,x1,z1,build(put)}; the blocks are bucketed per chunk on first use
-const STRUCTS={overworld:[],nether:[],end:[]},STRUCT_BUCKETS=new Map();
+const STRUCTS={overworld:[],nether:[],end:[],pool:[]},STRUCT_BUCKETS=new Map();
 let structSeed=null;
-function structReset(){STRUCTS.overworld=[];STRUCTS.nether=[];STRUCTS.end=[];STRUCT_BUCKETS.clear();structSeed=WSEED;LOOT.clear();
+function structReset(){STRUCTS.overworld=[];STRUCTS.nether=[];STRUCTS.end=[];STRUCTS.pool=[];STRUCT_BUCKETS.clear();structSeed=WSEED;LOOT.clear();
   {for(const s of strongholdSpots())STRUCTS.overworld.push({x0:s[0]-48,z0:s[2]-48,x1:s[0]+48,z1:s[2]+48,build:put=>buildStronghold(s,put),id:'sh'+s[0]});}}
 function structBlocks(S){if(S.buckets)return S.buckets;const bk=new Map();const put=(x,y,z,b)=>{const k=ckey(x>>4,z>>4);let a=bk.get(k);if(!a){a=[];bk.set(k,a);}a.push(x,y,z,b);};S.build(put);S.buckets=bk;return bk;}
 function structApply(dim,cx,cz){if(structSeed!==WSEED)structReset();const x0=cx*16,z0=cz*16;

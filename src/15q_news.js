@@ -1,6 +1,12 @@
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='3.1';
+const GAME_VER='3.2';
 const NEWS=[
+ ['3.2','November 27, 2026',[
+   'The sea update. Oceans and rivers are full of life: squid, cod, salmon, tropical fish and pufferfish (they puff up and poison you). Squid squirt ink in your face when you hit them.',
+   'The Megalodon hunts deep ocean water. It circles you closer and closer, then charges out of the murk with its jaws open. You will hear your heartbeat when it is near. It can knock you out of your boat.',
+   'The Kraken waits on the floor of deep oceans, mostly at night. It rises under swimmers and boats, grabs you with its tentacles and drags you down. Hit it hard enough and it lets go.',
+   'Both have boss bars, drops (Megalodon Teeth for the Shark Tooth Sword, the Kraken Eye) and very unpleasant surprises when they get you.',
+   'The noclip glitch is still in the game. Now, if you end up inside a wall or fall out of the bottom of the world, you end up somewhere else: the Poolrooms. Find the EXIT sign to get back. Don\'t stare at what lives there too long, and don\'t look away either.']],
  ['3.1','November 27, 2026',[
    'Every texture now looks like Minecraft. The 40 new items that had flat little drawings (foods, gadgets, the honeycomb, goat horn, nautilus shell, scutes, berries, chorus fruit and more) have new pixel art made the way the game\'s own items are: a dark outline, light from the top left and several shades for each material.',
    'The candy apple, pocket watch, depth meter, feather charm, smoke bomb and winged boots are now made from the resource pack\'s own apple, clock, compass, feather, firework star and golden boots.',

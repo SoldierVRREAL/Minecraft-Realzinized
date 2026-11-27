@@ -1,6 +1,7 @@
 // ================= Dimensions: travelling between the Overworld, the Nether and the End; portals; saving all three =================
 // Only one dimension is loaded at a time (the chunk ring). The others keep their edits, chests, furnaces and dropped items here.
-const DIMS=['overworld','nether','end'];
+const DIMS=['overworld','nether','end','pool'];
+const XDIMS=['nether','end','pool'];   // the dimensions other than the Overworld, saved with the world
 const DIMDATA={};   // dim -> {edits:Map, chests:Map, furn:Map, drops:[]}  (the current dimension lives in the usual globals)
 let hostDim='overworld',DRAGON_STATE={killed:false,crystals:0,egg:false,seen:false},START_EXTRA=null;
 const PORTAL_IDS=()=>[B.PORTAL_X,B.PORTAL_Z];
@@ -20,7 +21,7 @@ function dimMapInfo(dim){const sp=SURV.spawn||[0,70,0];
 {const b0=beginSurvival;beginSurvival=function(o){const X=START_EXTRA||{};START_EXTRA=null;
     dimResetAll();GENV=o.gen!=null?o.gen:X.gen!=null?X.gen:2;INF_WY=dimWY('overworld');structSeed=null;lootDone.clear();
     b0(o);
-    const dims=o.dims||X.dims||{};for(const d of ['nether','end']){const s=dims[d];if(!s)continue;const L=dimLive(d);L.edits=editsFromJSON(s.edits);for(const [k,items] of s.chests||[]){const [x,y,z]=k.split(',').map(Number);L.chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items});}L.furn=new Map(s.furn||[]);}
+    const dims=o.dims||X.dims||{};for(const d of XDIMS){const s=dims[d];if(!s)continue;const L=dimLive(d);L.edits=editsFromJSON(s.edits);for(const [k,items] of s.chests||[]){const [x,y,z]=k.split(',').map(Number);L.chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items});}L.furn=new Map(s.furn||[]);}
     if(o.dragon||X.dragon)DRAGON_STATE=Object.assign(DRAGON_STATE,o.dragon||X.dragon);
     SURV.bedSpawn=o.bed||X.bed||null;XP.total=(o.me&&o.me.xp)||0;xpRecalc();
     if(X.hdm)hostDim=X.hdm;
@@ -28,10 +29,10 @@ function dimMapInfo(dim){const sp=SURV.spawn||[0,70,0];
 {const a0=survApplyStart;survApplyStart=function(d){START_EXTRA={gen:d.gen!=null?d.gen:1,dims:d.dims,dragon:d.dragon,hdm:d.hdm||'overworld',dim:d.me&&d.me.dim};return a0(d);};}
 function editsMapJSON(m){const o={};for(const [k,mm] of m){if(!mm.size)continue;const a=[];for(const [i,b] of mm)a.push(i,b);o[k]=a;}return o;}
 function survSaveExtra(data){const ow=dimLive('overworld');data.gen=GENV;data.edits=editsMapJSON(ow.edits);data.chests=[...ow.chests].map(([k,c])=>[k,c.items]);data.furn=[...ow.furn];
-  data.dims={};for(const d of ['nether','end']){const L=dimLive(d);data.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items]),furn:[...L.furn]};}
+  data.dims={};for(const d of XDIMS){const L=dimLive(d);data.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items]),furn:[...L.furn]};}
   data.dragon=DRAGON_STATE;data.bed=SURV.bedSpawn||null;if(data.player){data.player.dim=DIM;data.player.xp=XP.total;}}
 {const s0=survSnapshot;survSnapshot=function(jid){const s=s0(jid);const ow=dimLive('overworld');s.gen=GENV;s.edits=editsMapJSON(ow.edits);s.chests=[...ow.chests].map(([k,c])=>[k,c.items]);
-    s.dims={};for(const d of ['nether','end']){const L=dimLive(d);s.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items])};}s.dragon=DRAGON_STATE;s.hdm=DIM;
+    s.dims={};for(const d of XDIMS){const L=dimLive(d);s.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items])};}s.dragon=DRAGON_STATE;s.hdm=DIM;
     if(DIM!=='overworld')s.drops=[];return s;};}
 // the chunk ring is rebuilt for a new render distance: keep this dimension's chests
 {const r0=restartSurvivalStream;restartSurvivalStream=function(){const c=chests,f=FURN;r0();chests=c;FURN=f;};}
