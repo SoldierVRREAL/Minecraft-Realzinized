@@ -81,6 +81,7 @@ async function loadPackBuffer(buf,label){
   // all the pictures are decoded side by side (one after another would wait a frame each)
   await Promise.all(TILE_PACK.map(async(n,t)=>{if(n[0]==='~')return;const img=await get('textures/block/'+n+'.png')||await get('textures/blocks/'+n+'.png')||(TILE_ALT[n]?await get('textures/blocks/'+TILE_ALT[n]+'.png'):null);if(img){tiles[t]=img;found++;}}));
   found+=await packDeriveTiles(get,tiles);
+  if(Object.keys(tiles).length)PACK.tileMiss=TILE_PACK.filter((n,t)=>!tiles[t]);
   const chest=await get('textures/entity/chest/normal.png');if(chest)PACK.chestTex=imgToCanvas(chest,64,64,0,0,chest.width,chest.height);
   const grassOv=await get('textures/block/grass_block_side_overlay.png')||await get('textures/blocks/grass_side_overlay.png');
   if(Object.keys(tiles).length||chest){

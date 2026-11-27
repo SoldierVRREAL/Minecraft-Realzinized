@@ -1,6 +1,22 @@
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='2.8.1';
+const GAME_VER='3.1';
 const NEWS=[
+ ['3.1','November 27, 2026',[
+   'Every texture now looks like Minecraft. The 40 new items that had flat little drawings (foods, gadgets, the honeycomb, goat horn, nautilus shell, scutes, berries, chorus fruit and more) have new pixel art made the way the game\'s own items are: a dark outline, light from the top left and several shades for each material.',
+   'The candy apple, pocket watch, depth meter, feather charm, smoke bomb and winged boots are now made from the resource pack\'s own apple, clock, compass, feather, firework star and golden boots.',
+   'New pictures for the shield and all 16 banners.',
+   'Pink petals and crystal clusters have new block textures.',
+   'The furnace flame and the progress arrows in the furnace and crafting table now use the resource pack\'s own furnace screen.']],
+ ['3.0','November 27, 2026',[
+   '100 new items. From Minecraft: copper and netherite tools and armour, raw copper, nuggets, the turtle shell, honey, berries, beetroot, chorus fruit, amethyst and echo shards, the Heart of the Sea, goat horns and more.',
+   'New foods: pizza, burgers, hot dogs, fries, sushi, donuts, chocolate, ice cream, pancakes, waffles, pies, juices, smoothies and more. Find them all in the Food tab of the crafting table.',
+   'New gadgets: magnet, grappling hook, dynamite, smoke bomb, bandages and med kits, a pocket watch, a depth meter, a feather charm, a recall scroll, night vision goggles, a scuba mask and winged boots. Emerald tools too.',
+   'Servers now check that everyone has the same version. Two versions build the world differently, so players on different versions saw different biomes. If yours is out of date you are told to reload, and a page left open a long time tells you when a new version is out.',
+   'Signing in keeps your old name, so your progress on servers stays yours. Any name that worked before can sign in, and you are warned if you sign in under a different name.']],
+ ['2.9','November 26, 2026',[
+   'Accounts: sign in with a name and a password (Options > Profile > Sign In). Use the same name and password on any device.',
+   'Servers remember your account the first time you join. After that, nobody can join that server with your name without your password, so they can\'t get your inventory, your items or your operator powers.',
+   'You need to be signed in to join servers. Operators can type /account list to see the registered names, and /account reset <name> to free a name whose owner forgot the password.']],
  ['2.8.1','November 25, 2026',[
    'Servers no longer close after a while. A world\'s join data grows as it gets played, and once it passed Photon\'s limit (about 500 KB in a short time) Photon disconnected the host. Big messages are now compressed and sent in small parts.',
    'If the connection drops for a moment (Wi-Fi blip, phone screen off), the game reconnects to the same server instead of closing it. Players get up to 20 seconds to come back before they count as gone.',
