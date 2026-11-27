@@ -2845,9 +2845,9 @@ function buildRuinedPortal(f,R){const {x,z}=f;const y=f.y+1;const ax=R(1)<.5;con
 
 // ---------- structures: block lists built once and handed out chunk by chunk ----------
 // STRUCTS[dim] = list of {x0,z0,x1,z1,build(put)}; the blocks are bucketed per chunk on first use
-const STRUCTS={overworld:[],nether:[],end:[]},STRUCT_BUCKETS=new Map();
+const STRUCTS={overworld:[],nether:[],end:[],pool:[]},STRUCT_BUCKETS=new Map();
 let structSeed=null;
-function structReset(){STRUCTS.overworld=[];STRUCTS.nether=[];STRUCTS.end=[];STRUCT_BUCKETS.clear();structSeed=WSEED;LOOT.clear();
+function structReset(){STRUCTS.overworld=[];STRUCTS.nether=[];STRUCTS.end=[];STRUCTS.pool=[];STRUCT_BUCKETS.clear();structSeed=WSEED;LOOT.clear();
   {for(const s of strongholdSpots())STRUCTS.overworld.push({x0:s[0]-48,z0:s[2]-48,x1:s[0]+48,z1:s[2]+48,build:put=>buildStronghold(s,put),id:'sh'+s[0]});}}
 function structBlocks(S){if(S.buckets)return S.buckets;const bk=new Map();const put=(x,y,z,b)=>{const k=ckey(x>>4,z>>4);let a=bk.get(k);if(!a){a=[];bk.set(k,a);}a.push(x,y,z,b);};S.build(put);S.buckets=bk;return bk;}
 function structApply(dim,cx,cz){if(structSeed!==WSEED)structReset();const x0=cx*16,z0=cz*16;
@@ -8196,7 +8196,8 @@ function drawOffHand(proj,pre){if(!javaCombat())return;const p=player;const s=p&
 
 // ================= Dimensions: travelling between the Overworld, the Nether and the End; portals; saving all three =================
 // Only one dimension is loaded at a time (the chunk ring). The others keep their edits, chests, furnaces and dropped items here.
-const DIMS=['overworld','nether','end'];
+const DIMS=['overworld','nether','end','pool'];
+const XDIMS=['nether','end','pool'];   // the dimensions other than the Overworld, saved with the world
 const DIMDATA={};   // dim -> {edits:Map, chests:Map, furn:Map, drops:[]}  (the current dimension lives in the usual globals)
 let hostDim='overworld',DRAGON_STATE={killed:false,crystals:0,egg:false,seen:false},START_EXTRA=null;
 const PORTAL_IDS=()=>[B.PORTAL_X,B.PORTAL_Z];
@@ -8216,7 +8217,7 @@ function dimMapInfo(dim){const sp=SURV.spawn||[0,70,0];
 {const b0=beginSurvival;beginSurvival=function(o){const X=START_EXTRA||{};START_EXTRA=null;
     dimResetAll();GENV=o.gen!=null?o.gen:X.gen!=null?X.gen:2;INF_WY=dimWY('overworld');structSeed=null;lootDone.clear();
     b0(o);
-    const dims=o.dims||X.dims||{};for(const d of ['nether','end']){const s=dims[d];if(!s)continue;const L=dimLive(d);L.edits=editsFromJSON(s.edits);for(const [k,items] of s.chests||[]){const [x,y,z]=k.split(',').map(Number);L.chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items});}L.furn=new Map(s.furn||[]);}
+    const dims=o.dims||X.dims||{};for(const d of XDIMS){const s=dims[d];if(!s)continue;const L=dimLive(d);L.edits=editsFromJSON(s.edits);for(const [k,items] of s.chests||[]){const [x,y,z]=k.split(',').map(Number);L.chests.set(k,{x,y,z,rot:null,lid:0,lidPrev:0,items});}L.furn=new Map(s.furn||[]);}
     if(o.dragon||X.dragon)DRAGON_STATE=Object.assign(DRAGON_STATE,o.dragon||X.dragon);
     SURV.bedSpawn=o.bed||X.bed||null;XP.total=(o.me&&o.me.xp)||0;xpRecalc();
     if(X.hdm)hostDim=X.hdm;
@@ -8224,10 +8225,10 @@ function dimMapInfo(dim){const sp=SURV.spawn||[0,70,0];
 {const a0=survApplyStart;survApplyStart=function(d){START_EXTRA={gen:d.gen!=null?d.gen:1,dims:d.dims,dragon:d.dragon,hdm:d.hdm||'overworld',dim:d.me&&d.me.dim};return a0(d);};}
 function editsMapJSON(m){const o={};for(const [k,mm] of m){if(!mm.size)continue;const a=[];for(const [i,b] of mm)a.push(i,b);o[k]=a;}return o;}
 function survSaveExtra(data){const ow=dimLive('overworld');data.gen=GENV;data.edits=editsMapJSON(ow.edits);data.chests=[...ow.chests].map(([k,c])=>[k,c.items]);data.furn=[...ow.furn];
-  data.dims={};for(const d of ['nether','end']){const L=dimLive(d);data.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items]),furn:[...L.furn]};}
+  data.dims={};for(const d of XDIMS){const L=dimLive(d);data.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items]),furn:[...L.furn]};}
   data.dragon=DRAGON_STATE;data.bed=SURV.bedSpawn||null;if(data.player){data.player.dim=DIM;data.player.xp=XP.total;}}
 {const s0=survSnapshot;survSnapshot=function(jid){const s=s0(jid);const ow=dimLive('overworld');s.gen=GENV;s.edits=editsMapJSON(ow.edits);s.chests=[...ow.chests].map(([k,c])=>[k,c.items]);
-    s.dims={};for(const d of ['nether','end']){const L=dimLive(d);s.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items])};}s.dragon=DRAGON_STATE;s.hdm=DIM;
+    s.dims={};for(const d of XDIMS){const L=dimLive(d);s.dims[d]={edits:editsMapJSON(L.edits),chests:[...L.chests].map(([k,c])=>[k,c.items])};}s.dragon=DRAGON_STATE;s.hdm=DIM;
     if(DIM!=='overworld')s.drops=[];return s;};}
 // the chunk ring is rebuilt for a new render distance: keep this dimension's chests
 {const r0=restartSurvivalStream;restartSurvivalStream=function(){const c=chests,f=FURN;r0();chests=c;FURN=f;};}
@@ -8923,13 +8924,19 @@ function showEndCredits(done){document.exitPointerLock&&document.exitPointerLock
     'Sleep in a bed to skip the night and set where you come back. Beds do not work in the Nether or the End.','The Ender Dragon heals from the crystals on the obsidian pillars. Break them first.');}
 // first visits feel like milestones
 {const t0=travelTo;travelTo=function(dim,pos,opt={}){const first=!(SURV.visited||(SURV.visited={}))[dim];SURV.visited[dim]=true;t0(dim,pos,opt);
-    if(first&&!opt.quiet&&dim!=='overworld')setTimeout(()=>{if(DIM===dim)SURV.toast={t:5,txt:dim==='nether'?'We Need to Go Deeper':'The End?'};},4500);};}
+    if(first&&!opt.quiet&&dim!=='overworld')setTimeout(()=>{if(DIM===dim&&(dim==='nether'||dim==='end'))SURV.toast={t:5,txt:dim==='nether'?'We Need to Go Deeper':'The End?'};},4500);};}
 // animated fire and portal tiles
 {const r0=render;let last=0;render=function(){const now=performance.now()/1000;if(last)animTiles(Math.min(.1,now-last));last=now;return r0.apply(this,arguments);};}
 
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='3.1';
+const GAME_VER='3.2';
 const NEWS=[
+ ['3.2','November 27, 2026',[
+   'The sea update. Oceans and rivers are full of life: squid, cod, salmon, tropical fish and pufferfish (they puff up and poison you). Squid squirt ink in your face when you hit them.',
+   'The Megalodon hunts deep ocean water. It circles you closer and closer, then charges out of the murk with its jaws open. You will hear your heartbeat when it is near. It can knock you out of your boat.',
+   'The Kraken waits on the floor of deep oceans, mostly at night. It rises under swimmers and boats, grabs you with its tentacles and drags you down. Hit it hard enough and it lets go.',
+   'Both have boss bars, drops (Megalodon Teeth for the Shark Tooth Sword, the Kraken Eye) and very unpleasant surprises when they get you.',
+   'The noclip glitch is still in the game. Now, if you end up inside a wall or fall out of the bottom of the world, you end up somewhere else: the Poolrooms. Find the EXIT sign to get back. Don\'t stare at what lives there too long, and don\'t look away either.']],
  ['3.1','November 27, 2026',[
    'Every texture now looks like Minecraft. The 40 new items that had flat little drawings (foods, gadgets, the honeycomb, goat horn, nautilus shell, scutes, berries, chorus fruit and more) have new pixel art made the way the game\'s own items are: a dark outline, light from the top left and several shades for each material.',
    'The candy apple, pocket watch, depth meter, feather charm, smoke bomb and winged boots are now made from the resource pack\'s own apple, clock, compass, feather, firework star and golden boots.',
@@ -11190,6 +11197,571 @@ function mcaArrow(c,f){const F=PACK.gui.furnace;if(!F)return false;const s=F.wid
     g.drawImage(F,56*s,36*s,14*s,14*s,0,0,14,14);const bf=f.burnMax?Math.max(0,Math.min(1,f.burn/f.burnMax)):0;const k=Math.round(13*bf);if(f.burn>0)g.drawImage(F,176*s,(13-k)*s,14*s,(k+1)*s,0,13-k,14,k+1);}}
   return r;};}
 {const l0=lcRender;lcRender=function(){const r=l0.apply(this,arguments);const out=$('lcOut'),c=$('lcArrow');if(out&&c&&PACK.gui.furnace)mcaArrow(c,out.querySelector('canvas')&&!out.classList.contains('miss')?1:0);return r;};}
+
+// ---------- the face of the things in the Poolrooms (art the game's owner supplied) ----------
+// PF_FACE: the head cut out (webp with transparency) for the creatures; PF_SCARE: the whole picture for the scare.
+const PF_FACE='data:image/webp;base64,UklGRigkAABXRUJQVlA4WAoAAAAQAAAA4gAAPwEAQUxQSI8TAAANGQVtJClZeH7/hg80RPR/AiABtn9xArZJAmAE8AtmbNmAMokUj4K2baSaP+x9dwwiYgKin6Qa89HQawM8zrY5kmznkjS1JqHl/vejLa3VEk5PsepkZbRF4LOCKkwCUyaBmgUkxe/9xoRJ0eVX+0H1ex9F+l0LqPGDIkyKSY+ix89ZQFwR5gEmF9Dt51UREzABnlvbdjZJti3k5nxvjam8nPNdcNuB7Wb/922+dy8t4ANMgKhvBWivTcAQwkRp1EYlBNgCbAEMcCwFQotU4IcBvzBZiogJ+FT8dqY/4G8EaoFaCxb/niCIBWrpj/01dTKWplWac2ciYCkOlfJkgUIddAI5acmPmxRaSsHyVSuUOtS/co/q2UqyjS2dLHnSSSvgCLYpjGOHpmGfKLOzLdNZQNOnmtECTfm0GS20ZWVFknOUnYR2zRqhKVCkFgEnlUKGr9rpVNx6enay7VrTQQrQWqxFnEBGdKyUWhwButp2J56a7MQ10ylpbctk7IYnnhZqmD1hLGM/gXbxlzHb05KfiMy9U3GcrlmykSctX9VCKmY9VoZhUoDpX1j39pTsHZg7UyzTNdPHg89tTYPQDozYWR3Z29MRI13TBjq9Dz/5kGcqIaQztGUv1p0+fJwL3bszC21n1spPbXnWEnbTxcoSZs3aPnIi3LvTVduypo8tL9C+djPeGYC5z+Sxz4LZbWcy2PvyNbxYzYbhnU/vs/qYc+BOWUNl1uyHvGhNhHuX0Pua1R6fkS6orlnZ8vKz2b773r1cdzo9OqMznbC6Hg+5jZv9WF13oQ9n5tiMU2rbGrmZmr3XmrF02+lxqQ4L7Fpbbqrxm877iBunPazIFMr0Ebm18bFn3Suo02NS6EBmGrnFyTfct0NCaQ9IMlDa2XKj3XtvkCY9IqUd05kttzuP8rBSpccDlWm33HSXGMfg0CMRaWtpuPkdwYxyLNhiafUAOiSVCfZIsEAbjrFtrAL0ICwUaDjKFkgB60HUiq0caJsGKMdYhVI8FBisIPX2lYJN5WBrM1gp3rYiQinHWyCFIdx2B0DwgKCWjA54wwoIlaOuTChyu1uUYg9LRodCblUpqXLoOtARvU2DCPTQCiBFbvKgAOXQtRSYxtvTVgHn4EBKKY03CBWHwxdLGbw5bU3VHh/a1rbE27IwgOUUWqBzYzqiNeUUqh1oG28KsXE4i6EdB/bt6PLJ1dOgpbRjvBEdVKCcR9PW1e5bMWPSZDjymeQrEVzQYd+GKQEdDn3hE20jwGZaOmxvwZodzL3HlpJO1/vk9fGJ+FRuwQLFXb56PZqNzv39fV6/2QxKMm1nfLy8LrZsFl/d+zw8FjTrT9/3z/2MP1qv7+t1E1l1hu1LW/UBWfzt9RNGDjbr/f1P8vXX/bP7T/OH+QXG3Sm3wFZSwzxVXcvEzfFOyWv6n+/f54/zy/mPP+9jO+OM8WUV3M1ePD3o+0o4IvLN1/3/b5evP3z/lcdvrde9k7adtfeLKszW3Hmy0/s8vrFtjoj9+u0f8f3j/T+/+9nf/+H/fcM9D9dyNfqSGjaEeaJzt6vffc0ajjnZ7PVDv+M/Xx/vP+L77X3K3LN9OVYztIobDVao8zwtRE/LZflFP6ddvkoTMDO0ET6Ivw79jRczUcCUAFXMrNhQY82G3m5frf2mx4RJjFqsRHjRvll+7cXYVMw8FEpCBAHDdErsL5SvE9djysxlCcUfbSwql/R6IY2Akinqq7SqRcZl8Aeix6W0IJxXM0LWEiCEvgFcL0PsJUaxwuzNo6AeylrR7wIripa9Gj4qphfD28to7FUSpB3GBhQB56EM2nM3iyhuHgJXbK8XUDblV0UBlukyAqzDdZgErlmUD+pLAOlvtgKsQ4KoUGUMAgeJ/cDxenZlgx8lAJ9r9VUIVxX6Bn0Baj9a3Ei4bEG5CtdzE7zs202OO1v7UXh7ZkX7xlxORMUrpdfzQstHL9xY0l6Ob8+qxL5xmorIVbyeE1I/enGe0162b8+oGD48UUXkC17PCOxH5uJEa/vW8vZs2g0fnKqK9G28no/4sXtxqk0vqNdzAe11P1cN9Co8l2HzRTxXVOFt8HoegJe9ONvCB/D2LErkI3PKvjhez0Q/9lycbc36kHo9B8jHdd3PVxW/wLMYIm9cnO8mvWhzfT4QP+aMqeWj8Plaw0dOGdVe1LfPp1z24oyr7cfo9blo+JL7xykrwsXK22dq9TJcpwx1+KLXZwL9cF2cdIEvNdfnUabUk0YVERMldrxn8r7PGpQmIqLcze5yuTnrVBiD+N3Efup5I9AA6E60Uz1vUJiIkNzN0vvmvFNNxWwnZsrUM0cWX4ruBNvxzEGBQsguwrLdnHmqwUSoWxM7NKcOhLBAsX0pw7knaUIDt6ZTiKcOKoCIkNsrM+HkeykAiC1rW+vJI02liHJLyLg8e4AvhMi2tEw4/QoxGsgtMXT26SMogu1LradPvFHE/HbiKpTTT1GjoPitVGHp6YPChOJtK9qp4fyTLBBTbqWU/n1ACC+AYYvWSYe/B5Ji9AbZAmmL/j0AUBFstylU/j5IgQdsG2np3xfoKUW2Yank7wUYVErAVi0jp5+qUE8Lxm0Mypy9WjUN2qK15rGV9QA9dZpySlXRlhCm7cCEU8+avZJjyCuny5Vb0c545oSDH8XCYnWQc8JWNTMWei1ijgYxr9E3Gas2wXb5WGOZr6FNoYmTsZrihJaAgi0L+UsePU6tlNiaiYMpglSZjtgh25R+yvnbPevKKiHCxa1Izhk7kXGx4IeBsyKIi7XBXwS6E4McLpiHiOGKimbuBU128cNOQIyxWiOpaajNzLl0hdmAnRKCcaIOg00lzUNo5lqG9bg0b7IDCNCaek9pvlYpha5VFjwVKcQOVc0MYiI2n32Mjc6lWsbrAr8LI6fRqwmpKQsp5lxpaUCsqW0PVmxNFooVszAkD7oWrORqk3mV7QHrsYy1XIK3Fpo/utfEo8A3UexQx0+X109Y9AoJkzc4t1DHpFG4i8N3OfycX2NtPfoWJKm412zfhMIKiFX9KtuRUn9B/mYnuV7jKWpWuLciGEAAWuhlK7z+rPV7fD6vjBO8wcUAAQSACgRb9nl57x+9jTakEr2DWRyuowEQ37glEU5hUNQkJlPLDlaW4zUAAOGxZfVq1Zb5PC5FsoqDaZKoFYBg60JZj3FJdlHVYZgczA+4CHYrTear2nJQT3gtDgaFYccENds4FWU2gbrYx7FCSymNpFVC5VYiXihkqSzFFLyVGDxYi1LEiFvqfK0HaSGYJ26rOr8t9wcrUANvK2VqSMmLQHFrDd/ocLx7HGRqdnsBUoysQ8Ut1vPeVDRnvcWUadHBzHvcXiVqEsAMt1jW6peCW+4w3IfEF6Q8NvfiimlHQkzI/iau63hwr3ql7shCfQoBN4sVre4ljXlHUuoVk92E03Sd3atdDDv2yU4t+xeIKd0LBu6IWZrgxRwwinPVFGRHVvLVnwpvymc5BOea54m7ESOvGorcJEXUO5e1it3SQyatxM3hVK/qXNO0K6iPERkvZB7C5Fp1Lm1XBL2EF8lQQ3AtDpp29VHTF+EQ19W12kF0RxTxAtsgyABxLN8idizUkkU2yEc7Ncea55E7AkVL3USKko5lRuxaWILkDcJSZ8diWXRnEK1FNqBXRLeqs/mdGfMq2FAaUd1KjHlnarCim8S2erfCGLkzU0RyA1YvwZxqTgfsXlQ8NtHcGtza/Mch6EbihzpGl/KY9GNQDLoJOA+H0aU0lfQxQMHmYapnmEMxNP9xgGzWDtfjKA6VeEIHiwwa3Im5oIuhnWt0p6rT2gUx8XQnQchdwOKvUpwpjyM7wVqjOw06opMFWZsreY2pI+2s0Z3G3A00zFYcqcpSOxJyKq6U2oiOlrb65kaeMXXGnnQRJ8rDqTModQ3NiQY5+M5M5azmQtTF0NnWrnl0oeoPa3fErnUqDjTUU+4Oon8KwX002YVdKk91cqD11REdLlNeRZzHt0PqEiZ/LM15hnBgp0zPbXQdvzai083OdRLHqfkyd0uW4Ria41zbK98tjHIno9v4PHl0vLV5GMVpcn1euyan4ak1pznbe981jOHOjy6TrocBnW8HfYK4DD8/d69c5Jwchun5xM612HjN5i5qz0XYMYknrFdv4ix+uh+G3DVYQa3iLNSDrDR2S/MRr74WBzqLyZBbk25xPvtX743O4kPxFLBbqGedIkBxk1rlEJCrdAysifU6HcxNfKSPzWu3JLQ8n18/fv47jC5CXMa7PLZau8XrpPVX/KrI+MocJNl7SYMQZKfy3ejPy6eXn/T30+Qe/mgXkbJaITq9X9XH52+VX/6MOopz5DlamqacW2GX3JMQI0pY70JxjnO7DNXXKRLdnmGpPsQxP9rkGsPx8Cpp9mMhpFPSNFlAK79uGJtb8Ek/na+haWUp6HSgFi1E1LMVt8iPby7Ha2mcpYl0Ke9LIlmtBbumaC7BB/lux0fvDfDW0OXyLWNTEy045xhdIh3faJ5JX0CTbsVKSGleZU1jM3fgEz6ZVTRltAZ2insBq7lMoZQ0F4dIT2+UWpiFDIZOr/sKDXVuY5mW4agmrsAn/uEMFvEIrAC7xNpMFqiG0EyT0hXy4+c9Bc2f46Gl6qVD0kGVsVQFSys1wxH5IJ/MUDE/tEmLKrorXXAkJp8hrIziCun43hMimp7HqxcVdgfCj+JS8yRJgVqtOQKf+B8zAKTwRlbOKtKdqSkFyQ6VKJZVxA3mu08rASgP4aiqRdDhkszrgvkweoj5HOCE/rV8vxkftWU9oxRhh2w31U+4KycCfpYYnOCavtMdPyJjyBmFFHaHGCWkcbiLgaJDjUEcoD6cPsm4MSx+QCUgHYKxiS7hD7QBsb7Nl8l6j3fn7/OAG2XMT7FVM3RbvMryLc4fKCjj258XXy3Wd+nlq7HeVMaH63PwBu1WgdT8O9/mD1agXKbXb8PUeo534QedcXMc7uI7QCndYqzlu/BH5Z8zML6xu6sX67d1fQPeJP7D9a8Pnt46ZqqW9cP77zUfCVnecU5Ze411+eMBN3O4G9/LoFbYMTEIHtb/uX9IQFliXj36rVyivgBXvsnHxODR8S0523B3+HOeCRgrpN+A4PFCymGsV19i52Kqqk/nT9/PKvRVWuk3XyXyBRInn1cZMzpfiteansKnZaBwyCFYn3FI04oXl8IsrWj3TETXmvLzySskPZVT6zPNOOQNAAqKYg82Ez2mHE8wlDKvIUiPgSdwI9Fi3AdSYlsfUjsVD5mm4yrWYzqNCZubEPuy4vnyeBcKyMPzeva9FSYdwmYiuJU0nw7/kj6HAPjpkFb2lsWWMjfap8Kh/Mf4064jUCKzorcVz8vTuqeA7D//+dcvo8U34YNYf+X11Z8Pb9O+0hR+p36O4/OnHz7cS499wA9793LlnkLSN4e318Mfjz/CH7AhpWf48Pjqj71KMe/3kU/hfrhrp/XLB9lACZN+GVaJDRJardxDHOolnCsHLti0Di1Kn4DQNAoICvZxrdPJH8/tHXQD8/OwjNInZmuy0pgNe5neLvH8WJ6Z+CIEPrR33vdIK0cwjBj2FDyXQ/5wvl/yJm1kttojspQHbac4JOxrtYAPT398n+oGGJeHl0uE9Ebk0ZdDSLa/YOU6v3vOaROL60tcIntjTHc8TRzK3oJHs2O+L5UbwIrWQC/sB4vDIy9hVdlfpI2P65tQ/SZoU8jQwfdDaI/n8E7mhj3uJaZ1iQrlBhLgT6f5WHthkj/w7yaf9hpQ/KOdgio2rhXPb/KsPSAX/n29b4PIXqPwqM8FproJ6vn8/Kop9185pTu9+HPDnrfBH4QEuAnzzNgE+z/Ka8jJV9l3UnMLFNONAFQV7H85+S+fLFTB3tckUUQA3QxgD5RpfiwNih7MvjVAwN9KH476B++lEH3ovTSBiFD7RSxePzQI+tHTBDCAvUKLercI+pIKMSEEYH+Iteksgh4lBRAI0aMScI3oUwXN8FH2h/F4sl4BKRQIIOwHmmGgoGcJASHoS0Pxs6F3qShCCNgLMKihhyCggBRIDwhSkx4CoCIAhNj3FIAF/VyAplS8XZS6e+fQbS03jebRHFmtwjh6oyhM7tsjA2mhVbxBJMXwLgdfkDp4g0iIiO9y9EKBtsTbQoKgiXICpUA7QW+Kh5DFygkU6lja7ttBqghVYyEnMW2RaYneCA8BSxiIk6g41Ok05haoF4hAYlW4o9iWdFbd+sKoVCtEFA+njLRlnI5uXxJV1QxmVuGaxuloXYtm+2JUVUxELXg6BxiHu7Qdm+2L8EqaGMWCJ5yErDLStarZPjeq0psV+hKbh6NGnaEwnQXZ8RlRvWppQEUZE+GsbttpkTVdIW77LKheATNAWaaWCJdN9sxA7eK+UNvpZyJVSTUTUG2cBoXjxtg1BVmsWTowjP27KVVVhRRT9QjLaa5w4J3QtaQyM0Os41AH+0QzUkoLRczgqRamZa5wY7Ol6w4VRgQtTFoowGSg0BRFBKrlcJBrhTsnO+3cZ6owcbRSP5EVhgorKzAgnk4xJYVbJ9mdWTPD1iU4WIudx6odoLNjbVqirZVw7528SueOj3lkZSqQ6WxcLNH90CCaZg9HT/ZjRzobIiVSStJ2y8Y1zVnh8po8mDIyO1QwTrNJV8vfEwXGAqEVLdXy99fKp5V/vg8AVlA4IHIQAAAweACdASrjAEABPlEkjkSjoiGWCX0sOAUEs7dwYGYyPZmGXO/7irnWdOR3k/90v2x9qTMg/xH95aOvPS292ap5QtQn9XvSq9gH7l+w3+pZ6lepD3U9ZOLYAySpJv6OYRck64vYwfOlXd7BPancy6GsRDXo0XhZNX6y6JfhE33stzGT6yhQ8VC82z7rgVVmrihWcjkbs3ylz3cIf+uMbEEv5s5z3Rvlot1MmvpB8Aiwx0zjlb+aekRP0JaYiK8kSA4BVIh9c7hhJfQV9Z/OSFRKz2UHee5daYhoMKaU3uQv/QzaCS/+VNBae1A2doU6sADRutMx1+JAr93QrSHxCvonTLZSGbqNHpE2vQ5wLDDfzH4lLlP1kWJjKc0nFIiN7blp6BkBgNmxnGxdVxRo3GBeUNfv7oa7nyFYOtHnHxNQNBtVb9Qq1vBdRBJg7y3fDo7uDPcybiJbrNe2898ng2xjUBPFlbGPYgaUcdONfD8fj8AmJIRaHPOrQ5aIoKz9bGIk6YWd7M0diNVqdD+0ikxSYYHZZqyr6DNmgNfTd3nZ78ViYN2Y/BM+uMr0bf8hVFzItBneI74UlbrijDaXCXeqqN0RWFz/9DPC4xjzC4CegjvpPAom5sip2LCgHkP9x+AvdDfGL1R+vKDE5l9IyxLaNFQ6SNwV0ZIhv3aSCJ4lzGXAK1l2qbegc2rk6bILvKeS0YBvfNn7JroAKi2dC2rqgxeKW0TWufOBr2BSRO6IAAkBsSEnbYAsX4azmnRTEXqst0O4Mzfm1Pmk5xCYlLRvvqUvgWYCCvP+cZzFZa8rF388N07xPHlfPMMS5wIdzbiA14ektGqF2XsXALrbe+XPfZrYyH413KH0yOZofupbGbjKJUm+az70m/Iky7xlbU3mJflPge89BhSLqqTU/AbFB3XMa/kWmhIN1B+jZH8Vrm4QHvrc5juSmexHfjGoo39pD2ajanWxFMDN57Bcs5JTMQ3EkLH8b1fcy5PDBh+3uIldZf5h+mCRNS7LokZstyoPNBimlY4o89IMXmbOMotyHGpU7mWoJZlM1Q1s0PhFPSD7So+Sqr8vEu29TTWYBfF/x7CCE5nahQ6U/8b8DM9JpMFf1as6P998cpx4GVsWe7cRvj+AI1/N93KVSB+sW8PLZMngwNf23RTswA9EUk1QYXABpXg+E/eY4gWoVX8g3uVU7mU6c5UQPdFfqOattx22WaH0ULVdHmZqaWG6fURDFSQdCY79eEJ/DAb17MAyM2RueHGPYseStcJtap/dGs7CVJsYCumEQRMAAP7oL4Ed/9TboEVrYhmQ2Bh6xc8Yr2Tm9hf+83anP7d+b1vx1Q85PJfOdXtCIv+NRQV/N9OxUYnAhNl85MU+U7cq4OMvSjE+eZUmqQ/c5PLyrcVtE+zcjtAmHOZWpx0u5L9JHFLGBqYOKmoE74madUy3oLThUjnBCKue/NKzhJcE3q8aDJirFWAl3QdLFz+t4vuw4hxJVGAEMdNNKogOzPFl7YCDK6bqvJH98xitWj7J1Ye3MBhpY5UMuG5ZSCEgiEAAFoyv+mMr30Cwqj2Cgu/pR5d94KCSG028zD0MK2XRNWvH5rOYITLV3kt2LtkWq/hFCN5fULOhT32GbTAdpaETiV2+gPiv4JyhX9ym/V7E6S7lJcrlbKXpT+DrIlDSEG3x5AtJJDK52Q2S0r1/POJ7FerntL9z2LJ+GLXExm4ewdLN5qMIAJtncSc1BxNsqAYNX37xCHuet9+rloCjv/KnA+9rk5aZmxyMPY+cpJkZbGAlS8aXVr73kNwD+Qj1SlLqUI8mb8IO9ckP1fmRz/8kQWY1Q3fIKO3eXPyOs0JSteMFWcWns/5Tj2lJ/XR22i0sZS0iP0g/TF3NFAmsjAEP/8ACM5TdQFhqxz7iAJW24E16wAuFiW6Ia5x/5qYM7Y3yvY7SeZFll/wvQMNtbR+ofI1+1+epdyWHij/Fcol2g1W8exHggOLC3kgfusmQJ2bNctRndXlXAJgcIMZLTcYrK3qSuoyLnVgj/SwBkDMvozfou+3RoZ0iU/ejbSz6QZXfEMrp3j2sZIqD6fayyv5NFGpJ2JqI0W34rW2kZzQzYbwQovsktO+7rkYc2DCnx14VobhykinIBnCS+CKUb1/7GOSRk4lcd3aUs+xp3xzFcYO1lqbTmNM07gRsyqscnzyonY3nYJLq726o2sz+hsao70HAApxtM66RFC3aspoOyy9aYuGstox56TD55MpWSxlaLGfHwnLLAXBO3IWUfbWEvkQtSrXLx/vlaemqu/OlUFTmnm4q1H/NU7j+/jsXMF223grgm7omnAfeGtDPlCItPziYfbzDa1vKPZWTv9CGUmi4xVlfAC4mcskAADIIpfFULfGO6J+xVJPCl/+3TRFfqZSeJ+yWEZAwX+rZXiidxoI2rSLoDsYnS1xEmGkWDeOm/aiQrm7kLAp3TI519h/WxUB5SEXSRy6oOTCLfcCan38ZLWWhKPtSjeNx2ftIHT/WB8+xmMBgP+q08pWfGac7gXOuc98tpZDHTStHQ+D5poc67X130XudTqT3UTc7mxl5xLR+irNmuASsvCocxXa4OtCzHNrdzZsA6mpjgIuKXuty/OoYDiQEfpD1UZMduWhXyuaYO8RSGt354j4ZkdIdyE8ZEWUwH7Z7B8iCgGM4mnAQKd9JBxN6tSzlV8iGAn2J7zfga1uxZaOFsJnnZMuBdD41HNm7M46o6zq1cJF8oq4iQOByXtod0YPDoX2ldrA48oEh9WzPQw7+QR1KjzjrxbxCVbc4dlR11Ipd6MJu2ePUYQQ3TozH/m7aC2O/1kDjKjDbPW/G5OJkEuavKU/ifKi2qZmod2pj3hDjrZ+6EDpdCJUEwJb+JgQRys8HvVdRS3a1eav4zGlu1cEmg2xIq30IrMAl1ztw1JCG5OnrTPr/mW58NFcWvyN/776YodLqqTpnaL9GlHgxjXqyJAOD3TcooFTlzDRIELy4/JC9sn7LOlUp02R8YuR8lhNZFIj9rx4N1/E1AQWwtEhNYD/17qHnmaBzRZr/Bzl6CZE777LGtWRGCXvT1roeSik9mJzH7iy1UioIvzKY1aBjzxB7Ln7dCcTl6PZGTnaant0V/cLW1yptewJU49gNIpEB/u2muCB8XYBV2wzTaPWDDpSZqDuiKGC8DCuV63AgLm4hvDgKHU988YBjegn/fRPd7sQIm38cfezFYt8rNdg3KvYeMcLDEhh0cP1LazE293QgETwLZbp5iHT/gKy4G9UVwhClK6fRYlhYrgHxyDI2ju2FFh+coYks3dHl6KA0QwJJmrVQbWutwrVGrbUj+M//Uj0E/8HKGaAXUyLEZDGlJyKUPBfDscVdXsW1Vf1D87Q7TQ+KzWs/gJYwI/0KY/sToBe684O8/N2TdEi1aqmnvCw7fiC2NJNxtVRliAE4wrNc4jP5aGkQqUoXUQiLiiGVG0RV82xLAYWG532MkvUh4+OTjoc/8VSohbJq/NMIakMewHlj2T51X/Pn386Z1J2U7xL0kDz+lyb4uvsxBiUSHkDYYiUDQRPnrYLLiqD9SrE7oy0rLxao8qLsQEbhr9QoHxQhTDCxatQzGJ4Ihx/lBx0cOt7ESVD2vDYoLGVUkbyF2XP9IgfrI2SNRWkE5/NYepTY5eP+mccaQcrvbchdP6DCF0jR4QWek4C9/ghRh4Cl7Qh862wXbLv4QweKxSQgKXLFVP4NCew527igBbGdJmoXrl5H8un4oePgb/R7Bb07IKMiKxa74uK+RyuJlJGghMao0tXr7oQ+BD6UrbL6IHdc0ovL+UwnL+ry/Y/yWUPgCAib8bGa5EZvfS7sEu+eutkjITpUSQCu0TTJf8H852PSBN2y6QO7WCZYsXFdvilp0WP70C7CLlPrtbo+C8koGM/KeNLSo4EWTY0niSoq7ZlPwL4OodSdF0AUrSy2JY7jANONgBBqQswXVJCT3NK49A1GHnOed8RK7h80gvPaO44OwfYhSfPlbQSiIhF6DRchppGKWJeEKZet1kd2qoUKpCgnKjPEtfQxdWwxwcfD8CCgFW+usgsyxMKQrkM3g0YxO79a3E1JV0XAAaX5VuyLk/tDZz8mfaTe2QSnPfU2VZMUQPBQc7F1so5pFH9TZNIA4TylRQp284ECJNAbz1CKFydxpjlp0n5pp7xihDBd4d3Da3NhDRIKDA0hXcwJ5COXGhrOTZ8AH3nrfIKXIctA7L+e4g7UzJOHPifS/eDrptQDiLgRtcpoD+pnTRrhh9ZdS4WtNg+5YOXQ022vbeZO/pKxjEmpk6R+hTAC7tV2TS0V6cvziH48kAqeBYGguEcTFDFNdm7KVpk8oYjs85IIKZV7r0Fs1adQy6AiViEtSrW15lQJvIWLnBzvqk0rstF88oClpGQv0JyeHkP+4Fj1zZCPtGyC1IGjPV8A1zbUbX2dAmjYbqJ+8xmOehF1RgpIzc3lOxzj93FvBxPR/f4+icOWF9NjhMZyAuQl5jIo5cDL8C8O2XMciJU7gOP6qUtzu/jPL3udnOAAErGibCCmf3e3l2rFt5Pt2UYe+Qi4yOUWjVzBKuqv95S6QpWAl7digJ3tQ91h9KJI/mxHZXdzU9wWftdJ8QhHzYuVEDmxvDDesZ5MhVfaEnvmZSTkTAAEpBD2wDkIX9g3NgLpoFL2HEXCYtBt5AiT6lDWBty9Iy4lyf3asKzBBWZSke0S3KR59AALQ6mnluDl4t68mUPcB55KzQTI3SM2m3VK9zH1nqlrmU5zFIwcX88KAYQyjzRkO6SNk/xryTy4mlljrVTXpqxb+VKPyWa1YnQAE5Z0N4pLy2twCAfVRtCbH9Fn3K8CRRL2Nr0ks8sXTBmTXTtxbytoosU0uUEBG1KEaSYYD4lP4fFqKdzjlJMy8FPSvAtJrrJFUwVAOUTP/Qu3qn8zowHWSaNWWgbXQdy+YgqVAASHWnjBJk240gHfQSo52nQUSulVSc8yn70/3RlSZUJ5X1B+1Qwuw+y41F4UYE+BkfTtHQgAm4GZ3E6QzxD4hXPBJWQWba6b7xRex7PbvUbrSdgRfWb53LFoC5sD/r02de9DMAtGbjL5UgYQ9MHJRWAiL7WwutMyElu+AjPiIRUWBJpL3QAJ2hLJ1DhHo+zVYPCcbmuys+Ct57B4YVVNiE0JHyIVfXP1NDzsky8EDC5gXcq/dEns1JAiHs7BRIWpCb8OI38W+1EY7ZUe5tE+l/su2gz2sbkjZlDLxEFpLgK62Ilx2RCxDJ0P4G4CADImCdpOi90tgug0o9nXcKXEedT5eTyYWgmCXaABxjGzJqI/JU+AK6FxfbHPznzMGhLC7vi79GcYMKrjgPfaXVeQ+u0mCYxqQPjIuaWDDVSWrRwHrBBPw+m8CUecEN30IJQKugRjio5drJAgJhJo9FI6mHZd/Fuwgc5JYRNzI0j2IjpRbDk/TieNy9xyJH7XUARq1SK6AABrhuFod/zsoK/rsufXs7wJkL5HhyxvLpbn4/ChOdJ7GGldEqUp79kD9K3ngQEc3s9VKIxMPz9NaJ3eHjSgRE00DYsQJM2nMOk92iJwvOvJNVI27hWeadTY8XZKCfuDvQDwAAAA';
+const PF_SCARE='data:image/jpeg;base64,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RRQAUUUUAFFFFABRRRQAU9F3cUyrNqm7tVR3Jk7I17oi38MW9uOGkYyt/SufroNbi2MkYPCRAfpXPmnIUQoooqCwooooAKKKKACiiigAooooAKKKKACiiigAooooAVfvj61oSHzbfZ3UcVRhXdIKv7Qq5rWGxnPczSMGip5Y85IqCoasWncKKKKkYUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAAKvWLBVG7oDmqSDJrQt0/dgeoNaQRE2TXV2bp3kPOen0rJb7xq5a8oVNV7hNkntTlqhR0diKiiisjQKKKKACiiigAooooAKKKKACiiigAooooAKKKKAJbcHzOKmnkK8UWacFjUVw26bitdome8izIn7kDviqFabkGNfpWa33jSmEBKKKKzNAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAJIRkkVegP7tfxqlb8yYq5EhICj1IrWOxlLcrQPi5x2JqxeQny91VHJjuScYIOcVpCQT2+PaiOqsEtHcyKKdIpRypptZGoUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUAZoqW2jMkwHYc00ribsXoYvLtcn0rNJy2a0byUxw7B3rNHXirn2Ih3Lu7IUeimqhGcmrQTBx6LzUDLiPNNhHQiooorI0CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAltziYVdik2sw7qc1nI21wat7sOH6g8GtIvQzktR2pqjOkydJBz9aksGDR7e4qHb5kLxZ5Q5WptMiJJJ9acVqKWwy9gzlwORVCugki6g1iXMXlTFe3aiceo4S6EVFFFZGgUUUUAFFFFABRRRQAUUUUAFFFFABWnYw7E3EcmqdnD50w44FbkcOVPYAVrTj1Mpy6GPqEm6UL6VWTg59Ks30eJ+Opqu67cLSe9yo7WJfN2xH1akk4hApqfMcn7q02R930pt6AlqMooorIsKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAqSOTAZSeDUdA6007CauWI3xKDn2q/ZfJOy/jWTnB4q/azjz4znr8prWLM5I3JU3IGFZV/amRNyj5hW7asrxmNu/SoLiDaxBFatXRinZnJEFTgjBorfm0+KccjB9RWdNpc0Z+X5hWDg0bqaZRoq4mmzN1GKlGkSnvS5GVzozqK010WUnrUo0JsfeNHIxc8THorY/sJv71IdDcd6PZsPaIyKK0JNIlXoaibTph2zRyMfOipSqpdgFGTV+HSJXOZDtFaMFjHD90c+ppqm3uS5pbEVja+VEOPmPWtB18qDpyamtoBnc3Ciob+dcE9gK3tZGDd2YU533Tf7Iqk5y5NSvNneR1Y1BWEmdEVYXcduKSiisywooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKUMR0pKKAN/Tr0SRjJ+YVsqRcxf7QrioZWhkDKa6PTr4NtYGumE7nPOFtS2YSD0pBGCMGr7Ksih1HXrULR4Oa0sZXKvklTlRSq23qtWBil2A0WC4wSp7U7zF9RR5CntTxaqe36UAM8xfUUxpVx/hUptVHak8lVNAFdiXPC0gh7mrOFHSkIzQFyDy/SnxwFm6cVMkVOuJVtoSP4jQBXuZxGuxegrnNSvPMJjU/WptRvsZVT8x/SsgnJyetYzn0RvTh1YUUUVgbBRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABUsFw8DZU/hUVFNOwbnV6TqqyrtJ57itJmDcjpXCRyNE4ZGKkdxWxZ66UAWcfiK3jUWzOeVPqjeNN3EUyHVLeQdjUrXVqw7g1rczswWUiplnOKqeZGxwrVOsTYpiHPMaiLk0kmE5Y4pq3Fuv3iTQA7k09aryahCv3Rx71Rn1yOMELyfQVLkkNRbNl7lIELEjNczqOqtNIQhz71TutRmuiQTtX0FVaxlUvojaNO2rAksck5JooorE2CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAHK7IcqxH0qVbyYdWzUFFNNoTSZeTUnXsalGtSjjn86zKKrnZPIjRbVpHHINQPfyt04qrRRzsfIiRp5XGC5xUdFFTe5VgooopAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAf//Z';
+
+// ================= The Poolrooms =================
+// The game has a noclip glitch: now and then you end up inside a wall or under the world. That glitch stays, but now it takes you
+// somewhere: the Poolrooms, an endless maze of white tiles, still water and humming lights. It is a dimension like the Nether
+// (built from the seed the same way on every computer), so it works in multiplayer and its edits are saved with the world.
+// Somewhere in each stretch of tiles there is a doorway under a green EXIT sign: walk through it to go back to where you were.
+// You are not alone in there. The Watchers stand still while you look at them and come for you when you don't.
+const POOL={F:32,CELL:10,EX:96,ret:null,safe:null,safeT:0,nc:0,glitch:0,going:false,time:0,spawnT:3,flash:0,ambT:6,hum:null,flick:0,flickT:20,scare:0,breath:0};
+BIOMES.push({k:'poolrooms',name:'The Poolrooms',base:32,amp:0,sc:100,top:B.SAND,fill:B.SAND,trees:0,fog:[.6,.7,.68],sky:[.6,.7,.68]});BIO.poolrooms=BIOMES.length-1;
+DIM_NAMES.pool='the Poolrooms';
+
+// the tiles give off a soft light of their own, so the rooms are evenly bright like the real place (the ceiling lights add to it)
+const POOL_GLOW=[8,10];
+// ---------- blocks: small square tiles, beige floor tiles, ceiling lights, the exit doorway and its sign ----------
+{let id=VB.lastId+1;
+  const tile=(name,part)=>{TILE_PACK.push(name);const t=TILE_PACK.length-1;NEWT[t]={k:'pool',part};return t;};
+  const tW=tile('~pool_tiles','wall'),tF=tile('~pool_floor','floor'),tL=tile('~pool_light','light'),tE=tile('~pool_exit','exit'),tA=tile('~pool_sign_ex','EX'),tB=tile('~pool_sign_it','IT'),tAm=tile('~pool_sign_ex_m','EXm'),tBm=tile('~pool_sign_it_m','ITm');
+  const blk=(key,name,col,top,side,o)=>{def(id,top,side,top,o);if(name)BLOCK_NAMES[id]=name;BLOCK_COL[id]=col;B[key]=id;return id++;};
+  blk('POOL_TILE','Pool Tiles','#d8ddd6',tW,tW,{poolB:true,light:POOL_GLOW[0]});
+  blk('POOL_FLOOR','Beige Pool Tiles','#c8b298',tF,tF,{poolB:true,light:POOL_GLOW[1]});
+  blk('POOL_LIGHT','Ceiling Light','#f4fafa',tL,tL,{poolB:true,light:15});
+  blk('POOL_EXIT',null,'#06080c',tE,tE,{poolB:true,solid:false,opaque:false,light:9,poolExit:true});
+  // the sign reads EXIT from both sides: the north faces show the other half of the word, mirrored, because they are seen from behind
+  blk('POOL_SIGN_L',null,'#1d8a3e',tW,tW,{poolB:true,light:7,faces:[tW,tW,tW,tW,tA,tBm]});
+  blk('POOL_SIGN_R',null,'#1d8a3e',tW,tW,{poolB:true,light:7,faces:[tW,tW,tW,tW,tB,tAm]});
+  VB.lastId=id-1;
+  for(const k of ['POOL_TILE','POOL_FLOOR','POOL_LIGHT']){const b=B[k];item('b'+b,{name:BLOCK_NAMES[b],type:'block',block:b,stack:64,color:BLOCK_COL[b]});MINE_T_X[b]=2.25;PICK_BLOCKS.add(b);}}
+// the tiles, in the same 16x16 pixel style as the rest: a 4x4 grid of tiles with grout lines, each tile a slightly different shade
+const PF_GLYPH={E:['111','100','110','100','111'],X:['101','101','010','101','101'],I:['111','010','010','010','111'],T:['111','010','010','010','010']};
+function poolTilePx(part,x,y){const h=hash2;
+  if(part==='wall'||part==='floor'){const ix=x&3,iy=y&3;const base=part==='wall'?[214,222,216]:[200,178,148],gr=part==='wall'?[184,194,188]:[166,146,120];
+    if(ix===3||iy===3){const n=.94+h(x,y,9101)*.08;return [gr[0]*n|0,gr[1]*n|0,gr[2]*n|0,255];}
+    let k=.93+h(x>>2,y>>2,9102)*.1+(h(x,y,9103)-.5)*.04;if(ix===0&&iy===0)k+=.04;if(ix===2||iy===2)k-=.025;
+    return [Math.min(255,base[0]*k|0),Math.min(255,base[1]*k|0),Math.min(255,base[2]*k|0),255];}
+  if(part==='light'){if(x===0||y===0||x===15||y===15)return [190,198,198,255];if(x===1||y===1||x===14||y===14)return [226,232,232,255];const n=h(x,y,9104)*5;return [250-n|0,253-n|0,253-n|0,255];}
+  if(part==='exit'){const n=h(x,y,9105),v=4+n*9+(h(x,0,9106)>.8?6:0);return [v*.7|0,v|0,v*1.5|0,255];}
+  if(x===0||y===0||x===15||y===15)return [14,56,28,255];
+  if(part.length===3){x=15-x;part=part.slice(0,2);}
+  const L=x<8?part[0]:part[1],lx=x<8?x-1:x-9,ly=y-3;if(lx>=0&&lx<6&&ly>=0&&ly<10&&PF_GLYPH[L][ly>>1][lx>>1]==='1')return [232,255,236,255];
+  const n=h(x,y,9107)*.08;return [29*(1-n)|0,138*(1-n)|0,62*(1-n)|0,255];}
+{const prev=procTile;procTile=function(t,x,y){const D=NEWT[t];if(!D||D.k!=='pool')return prev(t,x,y);return poolTilePx(D.part,x,y);};}
+atlasCanvas=makeProcAtlas();try{reuploadAtlas();}catch(e){}
+// they can't be broken inside the Poolrooms (they can anywhere else, if you bring some out in Creative)
+{const m0=mineTime;mineTime=function(b,id){if(DIM==='pool'&&BD[b]&&BD[b].poolB)return null;return m0(b,id);};}
+
+// ---------- the layout ----------
+// Columns are worked out from their coordinates alone, so chunks fit together and every computer builds the same rooms.
+// Three kinds of area, 48 blocks across: halls (7 high, pools), tall halls (13 high, pillars, ceilings hanging in blocks) and low tiled corridors.
+function poolReg(cx,cz){const i=Math.floor(cx*POOL.CELL/48),j=Math.floor(cz*POOL.CELL/48);const r=hash2(i,j,WSEED+9110);return r<.42?0:r<.78?1:2;}
+// one exit in every 96x96 stretch
+function poolExitOf(i,j){const C=POOL.CELL,E=POOL.EX;const cx=Math.floor((i*E+16+hash2(i,j,WSEED+9120)*(E-32))/C),cz=Math.floor((j*E+16+hash2(i,j,WSEED+9121)*(E-32))/C);return {x:cx*C+4,z:cz*C+5};}
+function poolExitNear(x,z){const i=Math.floor(x/POOL.EX),j=Math.floor(z/POOL.EX);let best=null,bd=1e18;for(let b=j-1;b<=j+1;b++)for(let a=i-1;a<=i+1;a++){const e=poolExitOf(a,b);const d=(e.x-x)**2+(e.z-z)**2;if(d<bd){bd=d;best=e;}}return best;}
+function poolCol(x,z,o){const C=POOL.CELL,cx=Math.floor(x/C),cz=Math.floor(z/C),u=x-cx*C,v=z-cz*C,reg=poolReg(cx,cz),S=WSEED+9130;
+  o.reg=reg;o.h=[7,13,4][reg];o.wall=0;o.open=0;o.pool=0;o.pillar=false;o.drop=0;o.light=false;o.ex=null;
+  const wc=[.38,.16,.72][reg],ww=reg===1?4:3,oh=reg===1?7:3;
+  // walls on a cell's west and north edges, each with a doorway
+  if(u===0&&hash3(cx,cz,1,S)<wc){o.wall=1;const d=1+Math.floor(hash3(cx,cz,2,S)*(C-ww-1));if(v>=d&&v<d+ww)o.open=oh;}
+  if(v===0&&hash3(cx,cz,3,S)<wc){const d=1+Math.floor(hash3(cx,cz,4,S)*(C-ww-1));const op=u>=d&&u<d+ww?oh:0;if(!o.wall){o.wall=1;o.open=op;}else o.open=Math.min(o.open,op);}
+  // pillars at the corners
+  if(!o.wall&&reg!==2){const pw=reg===1?2:1;if(u<pw&&v<pw&&hash3(cx,cz,5,S)<(reg===1?.75:.4))o.pillar=true;}
+  // pools: blocky shapes from a coarse noise
+  if(!o.wall&&!o.pillar){const n=fbm(Math.floor(x/3)/4.5,Math.floor(z/3)/4.5,S+6,2);if(n>[.6,.6,.68][reg])o.pool=reg===1?5:3;}
+  // in the tall halls, parts of the ceiling hang down
+  if(reg===1&&u>=2&&u<=C-3&&v>=2&&v<=C-3&&hash3(cx,cz,7,S)<.42)o.drop=4+Math.floor(hash3(cx,cz,8,S)*4);
+  // ceiling lights: 2x1 panels every 5 blocks
+  const mx=((x%5)+5)%5,mz=((z%5)+5)%5;if((mx===1||mx===2)&&mz===2)o.light=true;
+  // the exit: a short wall standing on its own with a dark doorway in it and an EXIT sign above
+  const e=poolExitNear(x,z),dx=x-e.x,dz=z-e.z;if(dx>=-4&&dx<=5&&dz>=-3&&dz<=3){o.wall=0;o.open=0;o.pillar=false;o.pool=0;o.drop=0;o.h=Math.max(o.h,7);o.ex=[dx,dz];}
+  return o;}
+const PCOL={};
+function genPool(cx,cz){const x0=cx*16,z0=cz*16;genCX=cx;genCZ=cz;const F=POOL.F;
+  for(let y=0;y<WY;y++){const row=y*WZ;for(let lz=0;lz<16;lz++){const o=(row+((z0+lz)&ZM))*WX+(x0&XM);world.fill(0,o,o+16);light.fill(0,o,o+16);}}
+  for(let i=0;i<256;i++){GB[i]=BIO.poolrooms;GH[i]=F;GU[i]=0;GBE[i]=0;GL[i]=-1;}
+  const T=B.POOL_TILE,FL=B.POOL_FLOOR,LI=B.POOL_LIGHT,WA=B.WATER;
+  for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){const x=x0+lx,z=z0+lz;const o=poolCol(x,z,PCOL);const ceil=F+o.h-o.drop;
+    world[idx(x,0,z)]=B.BEDROCK;for(let y=1;y<F;y++)world[idx(x,y,z)]=T;
+    if(o.pool){for(let y=F-1-o.pool;y<=F-2;y++)world[idx(x,y,z)]=WA;world[idx(x,F-1,z)]=0;}else world[idx(x,F-1,z)]=FL;
+    for(let y=ceil;y<=F+18;y++)world[idx(x,y,z)]=T;if(o.light)world[idx(x,ceil,z)]=LI;
+    if(o.wall||o.pillar)for(let y=F;y<ceil;y++)world[idx(x,y,z)]=o.wall&&y<F+o.open?0:T;
+    if(o.ex){const [dx,dz]=o.ex;if(dz===0&&dx>=-2&&dx<=3){for(let y=F;y<F+5&&y<ceil;y++)world[idx(x,y,z)]=T;
+      if(dx===0||dx===1){world[idx(x,F,z)]=B.POOL_EXIT;world[idx(x,F+1,z)]=B.POOL_EXIT;world[idx(x,F+2,z)]=dx===0?B.POOL_SIGN_L:B.POOL_SIGN_R;}}}}
+  finishChunk(cx,cz);}
+{const g0=genChunk;genChunk=function(cx,cz){if(DIM==='pool'){if(structSeed!==WSEED)structReset();return genPool(cx,cz);}return g0(cx,cz);};}
+{const b0=biomeAt;biomeAt=function(x,z){if(INF&&DIM==='pool')return BIO.poolrooms;return b0(x,z);};}
+{const m0=dimMapInfo;dimMapInfo=function(dim){if(dim!=='pool')return m0(dim);const sp=SURV.spawn||[0,70,0];
+  return {id:'survival',survival:true,skyLight:false,sky:[.6,.7,.68],fog:[.6,.7,.68],fogDist:46,voidY:-64,spawns:[[sp[0],sp[1],sp[2],0]],central:[],center:null,dim:'pool'};};}
+// a random dry, open spot far from 0,0 and at least 40 blocks from an exit
+function poolArrival(){const F=POOL.F,o={};const free=(x,z)=>{poolCol(x,z,o);return !(o.wall||o.pillar||o.pool||o.ex||o.h-o.drop<3);};
+  for(let k=0;k<600;k++){const a=Math.random()*6.283,r=300+Math.random()*2700;const x=Math.floor(Math.cos(a)*r),z=Math.floor(Math.sin(a)*r);
+    if(!free(x,z)||!free(x+1,z)||!free(x-1,z)||!free(x,z+1)||!free(x,z-1))continue;const e=poolExitNear(x,z);if(Math.hypot(e.x-x,e.z-z)<40)continue;return [x+.5,F,z+.5];}
+  return [5.5,F,5.5];}
+
+// ---------- getting in: the noclip glitch ----------
+// Your eyes inside a solid block for a moment, or falling out of the bottom of the Overworld, and reality lets go.
+function poolInside(p){const y=eye(p)[1]-.05;const b=getB(Math.floor(p.pos[0]),Math.floor(y),Math.floor(p.pos[2]));const D=b&&BD[b];
+  return !!(D&&D.solid&&D.opaque&&!D.shape&&!D.col&&!D.liquid&&!D.poolB&&b!==B.BARRIER);}
+function poolGlitch(){if(POOL.going||POOL.glitch>0)return;POOL.glitch=.9;POOL.fx=1;
+  if(actx){try{for(let i=0;i<6;i++)setTimeout(()=>{if(!actx)return;tone('square',200+Math.random()*1800,60+Math.random()*200,.07,.05);noiseHit(.12,800+Math.random()*3000,2,.12,'bandpass');},i*110);tone('sawtooth',90,30,.9,.06);}catch(e){}}}
+function poolEnter(){const p=player;if(!p||POOL.going)return;POOL.going=true;
+  POOL.ret={dim:POOL.safeDim||DIM,pos:(POOL.safe&&POOL.safeDim===DIM?POOL.safe:p.pos).slice()};if(POOL.ret.pos[1]<1)POOL.ret.pos=(SURV.bedSpawn||SURV.spawn).slice();
+  const to=poolArrival();POOL.time=0;
+  travelTo('pool',to,{after:()=>{p.pos=to.slice();p.vel=[0,0,0];p.mot=[0,0,0];p.fallDist=0;GZ.tp=perfT;POOL.going=false;}});
+  $('loadTitle').textContent='You noclipped out of reality';}
+function poolLeave(){const p=player;if(!p||POOL.going)return;POOL.going=true;const r=POOL.ret||{dim:'overworld',pos:(SURV.bedSpawn||SURV.spawn).slice()};POOL.ret=null;POOL.flash=1.2;
+  travelTo(r.dim,r.pos,{after:()=>{p.pos=r.pos.slice();p.vel=[0,0,0];p.mot=[0,0,0];p.fallDist=0;GZ.tp=perfT;POOL.going=false;}});$('loadTitle').textContent='Waking up';}
+function poolTick(dt){const p=player;
+  if(POOL.glitch>0){POOL.glitch-=dt;if(POOL.glitch<=0)poolEnter();}
+  if(!p||!p.alive||!INF||MATCH.mode!=='survival'||SURV.loading||p.spectator||p.bat){POOL.nc=0;return;}
+  if(DIM==='pool'){POOL.time+=dt;const x=Math.floor(p.pos[0]),y=Math.floor(p.pos[1]+.2),z=Math.floor(p.pos[2]);
+    if(getB(x,y,z)===B.POOL_EXIT||getB(x,y+1,z)===B.POOL_EXIT)poolLeave();return;}
+  POOL.safeT-=dt;if(POOL.safeT<=0&&p.onGround&&!poolInside(p)&&p.pos[1]>2){POOL.safeT=.5;POOL.safe=p.pos.slice();POOL.safeDim=DIM;}
+  if(perfT-(GZ.tp||-99)<2.5||(typeof vehicleOf==='function'&&vehicleOf(p))){POOL.nc=0;return;}
+  const fell=DIM==='overworld'&&p.pos[1]<-4&&p.gm!=='creative';
+  if(poolInside(p))POOL.nc+=dt;else POOL.nc=Math.max(0,POOL.nc-dt*2);
+  if(POOL.nc>.6||fell){POOL.nc=0;if(fell){POOL.glitch=.01;POOL.fx=.6;}else poolGlitch();}}
+{const t0=survTick;survTick=function(dt){t0(dt);try{poolTick(dt);}catch(e){console.error(e);}};}
+// dying in there sends you home as usual (to your bed or the spawn), and the way back is forgotten
+{const r0=survRespawn;survRespawn=function(){if(DIM==='pool')POOL.ret=null;return r0();};}
+XSAVE.push({save:d=>{d.poolRet=POOL.ret;},reset:()=>{POOL.ret=null;POOL.going=false;POOL.glitch=0;},load:o=>{POOL.ret=o.poolRet||null;POOL.going=false;}});
+
+// ---------- how it looks and sounds ----------
+{const u0=updateEnv;updateEnv=function(dt){u0(dt);if(!INF||MATCH.mode!=='survival'||DIM!=='pool')return;
+  // now and then the lights flicker
+  POOL.flickT-=dt;if(POOL.flickT<=0){POOL.flickT=18+Math.random()*30;POOL.flick=.5+Math.random()*.7;if(actx)try{noiseHit(.25,3000,1,.04,'highpass');}catch(e){}}
+  let fl=1;if(POOL.flick>0){POOL.flick-=dt;fl=Math.random()<.35?.35+Math.random()*.3:1;}
+  const f=[.62*fl,.72*fl,.7*fl];ENV.zen=f.slice();ENV.hor=f.slice();ENV.fog=f.slice();ENV.glow=0;ENV.night=0;ENV.sunStr=0;ENV.sunCol=[0,0,0];ENV.skyL=[.3,.33,.33];
+  ENV.blkL=[.98*fl,1.04*fl,1.03*fl];ENV.amb=.3*fl;SKYMUL=0;const far=Math.max(24,Math.min(infRD,infMaxRD())*16-6);ENV.fogN=4;ENV.fogF=Math.min(far,46);
+  const ib=getB(Math.floor(camPos[0]),Math.floor(camPos[1]),Math.floor(camPos[2]));if(ib===B.WATER){ENV.fog=[.16,.36,.38];ENV.fogN=0;ENV.fogF=11;}};}
+// the hum of the lights, water lapping, drips, far-off splashes
+function poolAmbience(dt){const inPool=INF&&DIM==='pool'&&MATCH.state==='play'&&!SURV.loading&&actx&&!(paused&&!online);
+  if(!inPool){if(POOL.hum){try{POOL.hum.g.gain.setTargetAtTime(0,actx.currentTime,.3);const h=POOL.hum;setTimeout(()=>{try{h.o1.stop();h.o2.stop();}catch(e){}},1500);}catch(e){}POOL.hum=null;}return;}
+  if(!POOL.hum){try{const g=actx.createGain(),f=actx.createBiquadFilter(),o1=actx.createOscillator(),o2=actx.createOscillator();f.type='lowpass';f.frequency.value=520;
+      o1.type='sawtooth';o1.frequency.value=120;o2.type='sine';o2.frequency.value=60;const g2=actx.createGain();g2.gain.value=.5;o1.connect(f);o2.connect(g2);g2.connect(g);f.connect(g);g.gain.value=0;g.connect(masterOut||actx.destination);
+      o1.start();o2.start();g.gain.setTargetAtTime(.022,actx.currentTime,1.5);POOL.hum={g,o1,o2};}catch(e){}}
+  else{try{POOL.hum.g.gain.setTargetAtTime(POOL.flick>0&&Math.random()<.5?.004:.022,actx.currentTime,.05);}catch(e){}}
+  POOL.ambT-=dt;if(POOL.ambT<=0){POOL.ambT=5+Math.random()*10;const r=Math.random();const p=camPos;const far=()=>[p[0]+(Math.random()-.5)*28,p[1],p[2]+(Math.random()-.5)*28];
+    try{if(r<.45){const t=actx.currentTime;tone('sine',1500+Math.random()*900,700,.09,.025);setTimeout(()=>{try{tone('sine',1300+Math.random()*700,650,.08,.012);}catch(e){}},180);}
+      else if(r<.75)psnd(['liquid/splash'],far(),.25,.5+Math.random()*.2)||noiseHit(.6,500,1,.03,'lowpass');
+      else if(r<.9)psnd(['ambient/cave/cave'],far(),.35,.8);
+      else{noiseHit(2.5,180,.8,.05,'lowpass');}}catch(e){}}}
+
+// creatures, players and held items: the rooms are lit all over, so they are too (the usual light curve would leave them in shadow)
+const poolEntL=p=>{const x=Math.floor(p[0]),z=Math.floor(p[2]),y=Math.floor(p[1]+.5);const L=Math.max(lightAt(x,y,z)&15,lightAt(x,y+1,z)&15);return Math.min(1.05,.5+LB[L]*1.4);};
+{const s0=setEntLight;setEntLight=function(p){if(INF&&DIM==='pool'&&p){gl.uniform1f(PT.u.bright,poolEntL(p));return;}return s0(p);};}
+{const b0=mobBright;mobBright=function(e){if(INF&&DIM==='pool')return poolEntL(e.rpos||e.pos);return b0(e);};}
+// ---------- the Watchers ----------
+MOB_T.faceling={name:'Watcher',hp:30,hw:.35,eh:2.6,model:'zombie',kind:'hostile',spd:.4,chase:1.2,dmg:7,drops:[['bone',0,2]],col:'#56606c',fireproof:true,noEgg:true};
+MOB_TYPES.push('faceling');
+MOB_SND.faceling={hurt:['mob/endermen/hit','mob/enderman/hit'],death:['mob/endermen/death','mob/enderman/death']};
+// is p looking at this point (on screen, nothing in between)?
+function pfSeenPos(p,pos){const o=eye(p),f=fwd(p);const c=[pos[0]-o[0],pos[1]+1.9-o[1],pos[2]-o[2]];const L=Math.hypot(c[0],c[1],c[2])||1;if((f[0]*c[0]+f[1]*c[1]+f[2]*c[2])/L<.8)return false;
+  return canSee({pos,eh:2.6},p);}
+function pfVanish(e){spawnParticles(e.pos[0],e.pos[1]+1.3,e.pos[2],30,[.08,.1,.12],1.6,'poof');e.alive=false;e.gone=true;}
+function pfUpdate(e,dt){if(!chunkReadyAt(e.pos[0],e.pos[2])){e.rpos=e.pos;return;}
+  e.fire=0;tickEffects(e,dt);if(!e.alive)return;e.eh=2.6;e.atkCD=Math.max(0,(e.atkCD||0)-dt);
+  const S=e.pf||(e.pf={look:0,rush:0});const T=nearestPlayer(e,56);let wx=0,wz=0,spd=.35;e.sneak=false;e.jump=false;
+  if(T){const dx=T.pos[0]-e.pos[0],dz=T.pos[2]-e.pos[2],hd=Math.hypot(dx,dz);const seen=pfSeenPos(T,e.pos);
+    if(seen&&S.rush<=0){S.look+=dt;spd=0;if(S.look>6.5&&hd<15){S.rush=2.2;S.look=0;}}
+    else{S.look=Math.max(0,S.look-dt*.5);spd=hd>20?1.6:1.2;}
+    if(S.rush>0){S.rush-=dt;spd=1.7;}
+    if(spd>0){wx=dx;wz=dz;}
+    // far away and unseen, it is suddenly closer
+    if(!seen&&hd>28&&Math.random()<dt*.12){for(let k=0;k<8;k++){const a=Math.random()*6.283,r=12+Math.random()*6;const x=Math.floor(T.pos[0]+Math.cos(a)*r),z=Math.floor(T.pos[2]+Math.sin(a)*r);
+      if(!chunkReadyAt(x,z)||!floorOk(x,POOL.F,z)||!openAt(x,POOL.F+2,z)||pfSeenPos(T,[x+.5,POOL.F,z+.5]))continue;e.pos=[x+.5,POOL.F,z+.5];e.rpos=e.pos.slice();break;}}
+    if(hd<1.5+e.hw&&Math.abs(T.pos[1]-e.pos[1])<2.2&&e.atkCD<=0){e.atkCD=3;damage(T,Math.max(2,MOB_T.faceling.dmg*diffMul()),e,'melee',[dx,dz,0,0,0],false);pfVanish(e);return;}
+    const want=Math.atan2(-dx,-dz);e.bodyYaw+=angTo(e.bodyYaw,want)*Math.min(1,dt*(spd>0?6:2));e.headYaw=e.bodyYaw;e.yaw=e.headYaw;
+    const fy=(T.pos[1]+1.5)-(e.pos[1]+2.3);e.pitch=clamp(Math.atan2(fy,hd),-.8,.8);}
+  else{e.ai.wt=(e.ai.wt||0)-dt;if(!e.ai.goal||e.ai.wt<=0){e.ai.wt=4+Math.random()*6;e.ai.goal=Math.random()<.4?null:[e.pos[0]+(Math.random()-.5)*14,0,e.pos[2]+(Math.random()-.5)*14];}
+    if(e.ai.goal){wx=e.ai.goal[0]-e.pos[0];wz=e.ai.goal[2]-e.pos[2];if(Math.hypot(wx,wz)<.8)wx=wz=0;}
+    if(wx||wz){e.bodyYaw+=angTo(e.bodyYaw,Math.atan2(-wx,-wz))*Math.min(1,dt*4);e.headYaw=e.yaw=e.bodyYaw;}}
+  const L=Math.hypot(wx,wz);if(L>.01){wx/=L;wz/=L;}if((wx||wz)&&e.collidedH&&e.onGround)e.jump=true;if(e.inWater)e.jump=true;
+  e.spdK=spd;physics(e,dt,wx,wz);}
+{const u0=updateMob;updateMob=function(e,dt){if(e.mob==='faceling')return pfUpdate(e,dt);return u0(e,dt);};}
+// spawning (whoever runs the creatures in this dimension): more of them the longer you stay
+function poolSpawn(dt){POOL.spawnT-=dt;if(POOL.spawnT>0)return;POOL.spawnT=4;if(sDiff()===0)return;
+  const players=ents.filter(e=>e.kind==='player'&&e.alive&&!e.spectator&&e.gm!=='creative'&&!e.bat);if(!players.length)return;
+  const have=mobs.filter(m=>m.alive&&m.mob==='faceling').length;const want=Math.min(4,1+Math.floor(POOL.time/75));if(have>=want)return;
+  const p=players[Math.random()*players.length|0];const F=POOL.F;
+  for(let k=0;k<16;k++){const a=Math.random()*6.283,r=26+Math.random()*18;const x=Math.floor(p.pos[0]+Math.cos(a)*r),z=Math.floor(p.pos[2]+Math.sin(a)*r);if(!chunkReadyAt(x,z))continue;
+    if(!floorOk(x,F,z)||!openAt(x,F+2,z))continue;if(players.some(q=>hdist(q.pos,[x,0,z])<20||pfSeenPos(q,[x+.5,F,z+.5])))continue;
+    spawnMob('faceling',[x+.5,F,z+.5]);return;}}
+{const s0=mobSpawnTick;mobSpawnTick=function(dt){if(DIM==='pool')return poolSpawn(dt);return s0(dt);};}
+
+// ---------- drawing a Watcher: a tall, thin, pale body, and that face ----------
+const PFI={img:null,scare:null,M:null};
+{const a=new Image();a.onload=()=>{PFI.img=a;PFI.M=null;};a.src=PF_FACE;const b=new Image();b.onload=()=>{PFI.scare=b;};b.src=PF_SCARE;}
+function pfSkin(){const c=mkCanvas(64,64),g=c.getContext('2d');
+  for(let y=0;y<64;y++)for(let x=0;x<64;x++){const n=hash2(x,y,9140),m=hash2(x>>1,y>>1,9141);let l=.5+n*.12+m*.1;if(hash2(x,y,9142)>.94)l-=.18;
+    g.fillStyle=`rgb(${150*l*1.5|0},${160*l*1.5|0},${174*l*1.5|0})`;g.fillRect(x,y,1,1);}
+  // ribs and joints: darker lines
+  g.fillStyle='rgba(30,38,50,.5)';for(let i=0;i<4;i++)g.fillRect(20,22+i*3,8,1);g.fillRect(40,28,2,1);g.fillRect(48,26,3,1);return c;}
+function pfMeshes(){if(PFI.M)return PFI.M;const A=f=>{const o=[];f(o);return meshFrom(o);};
+  const M={tex:mkTex(pfSkin()),
+    head:A(o=>boxUV(o,-4.5,0,-4,9,12,8,0,0,64,64)),torso:A(o=>boxUV(o,-4,0,-2,8,13,4,16,16,64,64)),neck:A(o=>boxUV(o,-1.5,0,-1.5,3,4,3,40,0,64,64)),
+    rarm:A(o=>boxUV(o,-1,-24,-1,2,24,2,40,16,64,64)),larm:A(o=>boxUV(o,-1,-24,-1,2,24,2,40,16,64,64,0,true)),
+    rleg:A(o=>boxUV(o,-1.25,-20,-1.25,2.5,20,2.5,48,16,64,64)),lleg:A(o=>boxUV(o,-1.25,-20,-1.25,2.5,20,2.5,48,16,64,64,0,true))};
+  if(PFI.img){const w=PFI.img.width,h=PFI.img.height;const c=mkCanvas(w*2,h),g=c.getContext('2d');g.drawImage(PFI.img,0,0);
+    // brighten it a little so it shows up under the lights, and make the soft edge either there or not
+    const d=g.getImageData(0,0,w,h);for(let i=0;i<d.data.length;i+=4){d.data[i]=Math.min(255,d.data[i]*1.25);d.data[i+1]=Math.min(255,d.data[i+1]*1.25);d.data[i+2]=Math.min(255,d.data[i+2]*1.25);d.data[i+3]=d.data[i+3]>110?255:0;}g.putImageData(d,0,0);
+    M.ftex=mkTex(c);M.face=A(o=>boxUV(o,-5.5,-2,0,11,15.5,0,0,0,22,15.5));}
+  return PFI.M=M;}
+function pfDraw(e){const M=pfMeshes();limbTick(e);const rp=e.rpos||e.pos,by=e.bodyYaw==null?e.yaw:e.bodyYaw;
+  const tilt=e.deathT!=null?Math.min(1,Math.sqrt(e.deathT*1.8))*HP2:0;const S=.88;
+  const base=chain(M4.tr(rp[0],rp[1],rp[2]),M4.ry(by),M4.rz(tilt),M4.sc(S,S,S));
+  const ls=(e.limbSwing||0)*.6662,la=Math.min(1,e.limbAmt||0);const hY=-((e.headYaw==null?e.yaw:e.headYaw)-by),hX=-(e.pitch||0);
+  const P=(x,y,z,X,Y,Z)=>[M4.tr(x/16,y/16,z/16),M4.rz(Z),M4.ry(-Y),M4.rx(-X)];
+  const sway=Math.sin(perfT*1.1+e.id.length)*.06,still=la<.05;const cock=still?.28+Math.sin(perfT*.4)*.04:Math.sin(perfT*3)*.05;
+  const body=chain(base,M4.tr(0,20/16,0),M4.rx(-.08));const neck=chain(body,...P(0,13,0,0,0,0));const head=chain(neck,...P(0,3.6,0,hX,hY,cock));
+  const reach=la>.8?.5:0;
+  const parts={torso:body,neck,head,rarm:chain(body,...P(5,12.5,0,Math.cos(ls+Math.PI)*.7*la-reach+sway,0,.05)),larm:chain(body,...P(-5,12.5,0,Math.cos(ls)*.7*la-reach-sway,0,-.05)),
+    rleg:chain(base,...P(1.6,20,0,Math.cos(ls)*1.1*la,0,0)),lleg:chain(base,...P(-1.6,20,0,Math.cos(ls+Math.PI)*1.1*la,0,0))};
+  setEntLight(e.pos);gl.uniform1f(PT.u.hurt,e.hurtT>0||e.deathT!=null?1:0);
+  for(const k of ['torso','neck','head','rarm','larm','rleg','lleg'])drawMesh(M[k],parts[k],M.tex);
+  if(M.face){gl.uniform1f(PT.u.bright,Math.max(.8,mobBright(e)));drawMesh(M.face,chain(head,M4.tr(0,6/16,-4.15/16)),M.ftex);}
+  gl.uniform1f(PT.u.hurt,0);}
+{const d0=drawMob;drawMob=function(e){if(e.mob==='faceling'){if(!e.gone)pfDraw(e);return;}return d0(e);};}
+
+// ---------- the scare when one reaches you ----------
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ii){const r=h0(e,amt,src,cause,kb,raw,ii);if(r&&e===player&&src&&src.mob==='faceling')pfScare();return r;};}
+function pfScare(){POOL.scare=1.5;GZ.shake=Math.max(GZ.shake||0,1.2);
+  if(typeof ndPlay==='function'&&actx)try{ndPlay({vol:1,rate:.8,fade:.02});}catch(e){}
+  if(actx)try{tone('sawtooth',160,40,1.2,.12);noiseHit(1.2,900,.7,.35,'bandpass',.3);}catch(e){}}
+// its breathing when one is close and you can't see it
+function pfNear(dt){if(DIM!=='pool'||!player||!actx)return;let best=99;for(const m of mobs)if(m.alive&&m.mob==='faceling')best=Math.min(best,dist(m.pos,player.pos));
+  if(best<14){POOL.breath-=dt;if(POOL.breath<=0){POOL.breath=1.6+best*.15;try{noiseHit(.9,300+Math.random()*80,1.2,.05*(1-best/14)+.01,'bandpass');}catch(e){}}}}
+{const h0=drawHUD;drawHUD=function(){h0();const dt=Math.min(.1,dtFrame||.016);try{poolAmbience(dt);pfNear(dt);}catch(e){}
+  // the glitch: the screen tears and buzzes
+  if(POOL.fx>0){POOL.fx-=dt;hc.save();for(let i=0;i<14;i++){const y=Math.random()*H,h=4+Math.random()*30;hc.globalAlpha=.25+Math.random()*.5;hc.fillStyle=Math.random()<.5?'#000':['#e8f0ec','#7fd8c8','#ff3050'][Math.random()*3|0];
+      hc.fillRect((Math.random()-.5)*60,y,W,h);}if(POOL.fx<.35){hc.globalAlpha=1-POOL.fx/.35;hc.fillStyle='#000';hc.fillRect(0,0,W,H);}hc.restore();}
+  if(POOL.flash>0){POOL.flash-=dt;hc.save();hc.globalAlpha=Math.min(1,POOL.flash);hc.fillStyle='#ffffff';hc.fillRect(0,0,W,H);hc.restore();}
+  if(POOL.scare>0){POOL.scare-=dt;hc.save();hc.fillStyle='#000';hc.fillRect(0,0,W,H);const im=PFI.scare;
+    if(im){const s=Math.max(W,H)*1.05*(1+(1.5-POOL.scare)*.12),j=()=>(Math.random()-.5)*W*.05;hc.globalAlpha=Math.random()<.15?.55:1;hc.drawImage(im,(W-s)/2+j(),(H-s)/2+j(),s,s);}
+    if(Math.random()<.3){hc.globalAlpha=.3;hc.fillStyle='#08303a';hc.fillRect(0,0,W,H);}hc.restore();}};}
+
+// creatures need their own icons nowhere; blocks need icons and the atlas was rebuilt above
+rebuildIcons();rebuildItemAtlas();
+
+// ================= The sea update: squid, fish, the Megalodon and the Kraken =================
+// Oceans and rivers now have life in them: squid (the pack's own squid), cod, salmon, tropical fish and pufferfish.
+// Deep ocean water hides two monsters. The Megalodon circles you, then charges out of the murk with its jaws open.
+// The Kraken waits on the sea floor and rises under swimmers and boats; its tentacles hold you down while it squeezes.
+// Both have boss bars, and both get a jumpscare when they get you.
+// Sea creatures run their own swimming code: they move freely in 3D while in water and flop about (and suffocate) on land.
+N.SEA=77;
+
+// ---------- items ----------
+Object.assign(DURABILITY,{shark:900});Object.assign(TOOL_SPEED,{shark:6});Object.assign(TOOL_LEVEL,{shark:2});Object.assign(REPAIR_MAT,{shark:['megalodon_tooth']});
+ni('megalodon_tooth',{name:'Megalodon Tooth',type:'mat',stack:64,color:'#ece4cc',tip:['Dropped by the Megalodon']});
+nfood('kraken_eye','Kraken Eye',4,2,'#f0a020',{rare:true,fx:[['strength',60,1],['absorption',60,1]],always:true,tip:['Dropped by the Kraken','Eat it, if you dare: Strength and Absorption']});
+ni('shark_tooth_sword',{name:'Shark Tooth Sword',type:'weapon',tool:'sword',dmg:8,color:'#ece4cc',rc:{src:'iron_sword',col:'#ece4cc',sel:'gray'},tip:['Made from Megalodon teeth']});
+{const P=(r,k,o,n)=>shaped(r,k,o,n);P(['T','T','S'],{T:'megalodon_tooth',S:'stick'},'shark_tooth_sword');}
+{const t=LC_TABS.find(x=>x.name==='Tools and Weapons');if(t)t.entries.push(['From the Sea',['shark_tooth_sword']]);}
+// their pictures, in the same Minecraft style as the other drawn items (see 15ze_mcart.js)
+Object.assign(MCA_RAMP,{tooth:'6a604a c8bea0 e0d8c0 f0eadc fffbf0',toothRoot:'2a2018 4a3a2c 5e4a38 6e5a46 7e6a54',sclera:'3a0808 8a2020 a83030 c04848 d86868',krakenIris:'6a2a04 c05a10 e88a18 f8b830 ffe070'});
+for(const k of ['tooth','toothRoot','sclera','krakenIris'])if(typeof MCA_RAMP[k]==='string')MCA_RAMP[k]=MCA_RAMP[k].split(' ').map(mcaHex);
+Object.assign(MCA_ART,{"megalodon_tooth":{g:["................","...rrrrrrrrrr...","..rrrrrrrrrrrr..","..wwwwwwwwwwww..","..wwwwwwwwwwww..","...wwswwwwwwww..","..wwwwwwwwwww...","...wwwwwwwwww...","....wwswwwwww...","...wwwwwwwww....","....wwwwwwww....",".....wwswwww....","....wwwwwww.....","......wwwww.....","......wwww......",".......ww......."],p:{w:'tooth',r:'toothRoot',s:'#fffdf4'}},
+  "kraken_eye":{g:["................",".....eeeeee.....","...eeeeeeeeee...","..eeeiiiiiieee..",".eeiiiikkiiiiee.",".eeiihkkkiiiiee.","eeiiiikkiiiiiee.","eeiiiikkiiiiiee.","eeiiiikkiiiiiee.","eeiiiikkiiiiiee.",".eeiiikkiiiiee..",".eeiiiikkiiiiee.","..eeeiiiiiieee..","...eeeeeeeeee...",".....eeeeee.....","................"],p:{e:'sclera',i:'krakenIris',k:'#080404',v:'#8a0c10',h:'#fff4c8'}}});
+
+// ---------- the creatures ----------
+const SEA_FISH=['cod','salmon','tropical_fish','pufferfish'];
+Object.assign(MOB_T,{
+  squid:{name:'Squid',hp:10,hw:.45,eh:.95,model:'zombie',kind:'water',spd:.3,drops:[['black_dye',1,3]],col:'#26425e',sea:'squid'},
+  cod:{name:'Cod',hp:3,hw:.25,eh:.35,model:'zombie',kind:'water',spd:.3,drops:[['raw_fish',1,1]],col:'#a08a5a',sea:'fish'},
+  salmon:{name:'Salmon',hp:3,hw:.3,eh:.4,model:'zombie',kind:'water',spd:.3,drops:[['raw_salmon',1,1]],col:'#b04a3a',sea:'fish'},
+  tropical_fish:{name:'Tropical Fish',hp:3,hw:.2,eh:.4,model:'zombie',kind:'water',spd:.3,drops:[['clownfish',1,1]],col:'#f08a20',sea:'fish'},
+  pufferfish:{name:'Pufferfish',hp:3,hw:.3,eh:.4,model:'zombie',kind:'water',spd:.3,drops:[['pufferfish',1,1]],col:'#e8c020',sea:'fish'},
+  megalodon:{name:'Megalodon',hp:200,hw:1.5,eh:2.2,model:'zombie',kind:'hostile',spd:.5,dmg:10,drops:[['megalodon_tooth',2,4],['raw_fish',3,6]],rare:[['heart_of_the_sea',.12]],col:'#4a5560',sea:'mega',fireproof:true},
+  kraken:{name:'Kraken',hp:300,hw:2.2,eh:4,model:'zombie',kind:'hostile',spd:.4,dmg:3,drops:[['black_dye',8,16],['kraken_eye',1,1],['nautilus_shell',2,4]],rare:[['heart_of_the_sea',.35]],col:'#5a1828',sea:'kraken',fireproof:true}});
+for(const k of ['squid'].concat(SEA_FISH,['megalodon','kraken'])){MOB_TYPES.push(k);MOB_SND[k]={hurt:['entity/fish/hurt'],death:['entity/fish/hurt']};}
+MOB_SND.squid={hurt:['entity/fish/hurt'],death:['entity/fish/hurt']};MOB_SND.megalodon={hurt:['ambient/underwater/additions/animal'],death:['ambient/underwater/additions/bass_whale']};
+MOB_SND.kraken={hurt:['ambient/underwater/additions/animal'],death:['ambient/underwater/additions/dark']};
+// spawn eggs
+for(const [k,a,b] of [['squid','#223b4c','#708899'],['cod','#c1a76a','#e5c48b'],['salmon','#a00f10','#0e8474'],['tropical_fish','#ef6915','#fff9ef'],['pufferfish','#f6b201','#37c3f2'],['megalodon','#3c4650','#d8d8d0'],['kraken','#4a0c1c','#f0a020']])
+  item('spawn_egg_'+k,{name:'Spawn '+MOB_T[k].name,type:'mat',stack:64,color:a,color2:b,spawn:k,tip:['Right click the ground to spawn a '+MOB_T[k].name]});
+const isSea=e=>!!(MOB_T[e.mob]&&MOB_T[e.mob].sea);
+
+// ---------- water helpers ----------
+function seaWaterAt(x,y,z){const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));return !!(b&&BD[b]&&BD[b].liquid==='water');}
+// the water column at x,z around y: its surface (top water block) and its floor (first solid block below)
+function seaCol(x,z,y){x=Math.floor(x);z=Math.floor(z);y=Math.floor(y);let top=y,bot=y;if(!seaWaterAt(x,y,z))return null;
+  while(top<WY-1&&seaWaterAt(x,top+1,z))top++;while(bot>1&&seaWaterAt(x,bot-1,z))bot--;return {top,bot:bot-1};}
+function seaYaw(e){const v=e.sv;const h=Math.hypot(v[0],v[2]);if(h>.05){const want=Math.atan2(-v[0],-v[2]);e.bodyYaw+=angTo(e.bodyYaw,want)*Math.min(1,dtFrame*6+.05);}
+  e.headYaw=e.yaw=e.bodyYaw;e.pitch=clamp(Math.atan2(v[1],Math.max(.3,h)),-.9,.9);}
+function seaSteer(e,dt,to,speed,turn){const d=[to[0]-e.pos[0],to[1]-e.pos[1],to[2]-e.pos[2]];const L=Math.hypot(d[0],d[1],d[2])||1;const k=Math.min(1,dt*turn);
+  for(let i=0;i<3;i++)e.sv[i]+=(d[i]/L*speed-e.sv[i])*k;}
+// move through water; a bump into land or air turns it back
+function seaMove(e,dt){const mid=e.eh*.5;const n=[e.pos[0]+e.sv[0]*dt,e.pos[1]+e.sv[1]*dt,e.pos[2]+e.sv[2]*dt];
+  if(seaWaterAt(n[0],n[1]+mid,n[2])){e.pos=n;return true;}
+  let ok=false;for(let i=0;i<3;i++){const t=e.pos.slice();t[i]=n[i];if(seaWaterAt(t[0],t[1]+mid,t[2])){e.pos=t;ok=true;}else e.sv[i]*=-.35;}return ok;}
+// out of the water: flop, and slowly suffocate
+function seaLand(e,dt){e.sv=[0,0,0];e.landT=(e.landT||0)+dt;if(e.onGround&&Math.random()<dt*2){e.mot[1]=.3;e.mot[0]+=(Math.random()-.5)*.2;e.mot[2]+=(Math.random()-.5)*.2;}
+  e.spdK=0;physics(e,dt,0,0);if(e.landT>1){e.landT=0;hurt(e,MOB_T[e.mob].sea==='fish'?1:2,null,'drown');}}
+
+// ---------- behaviour (whoever runs the creatures) ----------
+const seaPrey=(e,r)=>{let best=null,bd=r;for(const q of ents){if(q.kind!=='player'||!q.alive||q.spectator||q.bat||q.gm==='creative')continue;
+  const inSea=q.inWater||seaWaterAt(q.pos[0],q.pos[1]+.3,q.pos[2])||(typeof vehicleOf==='function'&&q===player&&vehicleOf(q))||q.riding;if(!inSea)continue;const d=dist(q.pos,e.pos);if(d<bd){bd=d;best=q;}}return best;};
+function seaInit(e){if(e.sv)return;e.sv=[0,0,0];e.sea={st:'roam',t:0,goal:null,ang:Math.random()*6.28,dir:Math.random()<.5?1:-1,home:e.pos.slice(),taken:0};}
+function seaUpdate(e,dt){seaInit(e);if(!chunkReadyAt(e.pos[0],e.pos[2])){e.rpos=e.pos;return;}
+  tickEffects(e,dt);e.fire=0;if(!e.alive)return;e.atkCD=Math.max(0,(e.atkCD||0)-dt);
+  // knockback from hits arrives in e.mot (blocks per tick)
+  if(e.mot&&(e.mot[0]||e.mot[2])){e.sv[0]+=e.mot[0]*14;e.sv[2]+=e.mot[2]*14;e.sv[1]+=e.mot[1]*6;e.mot=[0,0,0];}
+  const T=MOB_T[e.mob],kind=T.sea;e.inWater=seaWaterAt(e.pos[0],e.pos[1]+e.eh*.5,e.pos[2]);
+  if(!e.inWater){seaLand(e,dt);e.vel=[0,0,0];return;}e.landT=0;e.onGround=false;
+  const S=e.sea;S.t+=dt;
+  if(kind==='fish')fishAI(e,dt,S);else if(kind==='squid')squidAI(e,dt,S);else if(kind==='mega')megaAI(e,dt,S);else if(kind==='kraken')krakenAI(e,dt,S);
+  seaMove(e,dt);e.vel=e.sv.slice();seaYaw(e);}
+{const u0=updateMob;updateMob=function(e,dt){if(isSea(e))return seaUpdate(e,dt);return u0(e,dt);};}
+// a point in the water near p (within r), not too close to the surface or the floor
+function seaGoal(p,r,mid){for(let k=0;k<8;k++){const x=p[0]+(Math.random()-.5)*2*r,z=p[2]+(Math.random()-.5)*2*r,y=p[1]+(Math.random()-.5)*r*.6;const c=seaCol(x,z,y);if(!c)continue;
+    const lo=c.bot+1+(mid||0),hi=c.top-(mid||0);if(hi<lo)continue;return [x,clamp(y,lo,hi),z];}return null;}
+function fishAI(e,dt,S){const T=MOB_T[e.mob];const near=nearestPlayer(e,5);
+  if(e.mob==='pufferfish'){const q=nearestPlayer(e,3);e.puff=q?Math.min(1,(e.puff||0)+dt*4):Math.max(0,(e.puff||0)-dt);
+    if(q&&dist(q.pos,e.pos)<1.3+e.puff*.4&&e.atkCD<=0){e.atkCD=1.2;damage(q,1,e,'melee',null,false,[['poison',5,0]]);}}
+  if(near&&e.mob!=='pufferfish'){const d=[e.pos[0]-near.pos[0],e.pos[1]-near.pos[1],e.pos[2]-near.pos[2]];seaSteer(e,dt,[e.pos[0]+d[0]*3,e.pos[1]+d[1],e.pos[2]+d[2]*3],3.2,4);return;}
+  // schools: followers stay near their leader
+  const lead=S.lead&&mobs.find(m=>m.id===S.lead&&m.alive);
+  if(!S.goal||S.t>S.next||dist(S.goal,e.pos)<.6){S.t=0;S.next=2+Math.random()*4;S.goal=seaGoal(lead?lead.pos:e.pos,lead?2.5:6,.3)||S.goal;}
+  if(S.goal)seaSteer(e,dt,S.goal,e.mob==='salmon'?1.4:e.mob==='pufferfish'?.6:1,2);}
+function squidAI(e,dt,S){// it swims in pulses
+  S.pulse=(S.pulse||0)-dt;if(S.pulse<=0){S.pulse=2+Math.random()*2.5;const g=seaGoal(e.pos,6,.6);if(g){const d=[g[0]-e.pos[0],g[1]-e.pos[1],g[2]-e.pos[2]];const L=Math.hypot(...d)||1;e.sv=[d[0]/L*2.4,d[1]/L*2.4,d[2]/L*2.4];}}
+  for(let i=0;i<3;i++)e.sv[i]*=Math.max(0,1-dt*.9);}
+// the Megalodon: roams, finds you, circles closer and closer, then charges
+function megaAI(e,dt,S){const T=seaPrey(e,52);const col=seaCol(e.pos[0],e.pos[2],e.pos[1]+1);
+  const clampY=p=>{const c=seaCol(p[0],p[2],e.pos[1]+1)||col;if(c){p[1]=clamp(p[1],c.bot+1.4,Math.max(c.bot+1.4,c.top-1.6));}return p;};
+  if(!T){if(S.st!=='roam'){S.st='roam';S.t=0;}}
+  else if(S.st==='roam'){S.st='stalk';S.t=0;S.R=13+Math.random()*4;S.len=7+Math.random()*6;}
+  if(S.st==='roam'){if(!S.goal||S.t>8||dist(S.goal,e.pos)<2){S.t=0;S.goal=seaGoal(S.home,24,1.5)||seaGoal(e.pos,16,1.5);}if(S.goal)seaSteer(e,dt,S.goal,3,1.2);return;}
+  const tp=[T.pos[0],T.pos[1]+.5,T.pos[2]];
+  if(S.st==='stalk'){S.ang+=dt*.42*S.dir;S.R=Math.max(7,S.R-dt*.5);const p=clampY([tp[0]+Math.cos(S.ang)*S.R,tp[1]-2.5,tp[2]+Math.sin(S.ang)*S.R]);seaSteer(e,dt,p,5.5,1.6);
+    if(S.t>S.len){S.st='charge';S.t=0;}return;}
+  if(S.st==='charge'){seaSteer(e,dt,tp,13,2.6);const d=dist([e.pos[0],e.pos[1]+1,e.pos[2]],tp);
+    if(d<2.8&&e.atkCD<=0){e.atkCD=2;e.swing=1;damage(T,Math.max(3,MOB_T.megalodon.dmg*diffMul()),e,'melee',[T.pos[0]-e.pos[0],T.pos[2]-e.pos[2],0,0,0],false);S.st='recover';S.t=0;}
+    else if(S.t>3.5){S.st='recover';S.t=0;}return;}
+  if(S.st==='recover'){const away=[e.pos[0]+(e.pos[0]-tp[0])*2,e.pos[1]-1,e.pos[2]+(e.pos[2]-tp[2])*2];seaSteer(e,dt,clampY(away),6.5,1.5);
+    if(S.t>3){S.st='stalk';S.t=0;S.R=14;S.len=5+Math.random()*6;S.dir=Math.random()<.5?1:-1;S.ang=Math.atan2(e.pos[2]-tp[2],e.pos[0]-tp[0]);}}}
+// the Kraken: lies on the sea floor, rises under you, holds you down and squeezes
+function krakenAI(e,dt,S){const col=seaCol(e.pos[0],e.pos[2],e.pos[1]+1);const floorY=col?col.bot+1:e.pos[1];
+  if(S.st==='grab'){const V=entById(S.vict);S.sq=(S.sq||0)-dt;
+    if(!V||!V.alive||dist(V.pos,e.pos)>16||S.t>6.5||S.taken>=40){seaRelease(e,S);return;}
+    e.sv=[0,-.4,0];if(e.pos[1]<=floorY+.5)e.sv[1]=0;
+    if(S.sq<=0){S.sq=1.5;e.swing=1;damage(V,Math.max(1,MOB_T.kraken.dmg*diffMul()),e,'melee',null,false);}return;}
+  if(S.st==='sink'){seaSteer(e,dt,[S.home[0],floorY,S.home[2]],2.5,1);if(S.t>14){S.st='lurk';S.t=0;}return;}
+  const T=seaPrey(e,34);
+  if(S.st!=='rise'){S.st='lurk';const g=[S.home[0]+Math.sin(S.t*.2)*3,floorY,S.home[2]+Math.cos(S.t*.17)*3];seaSteer(e,dt,g,.8,1);
+    if(T&&Math.hypot(T.pos[0]-e.pos[0],T.pos[2]-e.pos[2])<28){S.st='rise';S.t=0;netSend(N.SEA,{k:'rise',id:e.id});seaNet('rise',{id:e.id});}return;}
+  if(!T||S.t>20){S.st='sink';S.t=0;return;}
+  const tp=[T.pos[0],T.pos[1]-3.2,T.pos[2]];seaSteer(e,dt,tp,4.2,1.4);
+  if(dist([e.pos[0],e.pos[1]+3,e.pos[2]],T.pos)<6.5){S.st='grab';S.t=0;S.vict=T.id;S.taken=0;S.sq=.6;const m={k:'grab',id:e.id,v:T.id};netSend(N.SEA,m);seaNet('grab',m);}}
+function seaRelease(e,S){const m={k:'rel',id:e.id,v:S.vict};S.st='sink';S.t=0;S.vict=null;netSend(N.SEA,m);seaNet('rel',m);}
+// hits on the Kraken while it holds someone count toward letting go
+{const h0=mobHurt;mobHurt=function(e,src,cause){if(e.mob==='kraken'&&e.sea)e.sea.taken+=(e._lastAmt||0);return h0(e,src,cause);};}
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ii){if(e&&e.mob==='kraken')e._lastAmt=amt;return h0(e,amt,src,cause,kb,raw,ii);};}
+
+// ---------- state for the other computers, and the Kraken's grip ----------
+const SEAS={grab:null,scare:null,ink:0,hb:0,rumble:0,sendT:0,seen:new Set()};
+function seaNet(k,d){if(k==='grab'){const e=mobs.find(m=>m.id===d.id);if(e)e.sst='grab';if(player&&d.v===player.id){SEAS.grab={id:d.id,t:0,miss:0};seaScare('kraken');
+      if(typeof vehicleOf==='function'&&vehicleOf(player))dismount(player);}}
+  else if(k==='rel'){const e=mobs.find(m=>m.id===d.id);if(e)e.sst='sink';if(SEAS.grab&&SEAS.grab.id===d.id)SEAS.grab=null;}
+  else if(k==='rise'){const e=mobs.find(m=>m.id===d.id);if(e)e.sst='rise';}
+  else if(k==='st'){for(const [id,st] of d.a||[]){const e=mobs.find(m=>m.id===id);if(e)e.sst=st;}}}
+{const o0=onNetEvent;onNetEvent=function(code,d,from){if(code===N.SEA){if(net&&from===net.hostId()&&d&&typeof d.k==='string')seaNet(d.k,d);return;}return o0(code,d,from);};}
+// every half second the host tells everyone what the big ones are doing (jaws open, tentacles out)
+function seaSync(dt){if(!isHost())return;const big=mobs.filter(m=>m.alive&&(m.mob==='megalodon'||m.mob==='kraken')&&m.sea);for(const m of big)m.sst=m.sea.st;
+  if(!net||!big.length)return;SEAS.sendT-=dt;if(SEAS.sendT>0)return;SEAS.sendT=.5;netSend(N.SEA,{k:'st',a:big.map(m=>[m.id,m.sea.st])});}
+// held: pulled toward its beak, can't swim up
+function seaGrip(dt){const g=SEAS.grab,p=player;if(!g||!p)return;g.t+=dt;const k=mobs.find(m=>m.id===g.id&&m.alive);
+  if(!k||!p.alive){g.miss+=dt;if(g.miss>1||!p.alive)SEAS.grab=null;return;}g.miss=0;if(g.t>9){SEAS.grab=null;return;}
+  const kp=k.rpos||k.pos;const to=[kp[0],kp[1]+2.6,kp[2]];const d=[to[0]-p.pos[0],to[1]-p.pos[1],to[2]-p.pos[2]];const L=Math.hypot(d[0],d[1],d[2])||1;
+  p.mot[0]=p.mot[0]*.6+d[0]/L*.06;p.mot[2]=p.mot[2]*.6+d[2]/L*.06;p.mot[1]=Math.min(p.mot[1]*.5+d[1]/L*.05,-.015);p.fallDist=0;GZ.tp=perfT;}
+{const t0=survTick;survTick=function(dt){t0(dt);try{seaSync(dt);seaGrip(dt);}catch(e){console.error(e);}};}
+
+// ---------- spawning (host, Overworld) ----------
+let seaSpawnT=2;
+function seaSpawn(dt){seaSpawnT-=dt;if(seaSpawnT>0)return;seaSpawnT=2;
+  const players=ents.filter(e=>e.kind==='player'&&e.alive&&!e.spectator);if(!players.length)return;const p=players[Math.random()*players.length|0];
+  const near=m=>hdist(m.pos,p.pos)<64;let fish=0,squid=0;for(const m of mobs){if(!m.alive||!near(m))continue;const s=MOB_T[m.mob].sea;if(s==='fish')fish++;else if(s==='squid')squid++;}
+  const a=Math.random()*6.283,r=12+Math.random()*30;const x=Math.floor(p.pos[0]+Math.cos(a)*r),z=Math.floor(p.pos[2]+Math.sin(a)*r);if(!chunkReadyAt(x,z))return;
+  const c=seaCol(x,z,SEA_LVL()-1);if(!c)return;const depth=c.top-c.bot;const bk=BIOMES[biomeAt(x,z)].k;
+  if(depth>=3&&fish<12&&Math.random()<.7){const cold=bk==='frozen'||bk==='river'||bk==='taiga';const warm=!cold&&bk==='ocean';const rr=Math.random();
+    const type=cold?'salmon':warm&&rr<.22?'tropical_fish':warm&&rr<.3?'pufferfish':'cod';const n=type==='pufferfish'?1:3+(Math.random()*3|0);let lead=null;
+    for(let i=0;i<n;i++){const y=c.bot+1+Math.random()*Math.max(1,depth-2);const e=spawnMob(type,[x+.5+(Math.random()-.5)*2,y,z+.5+(Math.random()-.5)*2]);if(!seaWaterAt(e.pos[0],e.pos[1]+.2,e.pos[2])){e.gone=true;continue;}
+      seaInit(e);if(type==='tropical_fish')e.color=lead?lead.color:(Math.random()*8|0);if(lead)e.sea.lead=lead.id;else lead=e;}return;}
+  if(depth>=5&&squid<4&&Math.random()<.3){const e=spawnMob('squid',[x+.5,c.bot+2+Math.random()*(depth-3),z+.5]);seaInit(e);return;}
+  if(bk!=='ocean'||sDiff()===0)return;
+  // the big ones: out of sight, deep, far from any other
+  const someoneAtSea=players.some(q=>q.inWater||q.riding||seaWaterAt(q.pos[0],q.pos[1]-.5,q.pos[2]));if(!someoneAtSea)return;
+  const behind=(q,bx,bz)=>{const f=fwd(q);return (bx-q.pos[0])*f[0]+(bz-q.pos[2])*f[2]<0;};
+  if(depth>=10&&!mobs.some(m=>m.mob==='megalodon'&&m.alive&&hdist(m.pos,p.pos)<160)&&Math.random()<.035){const b=seaBigSpot(p,depth,behind,10);if(b){const e=spawnMob('megalodon',b);seaInit(e);}return;}
+  const night=dayAmt()<.35;if(depth>=14&&(night||depth>=18)&&!mobs.some(m=>m.mob==='kraken'&&m.alive&&hdist(m.pos,p.pos)<200)&&Math.random()<.02){const b=seaBigSpot(p,depth,behind,14);if(b){const e=spawnMob('kraken',b);seaInit(e);}}}
+function seaBigSpot(p,depth,behind,need){for(let k=0;k<10;k++){const a=Math.random()*6.283,r=36+Math.random()*16;const x=Math.floor(p.pos[0]+Math.cos(a)*r),z=Math.floor(p.pos[2]+Math.sin(a)*r);
+    if(!chunkReadyAt(x,z)||!behind(p,x,z))continue;const c=seaCol(x,z,SEA_LVL()-1);if(!c||c.top-c.bot<need)continue;return [x+.5,c.bot+1.2,z+.5];}return null;}
+const SEA_LVL=()=>SEA;
+{const s0=mobSpawnTick;mobSpawnTick=function(dt){if(DIM!=='overworld'||MATCH.mode!=='survival'||!INF)return s0(dt);
+  // sea creatures don't count toward the land animals' and monsters' limits
+  const sea=mobs.filter(isSea);mobs=mobs.filter(m=>!isSea(m));try{s0(dt);}finally{mobs=mobs.concat(sea);}seaSpawn(dt);};}
+
+// ---------- drawing ----------
+// paint a box's six faces in the usual box-UV layout: f(face,x,y,w,h) returns [r,g,b] or [r,g,b,a] or null
+function seaPaint(c,u,v,w,h,d,f){const g=c.getContext('2d');const D=g.getImageData(0,0,c.width,c.height);
+  const faces=[['top',u+d,v,w,d],['bottom',u+d+w,v,w,d],['right',u,v+d,d,h],['front',u+d,v+d,w,h],['left',u+d+w,v+d,d,h],['back',u+2*d+w,v+d,w,h]];
+  for(const [n,x0,y0,fw,fh] of faces)for(let y=0;y<Math.ceil(fh);y++)for(let x=0;x<Math.ceil(fw);x++){const col=f(n,x,y,Math.ceil(fw),Math.ceil(fh));if(!col)continue;
+    const X=Math.floor(x0)+x,Y=Math.floor(y0)+y;if(X<0||Y<0||X>=c.width||Y>=c.height)continue;const i=(Y*c.width+X)*4;D.data[i]=col[0];D.data[i+1]=col[1];D.data[i+2]=col[2];D.data[i+3]=col[3]==null?255:col[3];}
+  g.putImageData(D,0,0);}
+const sN=(x,y,s,a)=>1+(hash2(x,y,s)-.5)*(a||.16);
+const sC=(c,k)=>[Math.max(0,Math.min(255,c[0]*k))|0,Math.max(0,Math.min(255,c[1]*k))|0,Math.max(0,Math.min(255,c[2]*k))|0];
+// countershading: dark back, pale belly
+function seaSkin(top,belly,line,s){return (n,x,y,w,h)=>{if(n==='top')return sC(top,.9*sN(x,y,s));if(n==='bottom')return sC(belly,sN(x,y,s+1,.08));
+  const k=sN(x,y,s+2);return y<h*line?sC(top,k*(1-.12*y/h)):sC(belly,k);};}
+const SEA_M={};
+function seaMeshes(k){if(SEA_M[k])return SEA_M[k];const A=f=>{const o=[];f(o);return meshFrom(o);};let M=null;
+  if(k==='squid'||k==='kraken'){const tex=(PACK.mobs&&PACK.mobs[k])||seaSquidTex(k);M={tex:mkTex(tex),th:tex.height,body:A(o=>boxUV(o,-6,0,-6,12,16,12,0,0,64,tex.height)),tent:A(o=>boxUV(o,-1,-18,-1,2,18,2,48,0,64,tex.height))};
+    if(k==='kraken'){const e=mkCanvas(16,16),g=e.getContext('2d');for(let y=0;y<16;y++)for(let x=0;x<16;x++){const r=Math.hypot(x-7.5,y-7.5);if(r>7.6)continue;
+        g.fillStyle=Math.abs(x-7.5)<1.6&&r<6.5?'#100404':r<5.8?`rgb(255,${(200-r*18)|0},${(40-r*4)|0})`:'#7a1010';g.fillRect(x,y,1,1);}
+      M.etex=mkTex(e);M.eye=A(o=>{boxUV(o,-5.5,8,-6.15,4,4,0,0,0,8,4);boxUV(o,1.5,8,-6.15,4,4,0,0,0,8,4);});}}
+  else if(SEA_FISH.includes(k)){const c=mkCanvas(32,32);const G=seaFishParts(k,c);M={tex:mkTex(c)};for(const n in G)M[n]=A(o=>G[n](o));}
+  else if(k==='megalodon'){const c=mkCanvas(128,128);seaMegaTex(c);const B=(o,a)=>boxUV(o,...a,128,128);
+    M={tex:mkTex(c),body:A(o=>B(o,[-7,0,-12,14,14,24,0,0])),head:A(o=>B(o,[-6,0,-11,12,11,11,0,40])),jaw:A(o=>B(o,[-5.5,-3,-10,11,3,10,48,40])),
+      tail1:A(o=>B(o,[-5,0,0,10,10,14,0,64])),tail2:A(o=>B(o,[-3,0,0,6,7,12,50,64])),lobeU:A(o=>B(o,[-.5,0,-1.5,1,11,3,88,64])),lobeD:A(o=>B(o,[-.5,-7,-1.5,1,7,3,88,80])),
+      dorsal:A(o=>B(o,[-.5,0,-4,1,11,7,0,96])),pecR:A(o=>B(o,[0,-.5,-3,8,1,5,24,96])),pecL:A(o=>boxUV(o,-8,-.5,-3,8,1,5,24,96,128,128,0,true)),
+      eyes:A(o=>{B(o,[-6.1,6,-9,1,1,1,120,0]);B(o,[5.1,6,-9,1,1,1,120,0]);})};}
+  return SEA_M[k]=M;}
+// squid skin if the pack has none (1.8 layout); the Kraken's is made from the pack's squid in packLoadMobs below
+function seaSquidTex(k){const c=mkCanvas(64,32);const kr=k==='kraken';const top=kr?[70,16,28]:[34,58,84],bel=kr?[120,40,48]:[60,90,120];
+  seaPaint(c,0,0,12,16,12,(n,x,y,w,h)=>{const k2=sN(x,y,9300);if((n==='left'||n==='right')&&y>=4&&y<=6&&x>=5&&x<=6)return n==='left'?[230,230,230]:[20,20,20];return sC(n==='bottom'?bel:top,k2*(1-.15*(y/16)));});
+  seaPaint(c,48,0,2,18,2,(n,x,y)=>sC(top,sN(x,y,9301)*(1-.3*y/18)));return c;}
+{const p0=packLoadMobs;packLoadMobs=async function(get){const n=await p0(get);try{const img=await get('textures/entity/squid.png');if(img){const raw=dvFull(img);const fit=c=>imgToCanvas(c,64,Math.round(64*c.height/c.width),0,0,c.width,c.height);
+  PACK.mobs=PACK.mobs||{};PACK.mobs.squid=fit(raw);PACK.mobs.kraken=fit(mobPal(raw,'1a0408 3a0a14 5a1424 8a2232 b84050'));for(const k of ['squid','kraken'])delete SEA_M[k];}}catch(e){}return n;};}
+// fish: parts and pictures
+function seaFishParts(k,c){const eye=(n,x,y,w,h,ex,ey)=>(n==='left'||n==='right')&&x===ex(w)&&y===ey?[12,12,12]:null;
+  if(k==='cod'){const sk=seaSkin([128,110,70],[226,214,180],.55,9310);
+    seaPaint(c,0,0,2,4,7,(n,x,y,w,h)=>{const s=sk(n,x,y,w,h);if((n==='left'||n==='right')&&y<2&&hash2(x,y,9311)>.6)return sC(s,.75);return s;});
+    seaPaint(c,0,12,2,3,3,(n,x,y,w,h)=>(n==='left'||n==='right')&&y===1&&(x===0||x===w-1)?[16,16,16]:sk(n,x,y,w,h));
+    seaPaint(c,20,0,0,6,5,(n,x,y,w,h)=>[150,128,86,(Math.abs(y-2.5)<1.2+x*.5)?255:0]);seaPaint(c,20,14,0,2,5,(n,x,y,w,h)=>[140,118,78,y>=1||x%2===0?255:0]);
+    return {body:o=>boxUV(o,-1,0,-4,2,4,7,0,0,32,32),head:o=>boxUV(o,-1,.5,-7,2,3,3,0,12,32,32),tail:o=>boxUV(o,0,-1,0,0,6,5,20,0,32,32),fin:o=>boxUV(o,0,4,-3,0,2,5,20,14,32,32)};}
+  if(k==='salmon'){const sk=seaSkin([150,54,44],[200,180,170],.6,9320);
+    seaPaint(c,0,0,3,5,10,(n,x,y,w,h)=>{const s=sk(n,x,y,w,h);if(n!=='bottom'&&hash2(x,y,9321)>.82)return [60,40,36];return s;});
+    seaPaint(c,0,16,2,4,3,(n,x,y,w,h)=>(n==='left'||n==='right')&&y===1&&(x===0||x===w-1)?[16,16,16]:sk(n,x,y,w,h));
+    seaPaint(c,12,16,0,6,6,(n,x,y)=>[120,40,36,(Math.abs(y-2.5)<1.2+x*.55)?255:0]);seaPaint(c,24,16,0,2,4,(n,x,y)=>[120,40,36,y>=1||x%2===0?255:0]);
+    return {body:o=>boxUV(o,-1.5,0,-5,3,5,10,0,0,32,32),head:o=>boxUV(o,-1,.5,-8,2,4,3,0,16,32,32),tail:o=>boxUV(o,0,-.5,0,0,6,6,12,16,32,32),fin:o=>boxUV(o,0,5,-2,0,2,4,24,16,32,32)};}
+  if(k==='tropical_fish'){// coloured per fish in the draw call; the picture is white with darker stripes
+    seaPaint(c,0,0,2,6,6,(n,x,y,w,h)=>{if((n==='left'||n==='right')&&y===2&&(x===0||x===w-1))return [20,20,20];const st=(n==='left'||n==='right')&&(x===2||x===3);return st?[120,120,120]:sC([250,250,250],sN(x,y,9330,.08));});
+    seaPaint(c,16,0,0,4,4,(n,x,y)=>[200,200,200,Math.abs(y-1.5)<.8+x*.6?255:0]);seaPaint(c,16,8,0,3,4,(n,x,y)=>[200,200,200,y>=1||x%2===0?255:0]);
+    return {body:o=>boxUV(o,-1,0,-3,2,6,6,0,0,32,32),tail:o=>boxUV(o,0,1,0,0,4,4,16,0,32,32),fin:o=>boxUV(o,0,6,-2,0,3,4,16,8,32,32)};}
+  // pufferfish: yellow, brown spots, little spikes
+  seaPaint(c,0,0,6,6,6,(n,x,y,w,h)=>{if(n==='front'&&y===1&&(x===1||x===4))return [16,16,16];if((x+y)%3===0&&n!=='bottom')return [250,240,200];
+    if(hash2(x,y,9340+n.length)>.78&&n!=='bottom')return [120,84,30];return n==='bottom'?[240,236,210]:sC([232,190,30],sN(x,y,9341));});
+  seaPaint(c,0,12,0,2,3,(n,x,y)=>[60,170,220,255]);
+  return {body:o=>boxUV(o,-3,0,-3,6,6,6,0,0,32,32),tail:o=>boxUV(o,0,1.5,0,0,2,3,0,12,32,32),fin:o=>{boxUV(o,3,2,-1,0,2,3,0,12,32,32);boxUV(o,-3,2,-1,0,2,3,0,12,32,32);}};}
+// the Megalodon's skin: slate back, white belly, scars, gills, red mouth, rows of teeth
+function seaMegaTex(c){const top=[58,68,78],bel=[214,214,208];const sk=seaSkin(top,bel,.62,9350);
+  const scar=(x,y)=>hash2(x>>1,y,9351)>.93;
+  seaPaint(c,0,0,14,14,24,(n,x,y,w,h)=>{let s=sk(n,x,y,w,h);if(n!=='bottom'&&scar(x,y))s=sC(s,1.35);return s;});
+  const tooth=(x,y,edge)=>edge&&((x%2===0)||y===0)?[244,240,226]:null,mouth=(x,y)=>sC([92,14,18],sN(x,y,9352));
+  seaPaint(c,0,40,12,11,11,(n,x,y,w,h)=>{
+    if(n==='bottom'){const e=x===0||y===0||x===w-1||y===h-1;if(e&&(x+y)%2===0)return [246,242,230];return mouth(x,y);}
+    if(n==='front'){if(y>=h-2){const t=(x%3)!==1?(y===h-2?[240,236,222]:[250,248,240]):null;if(t)return t;return [40,8,10];}if(y===3&&(x===3||x===w-4))return [20,20,24];}
+    if((n==='left'||n==='right')){if(y>=h-2&&x%2===0)return [246,242,230];      if(x>=6&&x<=9&&y>=3&&y<=8&&x%2===0)return sC(top,.55);}
+    return sk(n,x,y,w,h);});
+  seaPaint(c,48,40,11,3,10,(n,x,y,w,h)=>{if(n==='top'){const e=x===0||y===0||x===w-1||y===h-1;if(e&&(x+y)%2===1)return [246,242,230];return mouth(x,y);}
+    if((n==='front'||n==='left'||n==='right')&&y===0&&x%2===0)return [246,242,230];return n==='bottom'?sC(bel,sN(x,y,9353)):sk(n,x,y+8,w,h+8);});
+  seaPaint(c,0,64,10,10,14,(n,x,y,w,h)=>sk(n,x,y,w,h));seaPaint(c,50,64,6,7,12,(n,x,y,w,h)=>sk(n,x,y,w,h));
+  // fins: solid slabs, set at angles when drawn
+  const fin=(n,x,y)=>sC(top,sN(x,y,9354)*(n==='top'?.85:1));seaPaint(c,88,64,1,11,3,fin);seaPaint(c,88,80,1,7,3,fin);seaPaint(c,0,96,1,11,7,fin);seaPaint(c,24,96,8,1,5,fin);
+  const g=c.getContext('2d');g.fillStyle='#ff2020';g.fillRect(120,0,8,8);}
+// ink, bubbles
+function seaInk(e){const p=e.rpos||e.pos;spawnParticles(p[0],p[1]+.6,p[2],24,[.03,.03,.05],1.4,'poof');if(player&&dist(player.pos,p)<4.5)SEAS.ink=Math.max(SEAS.ink,1.6);}
+function seaDraw(e){const k=e.mob,M=seaMeshes(k);if(!M)return;const rp=e.rpos||e.pos,by=e.bodyYaw==null?e.yaw:e.bodyYaw;const T=MOB_T[k];
+  const dead=e.deathT!=null?Math.min(1,e.deathT*1.6):0;const roll=dead*Math.PI*.9;const pitch=-(e.pitch||0);
+  if(e.hurtT>.45&&!e._ink&&(k==='squid'||k==='kraken')){e._ink=true;seaInk(e);}if(!(e.hurtT>0))e._ink=false;
+  setEntLight(e.pos);gl.uniform1f(PT.u.hurt,e.hurtT>0||e.deathT!=null?1:0);
+  const P=(x,y,z,X,Y,Z)=>[M4.tr(x/16,y/16,z/16),M4.rz(Z||0),M4.ry(-(Y||0)),M4.rx(-(X||0))];const t=perfT+((e.id.charCodeAt(1)||0)%7);
+  const spd=Math.hypot(e.vel?e.vel[0]:0,e.vel?e.vel[2]:0);
+  if(k==='squid'||k==='kraken'){const S=k==='kraken'?4.2:1;const sw=k==='kraken'?Math.min(1,.4+spd*.15):Math.min(1,spd*.4);
+    const base=chain(M4.tr(rp[0],rp[1]+(k==='kraken'?3.2:1.05),rp[2]),M4.ry(by),M4.rx(pitch*.5),M4.rz(roll),M4.sc(S,S,S));
+    drawMesh(M.body,base,M.tex);const grab=k==='kraken'&&e.sst==='grab';
+    for(let i=0;i<8;i++){const a=i/8*Math.PI*2;const spread=grab?.9+Math.sin(t*3+i)*.15:.25+(.35+.25*sw)*(.5+.5*Math.sin(t*(k==='kraken'?1.6:3.2)+(k==='kraken'?i:0)));
+      let m=chain(base,M4.tr(Math.cos(a)*5/16,1/16,Math.sin(a)*5/16),M4.ry(-a),M4.rz(spread));drawMesh(M.tent,m,M.tex);
+      if(k==='kraken'){for(let s=1;s<4;s++){const curl=grab?-.55:Math.sin(t*1.3+i*.9+s)*.35-.1*s;m=chain(m,M4.tr(0,-18/16,0),M4.sc(.82,.82,.82),M4.rz(curl),M4.rx(Math.sin(t*.9+i+s)*.25));drawMesh(M.tent,m,M.tex);}}}
+    if(k==='kraken'&&M.eye){gl.uniform1f(PT.u.bright,1.7);drawMesh(M.eye,base,M.etex);}
+    else if(k==='squid'&&dayAmt()<.3){/* at night their eyes catch what little light there is */}
+    gl.uniform1f(PT.u.hurt,0);return;}
+  if(SEA_FISH.includes(k)){const puff=k==='pufferfish'?(e.puff!=null?e.puff:(player&&dist(player.pos,rp)<3?1:0)):0;if(k==='pufferfish'&&!isHost())e.puff=(e.puff||0)+((player&&dist(player.pos,rp)<3?1:0)-(e.puff||0))*Math.min(1,dtFrame*5);
+    const S=k==='salmon'?1:k==='pufferfish'?.8*(1+(e.puff||0)*.7):.9;const wet=seaWaterAt(rp[0],rp[1]+e.eh*.5,rp[2]);const flop=wet?0:Math.sin(t*14)*.6;
+    const base=chain(M4.tr(rp[0],rp[1]+.05,rp[2]),M4.ry(by),M4.rx(pitch),M4.rz(roll+flop+(wet?0:HP2)),M4.sc(S,S,S));
+    if(k==='tropical_fish'){const C=SEA_TROP[(e.color|0)%SEA_TROP.length];gl.uniform4f(PT.u.tint,C[0],C[1],C[2],1);}
+    const wag=Math.sin(t*(6+spd*4))*.45;drawMesh(M.body,base,M.tex);if(M.head)drawMesh(M.head,base,M.tex);
+    const back=k==='cod'?3:k==='salmon'?5:k==='tropical_fish'?3:3;drawMesh(M.tail,chain(base,M4.tr(0,0,back/16),M4.ry(wag)),M.tex);if(M.fin)drawMesh(M.fin,base,M.tex);
+    gl.uniform4f(PT.u.tint,1,1,1,1);gl.uniform1f(PT.u.hurt,0);return;}
+  if(k==='megalodon'){const S=2.9;const base=chain(M4.tr(rp[0],rp[1]+.1,rp[2]),M4.ry(by),M4.rx(pitch),M4.rz(roll),M4.sc(S,S,S));
+    const charging=e.sst==='charge';const open=e.swing>0?Math.max(0,.1-e.swing*.1):charging?.95+Math.sin(t*5)*.1:.08+Math.sin(t*.8)*.05;
+    const sway=Math.sin(t*(1.6+spd*.25))*(.12+Math.min(.25,spd*.03));
+    const body=chain(base,M4.ry(-sway*.35));drawMesh(M.body,body,M.tex);
+    const head=chain(body,...P(0,2,-12,0,sway*.25,0));drawMesh(M.head,head,M.tex);drawMesh(M.jaw,chain(head,M4.rx(open)),M.tex);
+    const t1=chain(body,...P(0,2,12,0,sway,0));drawMesh(M.tail1,t1,M.tex);const t2=chain(t1,...P(0,1.5,14,0,sway*1.4,0));drawMesh(M.tail2,t2,M.tex);
+    const tf=chain(t2,...P(0,3.5,11,0,sway*1.2,0));drawMesh(M.lobeU,chain(tf,M4.rx(-.6)),M.tex);drawMesh(M.lobeD,chain(tf,M4.rx(.55)),M.tex);
+    drawMesh(M.dorsal,chain(body,M4.tr(0,13/16,1/16),M4.rx(-.42)),M.tex);
+    drawMesh(M.pecR,chain(body,M4.tr(6.5/16,3/16,-6/16),M4.rz(-.55),M4.ry(-.3)),M.tex);drawMesh(M.pecL,chain(body,M4.tr(-6.5/16,3/16,-6/16),M4.rz(.55),M4.ry(.3)),M.tex);
+    gl.uniform1f(PT.u.bright,2.2);drawMesh(M.eyes,head,M.tex);gl.uniform1f(PT.u.hurt,0);return;}}
+const SEA_TROP=[[1,.5,.12],[.2,.6,1],[1,.85,.15],[.95,.25,.4],[.4,.9,.5],[.7,.35,.95],[1,1,1],[.2,.9,.9]];
+{const d0=drawMob;drawMob=function(e){if(isSea(e)){if(!e.gone)seaDraw(e);return;}return d0(e);};}
+
+// ---------- the scares ----------
+// hit by the Megalodon: the jaws close over the screen. Grabbed by the Kraken: its eye fills it.
+{const h0=hurt;hurt=function(e,amt,src,cause,kb,raw,ii){const r=h0(e,amt,src,cause,kb,raw,ii);
+  if(r&&e===player&&src&&src.mob==='megalodon'){seaScare('megalodon');if(typeof vehicleOf==='function'&&vehicleOf(player)){dismount(player);player.mot[1]=-.2;}}
+  if(r&&e===player&&src&&src.mob==='kraken'&&SEAS.grab)GZ.shake=Math.max(GZ.shake||0,.6);
+  return r;};}
+const SEA_EYE={veins:null};
+function seaScare(k){SEAS.scare={k,t:0,dur:k==='kraken'?1.9:1.3};GZ.shake=Math.max(GZ.shake||0,k==='kraken'?1.4:1.1);seaRoar(k);}
+function seaRoar(k){if(!actx)return;try{
+  if(k==='megalodon'){tone('sawtooth',120,36,1.1,.2);noiseHit(1.2,240,.8,.6,'lowpass',.35);noiseHit(.25,2500,1,.4,'bandpass');psnd(['ambient/underwater/additions/bass_whale'],null,1,.55);}
+  else{tone('sawtooth',82,26,2.2,.22);tone('square',41,30,2,.06);noiseHit(2.1,170,.6,.65,'lowpass',.4);psnd(['ambient/underwater/additions/dark'],null,1,.5);
+    if(typeof ndPlay==='function')ndPlay({vol:.55,rate:.45,lp:700,fade:.3,dur:2});}}catch(e){}}
+// dread: a slow heartbeat while the Megalodon circles you, faster as it charges; the deep rumble of the Kraken rising
+function seaDread(dt){const p=player;if(!p||!actx||DIM!=='overworld')return;let mega=99,charge=false,rise=99;
+  for(const m of mobs){if(!m.alive)continue;if(m.mob==='megalodon'){const d=dist(m.pos,p.pos);if(d<mega){mega=d;charge=m.sst==='charge';}}if(m.mob==='kraken'&&(m.sst==='rise'||m.sst==='grab'))rise=Math.min(rise,dist(m.pos,p.pos));}
+  const wet=p.inWater||p.riding;if(wet&&mega<34){SEAS.hb-=dt;if(SEAS.hb<=0){SEAS.hb=charge?.32:.55+mega/34*.7;try{tone('sine',58,40,.16,.22*(1-mega/40)+.05);setTimeout(()=>{try{tone('sine',52,36,.14,.15*(1-mega/40)+.03);}catch(e){}},150);}catch(e){}}}
+  // the deep is never quite silent
+  if(p.inWater&&camPos){const c=seaCol(camPos[0],camPos[2],camPos[1]);if(c&&c.top-c.bot>=10){SEAS.deep=(SEAS.deep==null?15:SEAS.deep)-dt;if(SEAS.deep<=0){SEAS.deep=18+Math.random()*30;
+    try{psnd([Math.random()<.5?'ambient/underwater/additions/dark':'ambient/underwater/additions/animal'],null,.35,.7+Math.random()*.2);}catch(e){}}}}
+  if(rise<30){SEAS.rumble-=dt;if(SEAS.rumble<=0){SEAS.rumble=3;try{noiseHit(3,90,.6,.3,'lowpass');psnd(['ambient/underwater/additions/bubbles'],null,.6,.6);}catch(e){}}}}
+function seaEyeVeins(){if(SEA_EYE.veins)return SEA_EYE.veins;const v=[];for(let i=0;i<40;i++){const a=Math.random()*6.283;const pts=[[Math.cos(a),Math.sin(a)]];let r=1,b=a;for(let s=0;s<6;s++){r-=.08;b+=(Math.random()-.5)*.35;pts.push([Math.cos(b)*r,Math.sin(b)*r]);}v.push(pts);}return SEA_EYE.veins=v;}
+{const h0=drawHUD;drawHUD=function(){h0();const dt=Math.min(.1,dtFrame||.016);try{seaDread(dt);}catch(e){}
+  if(SEAS.ink>0){SEAS.ink-=dt;hc.save();const a=Math.min(1,SEAS.ink);const gr=hc.createRadialGradient(W/2,H/2,Math.min(W,H)*.1,W/2,H/2,Math.max(W,H)*.7);gr.addColorStop(0,`rgba(4,4,8,${a*.75})`);gr.addColorStop(1,`rgba(0,0,0,${a})`);hc.fillStyle=gr;hc.fillRect(0,0,W,H);hc.restore();}
+  if(SEAS.grab){hc.save();const gr=hc.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.65);gr.addColorStop(0,'rgba(40,0,10,0)');gr.addColorStop(1,'rgba(40,0,10,.75)');hc.fillStyle=gr;hc.fillRect(0,0,W,H);hc.restore();}
+  const S=SEAS.scare;if(!S)return;S.t+=dt;if(S.t>=S.dur){SEAS.scare=null;return;}const k=S.t/S.dur;hc.save();const j=()=>(Math.random()-.5)*W*.03;
+  if(S.k==='megalodon'){// the jaws close over you: gums with rows of teeth come in from the top and the bottom
+    const close=Math.min(1,k/.38),e2=close*close*(3-2*close);const gap=H*(.62*(1-e2)+.02);const yT=H/2-gap/2,yB=H/2+gap/2;
+    const gr=hc.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.55);gr.addColorStop(0,'#1a0204');gr.addColorStop(.6,'#4a080c');gr.addColorStop(1,'#120204');hc.fillStyle=gr;hc.fillRect(0,0,W,H);
+    const n=9,tw=W/n,tl=H*.2;
+    const gum=(y0,y1)=>{const g3=hc.createLinearGradient(0,y0,0,y1);g3.addColorStop(0,'#3a0608');g3.addColorStop(1,'#8a1a1e');hc.fillStyle=g3;hc.fillRect(0,Math.min(y0,y1),W,Math.abs(y1-y0));};
+    gum(yT-H*.8,yT);gum(yB+H*.8,yB);
+    for(const row of [0,1])for(let i=-1;i<=n;i++){const x=i*tw+(row?tw/2:0)+j()*.3,len=tl*(.75+((i*7+row*3)%4)*.12);const y0=row?yB:yT,dir=row?-1:1;
+      const g4=hc.createLinearGradient(x,0,x+tw,0);g4.addColorStop(0,'#bdb39c');g4.addColorStop(.45,'#fbf7ea');g4.addColorStop(1,'#a89e88');hc.fillStyle=g4;
+      hc.beginPath();hc.moveTo(x+tw*.06,y0);hc.lineTo(x+tw*.94,y0);hc.lineTo(x+tw*.52,y0+dir*len);hc.closePath();hc.fill();hc.strokeStyle='rgba(70,30,20,.7)';hc.lineWidth=1.5;hc.stroke();
+      // serrated edges
+      hc.fillStyle='rgba(120,100,80,.5)';for(let q=1;q<5;q++){const f=q/5;hc.fillRect(x+tw*(.06+.46*f),y0+dir*len*f,2,2);hc.fillRect(x+tw*(.94-.42*f)-2,y0+dir*len*f,2,2);}}
+    if(k>.36&&k<.44){hc.fillStyle='rgba(255,255,255,.8)';hc.fillRect(0,0,W,H);}
+    if(k>.44){hc.globalAlpha=Math.min(1,(k-.44)*2.5);hc.fillStyle='#000';hc.fillRect(0,0,W,H);hc.globalAlpha=Math.max(0,.55-(k-.44)*.8);hc.fillStyle='#8a0000';hc.fillRect(0,0,W,H);}}
+  else{// the Kraken's eye opens in front of you
+    hc.fillStyle='#030104';hc.fillRect(0,0,W,H);const R=Math.min(W,H)*(.42+k*.25),cx=W/2+j(),cy=H/2+j();const open=Math.min(1,k/.2)*(k>.85?Math.max(0,1-(k-.85)/.12):1);
+    hc.save();hc.beginPath();hc.ellipse(cx,cy,R*1.25,R*open*.95+1,0,0,Math.PI*2);hc.clip();
+    let g2=hc.createRadialGradient(cx,cy,R*.2,cx,cy,R*1.2);g2.addColorStop(0,'#c04030');g2.addColorStop(1,'#2a0406');hc.fillStyle=g2;hc.fillRect(cx-R*1.3,cy-R*1.3,R*2.6,R*2.6);
+    hc.strokeStyle='rgba(120,0,0,.8)';hc.lineWidth=Math.max(1,R*.012);for(const v of seaEyeVeins()){hc.beginPath();v.forEach(([x,y],i)=>{const X=cx+x*R*1.2,Y=cy+y*R*1.2;i?hc.lineTo(X,Y):hc.moveTo(X,Y);});hc.stroke();}
+    g2=hc.createRadialGradient(cx,cy,0,cx,cy,R*.72);g2.addColorStop(0,'#fff070');g2.addColorStop(.45,'#f0a020');g2.addColorStop(1,'#7a2a06');hc.fillStyle=g2;hc.beginPath();hc.arc(cx,cy,R*.72,0,Math.PI*2);hc.fill();
+    hc.strokeStyle='rgba(90,30,0,.5)';hc.lineWidth=Math.max(1,R*.01);for(let i=0;i<48;i++){const a=i/48*Math.PI*2;hc.beginPath();hc.moveTo(cx+Math.cos(a)*R*.2,cy+Math.sin(a)*R*.2);hc.lineTo(cx+Math.cos(a)*R*.7,cy+Math.sin(a)*R*.7);hc.stroke();}
+    const pw=R*(.07+.25*Math.max(0,(k-.4)/.6));hc.fillStyle='#000';hc.beginPath();hc.ellipse(cx,cy,pw,R*.66,0,0,Math.PI*2);hc.fill();
+    hc.fillStyle='rgba(255,255,240,.75)';hc.beginPath();hc.ellipse(cx-R*.3,cy-R*.32,R*.08,R*.05,-.6,0,Math.PI*2);hc.fill();hc.restore();
+    if(k<.08){hc.fillStyle='rgba(255,255,255,.6)';hc.fillRect(0,0,W,H);}}
+  hc.restore();};}
+// boss bars for the Megalodon and the Kraken when they are close
+{const b0=drawBossBar;drawBossBar=function(){b0();if(!INF||!player||hideGui||DIM!=='overworld')return;let y=22+mobs.filter(m=>m.mob==='skinwalker'&&m.alive&&m.sw&&m.sw.st!=='d'&&dist(m.pos,camPos)<64).length*30;
+  for(const m of mobs){if(!m.alive||(m.mob!=='megalodon'&&m.mob!=='kraken')||dist(m.pos,camPos)>40)continue;const w=Math.min(420,W*.6),x=(W-w)/2;hc.save();txt(MOB_T[m.mob].name,W/2,y-6,16,m.mob==='kraken'?'#ff9a3a':'#9ad0ff','center');
+    hc.fillStyle='rgba(0,10,30,.85)';hc.fillRect(x,y,w,8);const f=Math.max(0,m.health/m.maxHp);const gr=hc.createLinearGradient(0,y,0,y+8);
+    if(m.mob==='kraken'){gr.addColorStop(0,'#ff8a2a');gr.addColorStop(1,'#8a2a06');}else{gr.addColorStop(0,'#5ab0ff');gr.addColorStop(1,'#1a4a8a');}hc.fillStyle=gr;hc.fillRect(x,y,w*f,8);
+    hc.strokeStyle='#000';hc.lineWidth=1;hc.strokeRect(x+.5,y+.5,w-1,7);for(let i=1;i<20;i++){hc.fillStyle='rgba(0,0,0,.35)';hc.fillRect(x+w*i/20,y,1,8);}hc.restore();y+=30;}};}
+
+// the new items need icons, and no two network messages may share a number
+rebuildIcons();rebuildItemAtlas();
+{const seen={};for(const k in N){if(seen[N[k]])console.error('network code clash: N.'+k+' and N.'+seen[N[k]]+' are both '+N[k]);seen[N[k]]=k;}}
 
 // ================= Anti-cheat: block the developer tools, and reload the page if they are opened or the game is tampered with =================
 // When it trips, the page reloads straight away WITHOUT saving, so nothing changed from the console is kept.

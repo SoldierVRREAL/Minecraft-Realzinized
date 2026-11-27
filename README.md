@@ -266,6 +266,24 @@ Every block, item, mob and armour texture now comes from the resource pack or is
 - **Screens:** the furnace flame and the arrows in the furnace and the crafting table come from the pack's furnace screen.
 - If you load a newer resource pack that has its own picture for one of these items, the pack's picture is used.
 
+## The sea update (version 3.2)
+
+- **Squid** (the resource pack's own squid) and **fish**: cod, salmon (cold water and rivers), tropical fish (eight colours, in schools) and pufferfish. Fish swim in schools, dart away from you, and flop about and suffocate on land. Pufferfish puff up when you come close and poison you on touch. Hit a squid and it squirts ink in your face.
+- **The Megalodon** (200 health, deep ocean only, rare). It finds you in the water or in a boat, circles closer and closer, then charges with its jaws open. A bite does 10 damage, knocks you out of your boat and closes its jaws over your screen. You hear a heartbeat while it is near. Drops 2 to 4 **Megalodon Teeth** (two teeth and a stick make a **Shark Tooth Sword**: 8 damage, 900 uses), raw fish and sometimes a Heart of the Sea.
+- **The Kraken** (300 health, very deep ocean, mostly at night, rare). It lies on the sea floor, rises under swimmers and boats, grabs you and drags you down, squeezing every 1.5 seconds. Its eye fills your screen when it grabs you. It lets go after about 6 seconds or when you deal it 40 damage. Drops ink (black dye), nautilus shells, the **Kraken Eye** (eat it for Strength and Absorption) and often a Heart of the Sea.
+- Both have boss bars when they are close. Spawn eggs exist for all of them, and `/summon megalodon`, `/summon kraken` and so on work.
+- Sea creatures run their own swimming code (`15zg_sea.js`): they move freely in all directions in water and keep to it. The host runs them and sends what the big ones are doing to everyone, so the jaws, tentacles and scares match on every screen.
+
+## The Poolrooms (version 3.2)
+
+The game has a noclip glitch: sometimes you end up inside a block. That glitch is still there, but now it takes you somewhere: if your head is inside a solid block for more than half a second, or you fall out of the bottom of the Overworld, the screen tears and you wake up in **the Poolrooms**.
+
+- An endless maze of small white tiles, beige floors, still pools of water and humming ceiling lights that sometimes flicker. There are halls, tall halls with pillars and ceilings hanging down in blocks, and low tiled corridors. You arrive at a random spot far from the middle.
+- **The exit:** in every 96 x 96 block stretch there is one short wall standing on its own with a dark doorway and a green **EXIT** sign above it. Walk through the doorway to go back to where you were before you glitched. Dying in there sends you home as usual.
+- **Watchers** live there: tall, thin, pale things with a face. They don't move while you look at them, and come for you fast when you don't. Stare at one too long and it rushes you anyway. When one reaches you, it is very close for a moment. More of them come the longer you stay.
+- The Poolrooms' tiles can't be broken in there. They are a dimension like the Nether (`15zf_pool.js`): built from the world seed the same way on every computer, saved with the world, and it works in multiplayer (each player who glitches goes on their own; if the host isn't there, your own game runs the Watchers).
+- The tiles and the light panels are in the Creative inventory if you want to build your own.
+
 ## Same version for everyone
 
 Every player builds the world from the seed on their own computer, so players on two different versions of the game see different terrain and biomes. Servers now let in only players on their own version (`15zb_versync.js`). Someone with an older page is told to reload. If the host is the one behind, the player is told to ask the host to reload. The server list shows a server's version when it differs from yours. A page that has been open for a while checks every 10 minutes for a new version and offers to reload.
@@ -464,6 +482,8 @@ python3 build.py
 | `15zb_versync.js` | Version check on joining, version in the server list, "new version" notice |
 | `15zd_items100.js` | The 100 new items: definitions, icons, recipes, drops and what they do |
 | `15ze_mcart.js` | Minecraft-style pixel art for items and tiles the pack has no picture of, and the shading engine that draws it |
+| `15zf0_poolface.js`, `15zf_pool.js` | The Poolrooms: the noclip glitch, the tiled maze, the exit, the Watchers |
+| `15zg_sea.js` | The sea update: squid, fish, the Megalodon and the Kraken, their swimming, scares and boss bars |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
