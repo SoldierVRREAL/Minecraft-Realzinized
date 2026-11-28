@@ -266,6 +266,17 @@ Every block, item, mob and armour texture now comes from the resource pack or is
 - **Screens:** the furnace flame and the arrows in the furnace and the crafting table come from the pack's furnace screen.
 - If you load a newer resource pack that has its own picture for one of these items, the pack's picture is used.
 
+## Realms (version 3.3)
+
+A Realm is a server world that stays online when its host leaves. To make one, open a world to a server (**Open to Server** in the pause menu, or **Host a Server**) and set **Realm** to **On**. Players join it with its address like any server.
+
+- **The host leaves:** the player who has been on the longest takes over hosting straight away, from the live world, and everyone else carries on with them after a moment of loading. Bans, the whitelist, operators and the names registered with passwords all carry over.
+- **Copies:** every minute or so (and soon after someone joins) the host sends everyone a copy of the whole world, compressed and a little at a time so the game doesn't stutter. Each player's copy is also brought up to date with what they see when they leave.
+- **Nobody is on:** anyone who has played on the Realm can open it again. Join it from the server list as usual; if nobody is hosting, your game opens it from your copy and hosts it. If two people open it at the same moment, the second one joins the first.
+- **Copies that went separate ways** (two people played it at different times without meeting) can't be merged. When you join a Realm whose world doesn't contain your copy's latest changes, your copy is kept as a Singleplayer world called "... (your copy)".
+- The Realm lives only in the players' browsers, so if nobody who has played it opens it, it isn't online. There is no server of ours involved: it runs on Photon like any other server.
+- The code is in `15zh_realms.js`.
+
 ## The sea update (version 3.2)
 
 - **Squid** (the resource pack's own squid) and **fish**: cod, salmon (cold water and rivers), tropical fish (eight colours, in schools) and pufferfish. Fish swim in schools, dart away from you, and flop about and suffocate on land. Pufferfish puff up when you come close and poison you on touch. Hit a squid and it squirts ink in your face.
@@ -484,6 +495,7 @@ python3 build.py
 | `15ze_mcart.js` | Minecraft-style pixel art for items and tiles the pack has no picture of, and the shading engine that draws it |
 | `15zf0_poolface.js`, `15zf_pool.js` | The Poolrooms: the noclip glitch, the tiled maze, the exit, the Watchers |
 | `15zg_sea.js` | The sea update: squid, fish, the Megalodon and the Kraken, their swimming, scares and boss bars |
+| `15zh_realms.js` | Realms: copies of the world for everyone, hosting handed over when the host leaves, opening a Realm from your copy |
 | `16_guard.js` | Anti-cheat |
 
 ## Coming next
