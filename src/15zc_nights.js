@@ -89,19 +89,21 @@ function faceOff(silent){if(FACE.st&&!silent)chatMsg(FACE.name+' left the game',
 function faceDrone(){if(!actx||FACE.drone)return;try{const o=actx.createOscillator(),g=actx.createGain(),f=actx.createBiquadFilter();o.type='sawtooth';o.frequency.value=38;f.type='lowpass';f.frequency.value=120;g.gain.value=.035;
   o.connect(f);f.connect(g);g.connect(masterOut||actx.destination);o.start();FACE.drone=o;}catch(e){}}
 function faceTick(dt){const p=player;
-  if(!p||!p.alive||!ntOn()||MATCH.state!=='play'){if(FACE.st)faceOff(true);if(!ntOn())FACE.wait=null;return;}
-  if(dayAmt()>.5&&!FACE.st){FACE.done=false;FACE.wait=null;return;}
-  if(!FACE.st){if(FACE.done||!ntNight())return;if(FACE.wait==null)FACE.wait=40+Math.random()*100;FACE.wait-=dt;if(FACE.wait>0||!ntOutside(p))return;
+  const on=ntOn()||(FACE.forced!=null&&MATCH.mode==='survival'&&INF&&DIM==='overworld');
+  if(!p||!p.alive||!on||MATCH.state!=='play'){if(FACE.st)faceOff(true);if(!on){FACE.wait=null;FACE.forced=null;}return;}
+  if(FACE.forced!=null&&!FACE.st){FACE.done=false;FACE.wait=0;}
+  else if(dayAmt()>.5&&!FACE.st){FACE.done=false;FACE.wait=null;return;}
+  if(!FACE.st){if(FACE.done||(!ntNight()&&FACE.forced==null))return;if(FACE.wait==null)FACE.wait=40+Math.random()*100;FACE.wait-=dt;if(FACE.wait>0||(!ntOutside(p)&&FACE.forced==null))return;
     FACE.st='watch';FACE.t=0;FACE.a=1;FACE.name='Player'+(1000+Math.random()*9000|0);facePlace();faceDrone();chatMsg(FACE.name+' joined the game','#ffff55',false);ntSound('distant',FACE.pos);FACE.nextSnd=20;return;}
   FACE.t+=dt;
   if(FACE.st==='watch'){const d=dist(FACE.pos,p.pos);if(d>46||d<8)facePlace();
     FACE.nextSnd-=dt;if(FACE.nextSnd<=0){FACE.nextSnd=18+Math.random()*25;ntSound('whisper',FACE.pos);}
-    if(FACE.drone)try{FACE.drone.frequency.value=38+FACE.t/300*30;}catch(e){}
-    if(FACE.t>=300){if(ntOutside(p)){FACE.st='rush';FACE.rt=0;FACE.from=FACE.pos.slice();ntSound('scream');}else{FACE.st='fade';FACE.ft=0;}}}
+    const RT=FACE.forced!=null?FACE.forced:300;if(FACE.drone)try{FACE.drone.frequency.value=38+FACE.t/RT*30;}catch(e){}
+    if(FACE.t>=RT){if(ntOutside(p)){FACE.st='rush';FACE.rt=0;FACE.from=FACE.pos.slice();ntSound('scream');}else{FACE.st='fade';FACE.ft=0;}}}
   else if(FACE.st==='rush'){FACE.rt+=dt;const k=Math.min(1,FACE.rt/1.1),e=eye(p),f=fwd(p);const to=[e[0]+f[0]*1.2,e[1]+f[1]*1.2,e[2]+f[2]*1.2];
     FACE.pos=[FACE.from[0]+(to[0]-FACE.from[0])*k*k,FACE.from[1]+(to[1]-FACE.from[1])*k*k,FACE.from[2]+(to[2]-FACE.from[2])*k*k];
-    if(k>=1){FACE.js=1.7;hurt(p,12,null,'magic');giveEffect(p,'slowness',8,1);giveEffect(p,'weakness',8,0);FACE.done=true;faceOff(false);}}
-  else if(FACE.st==='fade'){FACE.ft+=dt;FACE.a=Math.max(0,1-FACE.ft/3);if(FACE.ft>=3){FACE.done=true;faceOff(false);}}}
+    if(k>=1){FACE.forced=null;FACE.js=1.7;hurt(p,12,null,'magic');giveEffect(p,'slowness',8,1);giveEffect(p,'weakness',8,0);FACE.done=true;faceOff(false);}}
+  else if(FACE.st==='fade'){FACE.ft+=dt;FACE.a=Math.max(0,1-FACE.ft/3);if(FACE.ft>=3){FACE.forced=null;FACE.done=true;faceOff(false);}}}
 // drawn in the world, through the fog
 {const m0=drawMobs;drawMobs=function(fogF){m0(fogF);if(!FACE.st||!FACE.pos||!camPos)return;const M=faceMesh();if(!M)return;useTex(VP,camPos);
   const dx=camPos[0]-FACE.pos[0],dz=camPos[2]-FACE.pos[2];const near=FACE.st==='rush'?1+FACE.rt*2.5:1;const S=11*near;
@@ -117,3 +119,10 @@ function faceTick(dt){const p=player;
   for(const m of mobs){if(m.mob!=='mimic'||!m.alive||!m.sw||dist(m.pos,camPos)>40)continue;const rp=m.rpos||m.pos;nameTagMC({pos:[rp[0],rp[1],rp[2]],name:m.sw.name,sneak:m.sneak,bat:false},'#ffffff');}
   if(FACE.js>0&&FACE.img){FACE.js-=dt;hc.save();hc.fillStyle='#000';hc.fillRect(0,0,W,H);const s=Math.max(W,H)*1.15*(1+(1.7-FACE.js)*.08),j=()=>(Math.random()-.5)*W*.04;
     hc.globalAlpha=Math.random()<.15?.6:1;hc.drawImage(FACE.img,(W-s)/2+j(),(H-s)/2+j(),s,s);if(Math.random()<.3){hc.globalAlpha=.25;hc.fillStyle='#600';hc.fillRect(0,0,W,H);}hc.restore();}};}
+
+// a way for the owner to test it: /summon face [seconds until it rushes, default 300]. Host or Creative only, and not listed anywhere.
+{const c0=serverCmd;serverCmd=function(S,text){const a=text.replace(/^\//,'').trim().split(/\s+/);if((a[0]||'').toLowerCase()!=='summon'||(a[1]||'').toLowerCase()!=='face')return c0(S,text);
+  const reply=(t,col='#aaaaaa')=>{if(S.local)chatMsg(t,col,false);else netSend(N.CHAT,{t,c:col},S.id);};
+  if(!S.local)return reply('Usage: /summon <creature>, for example /summon skinwalker','#ff5555');
+  if(MATCH.mode!=='survival'||!INF||DIM!=='overworld')return reply('That only works in the Overworld of a Survival world.','#ff5555');
+  const n=parseFloat(a[2]);if(FACE.st)faceOff(true);FACE.forced=n>0?Math.min(3600,n):300;FACE.done=false;FACE.wait=0;};}

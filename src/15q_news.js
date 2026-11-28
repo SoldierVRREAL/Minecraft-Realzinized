@@ -1,6 +1,11 @@
 // ================= Version number and the update log ("What's New" on the title screen) =================
-const GAME_VER='3.2';
+const GAME_VER='3.3';
 const NEWS=[
+ ['3.3','November 28, 2026',[
+   'Realms! When you open a world to a server, set Realm to On and it stays online after you leave: the player who has been on the longest takes over hosting at once, and everyone carries on.',
+   'Everyone who plays on a Realm keeps a copy of it. When nobody is on, anyone who has played there can open it again: just join it from the server list as usual and your game hosts it.',
+   'Realms are marked [Realm] in the server list, and you are added to a Realm\'s list entry the first time you join it.',
+   'If your copy of a Realm has changes the online one doesn\'t (because you played it while nobody else was on), your copy is kept as a Singleplayer world so nothing is lost.']],
  ['3.2','November 27, 2026',[
    'The sea update. Oceans and rivers are full of life: squid, cod, salmon, tropical fish and pufferfish (they puff up and poison you). Squid squirt ink in your face when you hit them.',
    'The Megalodon hunts deep ocean water. It circles you closer and closer, then charges out of the murk with its jaws open. You will hear your heartbeat when it is near. It can knock you out of your boat.',
